@@ -2091,7 +2091,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           class: 'btn primary', text: 'Send answer', onclick: function () {
             if (!ans.value.trim()) { err.textContent = 'Write an answer first.'; err.classList.remove('hidden'); return; }
             T.forceNext = true;
-            api('/api/mesh/answer', { taskId: t.id, answer: ans.value }).then(function (r) { if (r && DEMO) push(); });
+            api('/api/mesh/answer', { taskId: t.id, answer: ans.value }).then(function (r) { if (r) { if (DEMO) push(); closeTask(); toast('Answer sent', 'success'); } });
           }
         }),
         el('button', { class: 'btn danger', text: 'Cancel task', onclick: function () { doCancel(t); } })
@@ -2103,7 +2103,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           uiConfirm({ title:'Mark '+t.id+' deployed?', message:'Confirm the deployment succeeded.', confirmLabel:'Mark deployed' }).then(function(ok){
             if (!ok) return;
             T.forceNext = true;
-            api('/api/mesh/task/'+encodeURIComponent(t.id)+'/deployed', {}).then(function(r){ if(r && DEMO) push(); });
+            api('/api/mesh/task/'+encodeURIComponent(t.id)+'/deployed', {}).then(function(r){ if(r) { if (DEMO) push(); closeTask(); toast('Marked deployed → Done', 'success'); } });
           });
         }
       }));
@@ -2120,7 +2120,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           class: 'btn primary', text: 'Send back to the agent', onclick: function () {
             if (!fb.value.trim()) { ferr.textContent = 'Feedback is required — the agent needs to know what to change.'; ferr.classList.remove('hidden'); fb.focus(); return; }
             T.forceNext = true;
-            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: false, feedback: fb.value }).then(function (r) { if (r) { T.sendBack = false; if (DEMO) push(); } });
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: false, feedback: fb.value }).then(function (r) { if (r) { T.sendBack = false; if (DEMO) push(); closeTask(); toast('Sent back to agent', 'success'); } });
           }
         }));
         out.push(el('button', { class: 'btn', text: 'Keep reviewing', onclick: function () { T.sendBack = false; updateTaskModal(true); } }));
@@ -2137,7 +2137,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           }).then(function (ok) {
             if (!ok) return;
             T.forceNext = true;
-            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r) { if (DEMO) push(); closeTask(); toast('Approved → Pending deployment', 'success'); } });
           });
         }
       }));
@@ -2150,7 +2150,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           }).then(function(ok){
             if (!ok) return;
             T.forceNext = true;
-            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r && DEMO) push(); });
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r) { if (DEMO) push(); closeTask(); toast('Approved without deploying → Done', 'success'); } });
           });
         }
       }));
@@ -2164,7 +2164,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       out.push(el('button', {
         class: 'btn', text: 'Copy request for ' + holder, onclick: function () {
           api('/api/mesh/task/' + encodeURIComponent(t.id) + '/request', {}).then(function (r) {
-            if (r && typeof r.text === 'string') copyText(r.text, 'Request for ' + holder);
+            if (r && typeof r.text === 'string') { copyText(r.text, 'Request for ' + holder); closeTask(); toast('Sent to In progress', 'success'); }
           });
         }
       }));
@@ -2176,7 +2176,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
             if (!paste.value.trim()) { toast('Paste the response first', 'error'); paste.focus(); return; }
             T.forceNext = true;
             api('/api/mesh/task/' + encodeURIComponent(t.id) + '/response', { text: paste.value }).then(function (r) {
-              if (r) { T.pasteOpen = false; if (DEMO) push(); }
+              if (r) { T.pasteOpen = false; if (DEMO) push(); closeTask(); toast('Sent to Code review', 'success'); }
             });
           }
         }));
@@ -2195,7 +2195,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       var res = t.assignee ? agentById(t.assignee) : null;
       if (res && !res.manual && res.launch && !res.launch.running) out.push(el('button', {
         class: 'btn primary', text: '▶ Run ' + (res.launch.label || res.id) + ' to start this task',
-        onclick: function () { runAgent(res.id); } }));
+        onclick: function () { runAgent(res.id); closeTask(); toast('Run requested', 'success'); } }));
       else if (!t.assignee) out.push(runAgentMenuButton(t));
     }
     if (!hasFinal) {
@@ -2227,7 +2227,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         var list = runnableAgents();
         if (!list.length) { toast('No agent can be started from the board right now', 'warn'); return; }
         openMenu(btn, 'Start an agent for ' + t.id, list.map(function (a) {
-          return { label: '▶ Run ' + (a.launch ? a.launch.label : a.id) + (t.assignee ? '' : ' (any agent)'), run: function () { runAgent(a.id); } };
+          return { label: '▶ Run ' + (a.launch ? a.launch.label : a.id) + (t.assignee ? '' : ' (any agent)'), run: function () { runAgent(a.id); closeTask(); toast('Run requested', 'success'); } };
         }));
       }
     });
@@ -2245,7 +2245,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     }).then(function (ok) {
       if (!ok) return;
       T.forceNext = true;
-      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/release', {}).then(function (r) { if (r && DEMO) push(); });
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/release', {}).then(function (r) { if (r) { if (DEMO) push(); closeTask(); toast('Released to Waiting', 'success'); } });
     });
   }
   function doCancel(t) {
@@ -2258,7 +2258,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       uiPrompt({ title: 'Reason (optional)', label: 'Why is this task cancelled?', required: false, confirmLabel: 'Cancel task' })
         .then(function (reason) {
           api('/api/mesh/task/' + encodeURIComponent(t.id) + '/cancel', { reason: reason || '' })
-            .then(function (r) { if (r && DEMO) push(); });
+            .then(function (r) { if (r) { if (DEMO) push(); closeTask(); toast('Cancelled', 'success'); } });
         });
     });
   }
@@ -2476,7 +2476,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         el('button', { class:'btn primary', text:'Hand over', onclick:function(){
           var payload = { to: selectedTo, note: noteIn.value };
           api('/api/mesh/task/'+encodeURIComponent(t.id)+'/handover', payload).then(function(r){
-            if (r){ ov.close(); if (DEMO) push(); toast('Handed over '+t.id,'success'); }
+            if (r){ ov.close(); if (DEMO) push(); toast('Handed over '+t.id,'success'); closeTask(); }
           });
         }})
       ]
@@ -2645,7 +2645,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       confirmLabel: 'Approve'
     }).then(function (ok) {
       if (!ok) return;
-      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r) { if (DEMO) push(); closeTask(); toast('Approved → Pending deployment', 'success'); } });
     });
   }
   function approveWithoutDeploy(t){
@@ -2655,7 +2655,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       confirmLabel: 'Approve without deploying'
     }).then(function(ok){
       if (!ok) return;
-      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r && DEMO) push(); });
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r) { if (DEMO) push(); closeTask(); toast('Approved without deploying → Done', 'success'); } });
     });
   }
   function markDeployed(t){
@@ -2665,7 +2665,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       confirmLabel: 'Mark deployed'
     }).then(function(ok){
       if (!ok) return;
-      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/deployed', {}).then(function(r){ if(r && DEMO) push(); });
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/deployed', {}).then(function(r){ if(r) { if (DEMO) push(); closeTask(); toast('Marked deployed → Done', 'success'); } });
     });
   }
   function moveTask(t, to) {
@@ -2682,13 +2682,13 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
   function sendMove(t, to, label) {
     api('/api/mesh/task/' + encodeURIComponent(t.id) + '/move', { to: to }).then(function (r) {
-      if (r) { toast(t.id + ' → ' + (label || to), 'success'); if (DEMO) push(); }
+      if (r) { toast(t.id + ' → ' + (label || to), 'success'); if (DEMO) push(); closeTask(); }
     });
   }
   function reassign(t, agentId) {
     if (t.status !== 'backlog') { toast('Only waiting tasks can be reassigned', 'error'); return; }
     api('/api/mesh/task/' + encodeURIComponent(t.id) + '/edit', { assignee: agentId }).then(function (r) {
-      if (r) { toast(agentId ? 'Assigned to ' + agentName(agentId) : 'Unassigned', 'success'); if (DEMO) push(); }
+      if (r) { toast(agentId ? 'Assigned to ' + agentName(agentId) : 'Unassigned', 'success'); if (DEMO) push(); closeTask(); }
     });
   }
 
