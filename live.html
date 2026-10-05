@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>AgentMesh</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{--bg:#f5f6f8;--panel:#fff;--panel-2:#eef0f4;--text:#171a21;--muted:#6b7280;--border:#e2e5ea;--border-strong:#ccd2db;
+ --accent:#3b5bdb;--accent-soft:#eaefff;--accent-fg:#fff;--ok:#2f9e44;--ok-soft:#e9f7ec;--warn:#c2570c;--warn-soft:#fff3e6;
+ --danger:#d6336c;--danger-soft:#ffeaf1;--purple:#7048e8;--purple-soft:#f0ecff;--grey-dot:#adb5bd;
+ --acc-wait:#64748b;--acc-work:#2563eb;--acc-ask:#d97706;--acc-review:#7c3aed;--acc-done:#16a34a;--acc-cancel:#94a3b8;
+ --dots:rgba(15,23,42,.055);--glow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);
+ --radius:10px;--radius-sm:7px;--shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.10);--t:150ms}
+[data-theme="dark"]{--bg:#0e1014;--panel:#161a20;--panel-2:#1b2027;--text:#e8eaee;--muted:#98a2b3;--border:#262c36;
+ --border-strong:#3a424f;--accent:#5c7cfa;--accent-soft:#1c2540;--accent-fg:#fff;--ok:#51cf66;--ok-soft:#16281b;
+ --warn:#ffa94d;--warn-soft:#2f2318;--danger:#ff6b81;--danger-soft:#331b24;--purple:#9775fa;--purple-soft:#241f3d;
+ --grey-dot:#5c6672;--shadow:0 1px 2px rgba(0,0,0,.5),0 14px 34px rgba(0,0,0,.45);
+ --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-done:#4ade80;--acc-cancel:#64748b;
+ --dots:rgba(255,255,255,.045)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#0e1014;--panel:#161a20;
+ --panel-2:#1b2027;--text:#e8eaee;--muted:#98a2b3;--border:#262c36;--border-strong:#3a424f;--accent:#5c7cfa;
+ --accent-soft:#1c2540;--accent-fg:#fff;--ok:#51cf66;--ok-soft:#16281b;--warn:#ffa94d;--warn-soft:#2f2318;
+ --danger:#ff6b81;--danger-soft:#331b24;--purple:#9775fa;--purple-soft:#241f3d;--grey-dot:#5c6672;
+ --shadow:0 1px 2px rgba(0,0,0,.5),0 14px 34px rgba(0,0,0,.45);
+ --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-done:#4ade80;--acc-cancel:#64748b;
+ --dots:rgba(255,255,255,.045)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.hidden{display:none!important}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.muted{color:var(--muted)}
+.trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+/* top bar */
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0}.brand .logo{color:var(--accent);font-size:15px}
+.conn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+.conn .dot{width:7px;height:7px;border-radius:50%;background:var(--grey-dot)}
+.conn.live{color:var(--ok);border-color:var(--ok)}.conn.live .dot{background:var(--ok)}
+.conn.down{color:var(--danger);border-color:var(--danger)}.conn.down .dot{background:var(--danger)}
+.badge-demo{margin-left:4px}
+.topbar-mid{display:flex;align-items:center;gap:8px;flex:1 1 340px;min-width:220px}
+.topbar-mid input[type=search]{flex:1 1 200px;min-width:120px}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.counts{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.counts b{color:var(--text);font-weight:600}.counts .warn{color:var(--warn)}.counts .purple{color:var(--purple)}
+input[type=search],input[type=text],select,textarea{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;transition:border-color var(--t),box-shadow var(--t)}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,[tabindex]:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+textarea{resize:vertical;min-height:64px;width:100%}
+.btn{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px;transition:background var(--t),border-color var(--t),color var(--t)}
+.btn:hover{background:var(--panel-2);border-color:var(--border-strong)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--danger);border-color:var(--danger)}.btn.danger:hover{background:var(--danger-soft)}
+.btn.ghost{background:transparent;border-color:transparent}.btn.icon{padding:5px 8px}.btn.small{padding:2px 7px;font-size:11px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.seg button{background:var(--panel);border:0;padding:5px 9px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.check{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;cursor:pointer}
+/* layout */
+main{display:grid;grid-template-columns:252px minmax(0,1fr) 312px;min-height:0;height:100%}
+.rail{border-right:1px solid var(--border);background:var(--panel);overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.rail h2{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0;font-weight:600}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:8px 9px;display:flex;flex-direction:column;gap:6px}
+.card.clickable{cursor:pointer;transition:border-color var(--t),box-shadow var(--t)}
+.card.clickable:hover{border-color:var(--border-strong);box-shadow:var(--shadow)}
+.agent-card{border-left:3px solid var(--card-accent,var(--border))}
+.agent-card:hover{transform:translateY(-1px)}
+.agent-card .row{display:flex;align-items:center;gap:8px}
+.agent-card .id{font-size:10.5px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.agent-card .actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn.launch{border-color:var(--ok);color:var(--ok);font-weight:600}
+.btn.launch:hover{background:var(--ok-soft)}
+.btn[disabled].launch{border-color:var(--border);color:var(--muted)}
+.launcher{border-style:dashed;border-left:3px solid var(--border)}
+.launcher .row{display:flex;align-items:center;gap:8px}
+.agent-card .name{font-weight:600;display:flex;align-items:center;gap:6px;min-width:0}
+.agent-card .name span.trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agent-card .sub{font-size:11px;color:var(--muted);display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex:0 0 auto;overflow:hidden;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35);user-select:none}
+.avatar.sm{width:20px;height:20px;font-size:9px}.avatar.lg{width:38px;height:38px;font-size:15px}.avatar.xl{width:46px;height:46px;font-size:19px}
+.avatar .avatar-emoji{font-size:1.15em;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-stack{display:inline-flex;align-items:center}
+.avatar-stack .avatar{margin-left:-6px;box-shadow:0 0 0 2px var(--panel),inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.avatar-stack .avatar:first-child{margin-left:0}
+.avatar-pick{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.swatch{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.swatch[aria-pressed=true]{border-color:var(--text);transform:scale(1.08)}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:3px;max-width:280px}
+.emoji-grid button{background:var(--panel-2);border:1px solid var(--border);border-radius:7px;font-size:15px;line-height:1;padding:4px 5px}
+.emoji-grid button:hover{border-color:var(--accent)}
+.agent-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border:1px solid var(--border);border-radius:9px;background:var(--panel)}
+.agent-row .main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.agent-row .id{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+.wload{display:flex;height:6px;border-radius:999px;overflow:hidden;background:var(--panel-2);border:1px solid var(--border);min-width:70px;flex:1 1 70px}
+.wload i{display:block;height:100%}
+.wload i.s-backlog{background:var(--acc-wait)}.wload i.s-claimed,.wload i.s-in_progress{background:var(--acc-work)}
+.wload i.s-blocked{background:var(--acc-ask)}.wload i.s-review{background:var(--acc-review)}
+.wload i.s-done{background:var(--acc-done)}.wload i.s-cancelled{background:var(--acc-cancel)}
+.rail-filter{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.chip-avatar{background:transparent;border:2px solid transparent;border-radius:50%;padding:1px;line-height:0}
+.chip-avatar[aria-pressed=true]{border-color:var(--accent)}
+.timer{display:inline-flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums}
+.tile-time{font-size:11px;color:var(--muted);margin-left:4px}
+.tile-foot .trunc{flex:0 1 auto}
+.timer.stale{color:var(--warn);font-weight:600}
+.tile{position:relative;overflow:hidden}
+.tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,var(--border))}
+.tile[data-status=backlog]{--acc:var(--acc-wait)}.tile[data-status=claimed],.tile[data-status=in_progress]{--acc:var(--acc-work)}
+.tile[data-status=blocked]{--acc:var(--acc-ask)}.tile[data-status=review]{--acc:var(--acc-review)}
+.tile[data-status=done]{--acc:var(--acc-done)}.tile[data-status=cancelled]{--acc:var(--acc-cancel)}
+.tile.mine{border-left-color:var(--accent)}
+@keyframes tileIn{from{opacity:0;transform:translateY(-7px) scale(.98)}}
+@keyframes tileFlash{0%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 10px transparent}}
+@keyframes evIn{from{opacity:0;transform:translateX(6px)}}
+.tile-enter{animation:tileIn 230ms ease-out}
+.tile-flash{animation:tileFlash 900ms ease-out}
+.event-enter{animation:evIn 220ms ease-out}
+body.compact .tile{padding:6px 8px;gap:4px}
+body.compact .col-body{gap:6px;padding:6px}
+body.compact .card{padding:6px 8px}
+body.compact .agent-card .actions .btn{padding:1px 5px;font-size:10.5px}
+body.compact .toolbar,body.compact .col-head{padding-top:4px;padding-bottom:4px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--grey-dot);flex:0 0 auto}
+.st-backlog{background:var(--acc-wait)}.st-claimed,.st-in_progress{background:var(--acc-work)}.st-blocked{background:var(--acc-ask)}
+.st-review{background:var(--acc-review)}.st-done{background:var(--acc-done)}.st-cancelled{background:var(--acc-cancel);opacity:.6}
+.status-dot{width:9px;height:9px}
+.beat{animation:beat 2.1s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.45);opacity:.6}}
+.conn.live .dot{animation:beat 2.6s ease-in-out infinite}
+.lock{display:flex;align-items:center;gap:6px;font-size:11px}
+.lock .path{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:ui-monospace,Menlo,monospace}
+/* board */
+.center{display:flex;flex-direction:column;min-width:0;min-height:0}
+.toolbar{display:flex;align-items:center;gap:12px;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--panel)}
+.needs{display:flex;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent-soft);overflow-x:auto;align-items:center}
+.needs .needs-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);flex:0 0 auto}
+.need{flex:0 0 auto;text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:border-color var(--t)}
+.need{border-left:3px solid var(--need-accent,var(--accent))}
+.need:hover{border-color:var(--need-accent,var(--accent))}.need.warning{--need-accent:var(--warn)}
+@keyframes pop{from{opacity:.5;transform:translateY(6px) scale(.985)}}
+.board{flex:1 1 auto;min-height:0;display:flex;gap:10px;overflow:auto;padding:10px;align-items:stretch;background-image:radial-gradient(var(--dots) 1px,transparent 1px);background-size:20px 20px}
+.board.lanes{flex-direction:column;gap:10px}
+.board-row{flex:1 1 auto;display:flex;gap:10px;align-items:stretch;min-height:0;min-width:0}
+.col{flex:0 0 272px;width:272px;display:flex;flex-direction:column;min-height:0;max-height:100%;background:var(--panel-2);border:1px solid var(--border);border-top:3px solid var(--col-accent,var(--border));border-radius:var(--radius);transition:box-shadow var(--t),outline-color var(--t)}
+.col[data-colkey=backlog]{--col-accent:var(--acc-wait)}.col[data-colkey=working]{--col-accent:var(--acc-work)}
+.col[data-colkey=blocked]{--col-accent:var(--acc-ask)}.col[data-colkey=review]{--col-accent:var(--acc-review)}
+.col[data-colkey=done]{--col-accent:var(--acc-done)}.col[data-colkey=cancelled]{--col-accent:var(--acc-cancel)}
+.col-head{border-bottom:1px solid var(--border)}
+.col.narrow{flex:0 0 216px;width:216px}
+.col-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.col-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--col-accent,var(--muted))}
+.col-count{margin-left:auto;font-size:11px;color:var(--col-accent,var(--muted));background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:0 7px;font-weight:600}
+.col-body{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:34px}
+.empty{color:var(--muted);font-size:12px;padding:8px 2px;border:1px dashed var(--border);border-radius:var(--radius-sm);text-align:center}
+.lane{border:1px solid var(--border);background:var(--panel);border-radius:var(--radius);margin:0 10px 10px;flex:0 0 auto}
+.lane-head{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border)}
+.lane-cols{display:flex;gap:10px;padding:8px;overflow:auto}
+.lane-cols .col{background:var(--panel-2);max-height:min(62vh,460px)}
+.lane-cols .col .col-body{overflow:auto}
+.tile{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 9px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;transition:border-color var(--t),box-shadow var(--t)}
+.tile:hover{border-color:var(--border-strong);box-shadow:var(--shadow);transform:translateY(-1px)}
+.tile:active{transform:translateY(0) scale(.995)}.tile.dragging{opacity:.45;transform:rotate(.6deg)}
+.tile .status-dot{margin-top:0}
+.cancel-strip{display:none;margin:0 10px 10px;border:2px dashed var(--danger);border-radius:var(--radius);padding:10px 12px;text-align:center;color:var(--danger);background:var(--danger-soft);font-weight:600;font-size:12px;transition:background var(--t),color var(--t),transform var(--t)}
+body.is-dragging .cancel-strip{display:block;animation:pop 160ms ease-out}
+.cancel-strip.over{background:var(--danger);color:#fff;transform:scale(1.01)}
+.tile-top{display:flex;align-items:center;gap:6px}
+.tile-id{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace}
+.tile-menu-btn{margin-left:auto;background:transparent;border:0;color:var(--muted);border-radius:5px;padding:0 5px;line-height:1.2}
+.tile-menu-btn:hover{background:var(--panel-2);color:var(--text)}
+.tile-title{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile-foot{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+.badges{display:flex;gap:4px;flex-wrap:wrap}
+.badge{font-size:11px;border:1px solid var(--border);border-radius:999px;padding:0 6px;color:var(--muted);background:var(--panel-2);white-space:nowrap}
+.badge.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-soft)}
+.badge.danger{color:var(--danger);border-color:var(--danger);background:var(--danger-soft)}
+.badge.purple{color:var(--purple);border-color:var(--purple);background:var(--purple-soft)}
+.badge.ok{color:var(--ok);border-color:var(--ok);background:var(--ok-soft)}
+.badge.time{font-variant-numeric:tabular-nums}
+.settings-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.settings-tabs .btn[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.kv{display:grid;grid-template-columns:minmax(120px,auto) 1fr;gap:3px 12px;font-size:12px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.status-pill{font-weight:600}
+.status-pill.st-backlog{color:var(--acc-wait)}.status-pill.st-claimed,.status-pill.st-in_progress{color:var(--acc-work)}
+.status-pill.st-blocked{color:var(--acc-ask)}.status-pill.st-review{color:var(--acc-review)}
+.status-pill.st-done{color:var(--acc-done)}.status-pill.st-cancelled{color:var(--acc-cancel)}
+.tile.mine{border-style:solid;background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--accent-soft)}
+.drop-valid{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft);box-shadow:var(--glow)}
+.drop-invalid{cursor:not-allowed;opacity:.55}
+.tile.shake{animation:shake 220ms ease-in-out}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+/* activity */
+.activity{border-left:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.activity-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.activity-feed{overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:10px}
+.event{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.event .meta{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px}
+.event .msg{color:var(--text);overflow-wrap:anywhere}
+.badge-type{width:6px;height:6px;border-radius:50%;background:var(--grey-dot)}
+.bt-success{background:var(--ok)}.bt-warning{background:var(--warn)}.bt-purple{background:var(--purple)}.bt-info{background:var(--accent)}
+/* dialogs */
+.backdrop{position:fixed;inset:0;background:rgba(10,12,16,.45);display:flex;align-items:center;justify-content:center;padding:14px;z-index:60}
+.dialog{animation:pop 150ms ease-out;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);width:min(720px,100%);max-height:min(90vh,900px);display:flex;flex-direction:column;overflow:hidden}
+.dialog.wide{width:min(900px,100%)}.dialog.small{width:min(430px,100%)}
+.dialog-head{display:flex;align-items:flex-start;gap:10px;padding:12px 12px 10px;border-bottom:1px solid var(--border)}
+.dialog-head .head-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:6px}
+.dialog-title{margin:0;font-size:15px;font-weight:650;overflow-wrap:anywhere}
+.dialog-sub{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dialog-body{overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.dialog-foot{border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;background:var(--panel-2)}
+.dialog-foot:empty{display:none}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 12px;overflow-x:auto}
+.tab{background:transparent;border:0;border-bottom:2px solid transparent;padding:8px 10px;color:var(--muted);font-weight:550}
+.tab[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent)}
+.panel{display:flex;flex-direction:column;gap:12px}
+.section{display:flex;flex-direction:column;gap:5px}
+.section>h3{margin:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:9px;max-height:280px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.meta{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12px;overflow-wrap:anywhere}
+.meta b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12px}.field>label,.field label{font-weight:600}
+.field .hint{color:var(--muted);font-size:11px}.field .err{color:var(--danger);font-size:11px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .full{grid-column:1/-1}
+.timeline{display:flex;flex-direction:column;gap:9px}
+.tl-item{border-left:2px solid var(--border);padding:0 0 0 10px;display:flex;flex-direction:column;gap:2px}
+.tl-item .tl-meta{display:flex;gap:7px;align-items:center;color:var(--muted);font-size:11px}
+.welcome{margin:18px auto;max-width:480px;text-align:center;padding:22px 20px;border:1px dashed var(--border-strong);border-radius:14px;background:var(--panel);display:flex;flex-direction:column;gap:9px;align-items:center}
+.welcome .big{font-size:30px;color:var(--accent);line-height:1}
+.welcome h3{margin:0;font-size:15px}
+.welcome p{margin:0;font-size:12px;line-height:1.5}
+.notice{border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;background:var(--panel-2)}
+.notice.warn{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.notice.danger{border-color:var(--danger);background:var(--danger-soft);color:var(--danger)}
+.notice.purple{border-color:var(--purple);background:var(--purple-soft);color:var(--purple)}
+.notice.amber{border-color:var(--warn);background:var(--warn-soft)}
+.message{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+/* menus, toasts */
+.menu{position:fixed;z-index:80;background:var(--panel);border:1px solid var(--border);border-radius:9px;box-shadow:var(--shadow);padding:5px;min-width:206px;display:flex;flex-direction:column;gap:2px}
+.menu button{background:transparent;border:0;text-align:left;padding:6px 8px;border-radius:6px;font-size:12px}
+.menu button:hover{background:var(--panel-2)}
+.menu .menu-title{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:4px 8px 2px;font-weight:700}
+.menu .menu-sep{height:1px;background:var(--border);margin:3px 0}
+#toasts{position:fixed;right:14px;bottom:14px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:min(380px,90vw)}
+.toast{animation:pop 160ms ease-out;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:9px;box-shadow:var(--shadow);padding:8px 11px;font-size:12px;opacity:1;transition:opacity var(--t),transform var(--t)}
+.toast.out{opacity:0;transform:translateY(4px)}
+.toast.error{border-left-color:var(--danger)}.toast.success{border-left-color:var(--ok)}.toast.warn{border-left-color:var(--warn)}
+/* responsive */@media (max-width:1200px){main{grid-template-columns:228px minmax(0,1fr)}
+ .activity{position:fixed;top:0;right:0;bottom:0;width:min(340px,92vw);z-index:70;transform:translateX(101%);transition:transform var(--t);box-shadow:var(--shadow)}
+ .activity.open{transform:none}}
+@media (min-width:1201px){#activityToggle{display:none}}
+@media (max-width:900px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+ .rail{border-right:0;border-bottom:1px solid var(--border);flex-direction:row;overflow-x:auto;padding:8px}
+ .rail>*{min-width:236px;flex:0 0 auto}
+ .board{scroll-snap-type:x proximity}
+ .col{flex:0 0 84vw;width:84vw;scroll-snap-align:start}
+ .lane-cols .col{flex:0 0 78vw;width:78vw}}
+@media (max-width:620px){.form-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">◆</span><span>AgentMesh</span>
+    <span id="conn" class="conn"><span class="dot" aria-hidden="true"></span><span id="connText">connecting…</span></span>
+    <span id="demoBadge" class="badge badge-demo hidden">DEMO — not connected</span>
+  </div>
+  <div class="topbar-mid">
+    <input id="search" type="search" placeholder="Search tasks…  ( / )" aria-label="Search tasks by id, title, agent or brief">
+    <select id="agentFilter" aria-label="Filter by agent"><option value="">All agents</option></select>
+  </div>
+  <div class="topbar-right">
+    <span id="counts" class="counts"></span>
+    <button id="newTaskBtn" class="btn primary" title="New task (N)">+ New task</button>
+    <button id="themeBtn" class="btn icon" aria-label="Theme: auto" title="Theme">◐</button>
+    <div class="seg" role="group" aria-label="Group by">
+      <button id="groupStatus" data-group="status" aria-pressed="true">Status</button>
+      <button id="groupAgent" data-group="agent" aria-pressed="false">Agent</button>
+    </div>
+    <button id="settingsBtn" class="btn icon" aria-label="Settings: team, avatars and appearance" title="Settings">⚙</button>
+    <button id="activityToggle" class="btn icon" aria-label="Toggle activity feed" title="Activity">☰</button>
+  </div>
+</header>
+<main>
+  <aside class="rail" id="rail" aria-label="Team and file locks"></aside>
+  <section class="center">
+    <div class="toolbar">
+      <span class="muted">Board</span>
+      <label class="check"><input type="checkbox" id="showCancelled"> Show cancelled lane</label>
+      <span class="muted" id="boardHint"></span>
+    </div>
+    <div id="needs" class="needs hidden" aria-live="polite"></div>
+    <div id="cancelStrip" class="cancel-strip" aria-hidden="true">Drop here to cancel</div>
+    <div id="boardEmpty" class="notice hidden" style="margin:10px 10px 0"></div>
+    <div id="board" class="board" aria-label="Task board"></div>
+  </section>
+  <aside class="activity" id="activity" aria-label="Activity feed">
+    <div class="activity-head"><strong>Activity</strong><span class="muted" id="activityCount"></span>
+      <button class="btn small ghost" id="activityClose" aria-label="Close activity feed" style="margin-left:auto">✕</button>
+    </div>
+    <div class="activity-feed" id="activityFeed"></div>
+  </aside>
+</main>
+<datalist id="agentIds"></datalist>
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<script>'use strict';
+(function () {
+  /* 0. environment */
+  var DEMO = false;
+  try { DEMO = new URLSearchParams(location.search).get('demo') === '1'; } catch (e) { DEMO = false; }
+
+  /* 1. small helpers (createElement / textContent only — no innerHTML ever) */
+  function el(tag, props) {
+    var n = document.createElement(tag), k, v;
+    if (props) for (k in props) {
+      v = props[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k === 'text') n.textContent = String(v);
+      else if (k === 'dataset') { for (var d in v) if (v[d] !== null && v[d] !== undefined) n.dataset[d] = String(v[d]); }
+      else if (k === 'style' && typeof v === 'object') { for (var s in v) n.style[s] = v[s]; }
+      else if (k === 'value' && n.tagName === 'TEXTAREA') n.value = String(v); // the value attribute does nothing for a textarea
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') n.addEventListener(k.slice(2), v);
+      else if (v === true) n.setAttribute(k, '');
+      else n.setAttribute(k, String(v));
+    }
+    for (var i = 2; i < arguments.length; i++) add(n, arguments[i]);
+    return n;
+  }
+  function add(parent, kid) {
+    if (kid === null || kid === undefined || kid === false || kid === '') return;
+    if (Array.isArray(kid)) { for (var i = 0; i < kid.length; i++) add(parent, kid[i]); return; }
+    if (kid instanceof Node) { parent.appendChild(kid); return; }
+    parent.appendChild(document.createTextNode(String(kid)));
+  }
+  function clear(node) { while (node && node.firstChild) node.removeChild(node.firstChild); }
+  function replace(node) {
+    clear(node);
+    for (var i = 1; i < arguments.length; i++) add(node, arguments[i]);
+    return node;
+  }
+  function setText(node, txt) { if (node && node.textContent !== String(txt)) node.textContent = String(txt); }
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  /* ---- time ---- */
+  function tms(iso) { if (!iso) return null; var t = Date.parse(iso); return isNaN(t) ? null : t; }
+  function agoText(iso) {
+    var t = tms(iso);
+    if (t === null) return '';
+    var s = Math.max(0, (Date.now() - t) / 1000);
+    if (s < 10) return 'just now';
+    if (s < 60) return Math.round(s) + 's ago';
+    if (s < 3600) return Math.round(s / 60) + 'm ago';
+    if (s < 86400) return Math.round(s / 3600) + 'h ago';
+    if (s < 604800) return Math.round(s / 86400) + 'd ago';
+    return new Date(t).toLocaleDateString();
+  }
+  function agoNode(iso, cls) { return el('span', { class: cls || 'ago', dataset: { ago: iso || '' }, text: agoText(iso) }); }
+  function clockText(iso) { var t = tms(iso); return t === null ? '' : new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function durationText(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    if (s < 60) return s + 's';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + 'm';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + 'h ' + (m % 60) + 'm';
+    return Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
+  }
+  function refreshTimes() {
+    var agos = document.querySelectorAll('[data-ago]');
+    for (var i = 0; i < agos.length; i++) setText(agos[i], agoText(agos[i].dataset.ago));
+    var since = document.querySelectorAll('[data-since]');
+    for (var j = 0; j < since.length; j++) {
+      setText(since[j], '⏱ ' + durationText(Date.now() - Number(since[j].dataset.since)));
+      var limit = Number(since[j].dataset.staleAt || 0);
+      if (limit) since[j].classList.toggle('stale', Date.now() - Number(since[j].dataset.since) > limit);
+    }
+  }
+  window.setInterval(refreshTimes, 5000);
+  /* ---- identity ---- */
+  function hueOf(id) { var h = 0, s = String(id || '?'); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+  function initialsOf(name) {
+    var s = String(name || '?').replace(/[^A-Za-z0-9]+/g, ' ').trim();
+    if (!s) return '?';
+    var p = s.split(' ');
+    return ((p[0][0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+  }
+  function avatarCfg(agentId) { return AV[agentId] || {}; }
+  function avatarColor(agentId) {
+    var cfg = avatarCfg(agentId);
+    return cfg.color || ('hsl(' + hueOf(agentId || '?') + ' 56% 44%)');
+  }
+  function avatarNode(agentId, cls) {
+    var a = agentById(agentId);
+    var label = a ? (a.displayName || a.id) : (agentId || '?');
+    var cfg = avatarCfg(agentId);
+    var node = el('span', { class: 'avatar ' + (cls || ''), title: label, 'aria-hidden': 'true', style: { background: avatarColor(agentId) } });
+    if (cfg.img) node.appendChild(el('img', { src: cfg.img, alt: '' }));
+    else if (cfg.emoji) node.appendChild(el('span', { class: 'avatar-emoji', text: cfg.emoji }));
+    else node.appendChild(el('span', { text: initialsOf(label) }));
+    return node;
+  }
+  /* ---- toasts ---- */
+  function toast(msg, kind) {
+    var t = el('div', { class: 'toast ' + (kind || ''), role: 'status' }, el('span', { text: msg }));
+    var wrap = $('#toasts');
+    wrap.appendChild(t);
+    window.setTimeout(function () {
+      t.classList.add('out');
+      window.setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 220);
+    }, kind === 'error' ? 6500 : 3800);
+  }
+  /* ---- overlays (stack, Esc, focus trap) ---- */
+  var overlays = [];
+  function trapFocus(root) {
+    root.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var list = Array.prototype.filter.call(
+        root.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'),
+        function (n) { return !n.disabled && n.offsetParent !== null; });
+      if (!list.length) return;
+      var first = list[0], last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+  }
+  function closeOverlay(ov) {
+    var i = overlays.indexOf(ov);
+    if (i < 0) return;
+    overlays.splice(i, 1);
+    if (ov.el && ov.el.parentNode) ov.el.parentNode.removeChild(ov.el);
+    if (ov.onClose) { try { ov.onClose(); } catch (e) { } }
+    if (ov.returnFocus && ov.returnFocus.focus) { try { ov.returnFocus.focus(); } catch (e) { } }
+  }
+  function closeTopOverlay() { if (overlays.length) closeOverlay(overlays[overlays.length - 1]); return overlays.length; }
+  function openDialog(opts) {
+    var label = opts.label || opts.title || 'Dialog';
+    var head = el('div', { class: 'dialog-head' });
+    var ov = {};
+    var closeBtn = el('button', { class: 'btn icon ghost', 'aria-label': 'Close dialog', title: 'Close (Esc)', text: '✕', onclick: function () { closeOverlay(ov); } });
+    if (opts.title !== undefined) head.appendChild(el('h2', { class: 'dialog-title', text: opts.title }));
+    add(head, opts.head || []);
+    head.appendChild(closeBtn);
+    var body = el('div', { class: 'dialog-body' });
+    add(body, opts.body || []);
+    var foot = el('div', { class: 'dialog-foot' });
+    add(foot, opts.foot || []);
+    var dialog = el('div', { class: 'dialog ' + (opts.cls || '') + (opts.wide ? ' wide' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': label });
+    dialog.appendChild(head);
+    if (opts.tabs) dialog.appendChild(opts.tabs);
+    dialog.appendChild(body);
+    dialog.appendChild(foot);
+    var backdrop = el('div', { class: 'backdrop', onclick: function (e) { if (e.target === backdrop && opts.dismissable !== false) closeOverlay(ov); } }, dialog);
+    trapFocus(backdrop);
+    ov = { el: backdrop, dialog: dialog, head: head, body: body, foot: foot, close: function () { closeOverlay(ov); }, returnFocus: opts.returnFocus || document.activeElement, onClose: opts.onClose };
+    overlays.push(ov);
+    document.body.appendChild(backdrop);
+    return ov;
+  }
+  function uiConfirm(opts) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) { if (done) return; done = true; resolve(v); }
+      var ov = openDialog({
+        cls: 'small', title: opts.title || 'Are you sure?',
+        body: [el('div', { class: 'message' }, el('div', { text: opts.message || '' })), opts.detail ? el('div', { class: 'notice warn', text: opts.detail }) : null],
+        foot: [
+          el('button', { class: 'btn', text: 'Cancel', onclick: function () { finish(false); closeOverlay(ov); } }),
+          el('button', { class: 'btn ' + (opts.danger ? 'danger' : 'primary'), text: opts.confirmLabel || 'Confirm', onclick: function () { finish(true); closeOverlay(ov); } })
+        ],
+        onClose: function () { finish(false); }
+      });
+    });
+  }
+  function uiPrompt(opts) {
+    return new Promise(function (resolve) {
+      var input = el('textarea', { rows: '3', placeholder: opts.placeholder || '' });
+      var err = el('div', { class: 'field err hidden' });
+      var value = null;
+      var ov = openDialog({
+        cls: 'small', title: opts.title || 'Input',
+        head: opts.message ? [el('div', { class: 'head-main' }, el('div', { class: 'message', text: opts.message }))] : null,
+        body: [el('label', { class: 'field' }, el('span', { text: opts.label || '' }), input, err)],
+        foot: [
+          el('button', { class: 'btn', text: 'Cancel', onclick: function () { ov.close(); } }),
+          el('button', {
+            class: 'btn primary', text: opts.confirmLabel || 'Send', onclick: function () {
+              if (opts.required !== false && !input.value.trim()) { err.textContent = 'Please write something first.'; err.classList.remove('hidden'); input.focus(); return; }
+              value = input.value; ov.close();
+            }
+          })
+        ],
+        onClose: function () { resolve(value); }
+      });
+      input.focus();
+    });
+  }
+
+  /* 2. state + persisted view options */
+  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '' };
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, compact: false };
+  var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
+  var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
+  function loadUI() {
+    try {
+      var raw = window.localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      var o = JSON.parse(raw);
+      if (!o || typeof o !== 'object') return;
+      if (o.groupBy === 'status' || o.groupBy === 'agent') UI.groupBy = o.groupBy;
+      if (o.theme === 'light' || o.theme === 'dark' || o.theme === 'auto') UI.theme = o.theme;
+      UI.showCancelled = !!o.showCancelled;
+      UI.activity = !!o.activity;
+      UI.search = typeof o.search === 'string' ? o.search : '';
+      UI.filterAgent = typeof o.filterAgent === 'string' ? o.filterAgent : '';
+    } catch (e) { /* storage unavailable — fine */ }
+  }
+  function loadPrefs() {
+    try {
+      var raw = window.localStorage.getItem(PREF_KEY);
+      if (!raw) return;
+      var o = JSON.parse(raw);
+      if (!o || typeof o !== 'object') return;
+      if (o.avatars && typeof o.avatars === 'object') AV = o.avatars;
+      if (o.compact) UI.compact = true;
+    } catch (e) { /* storage unavailable — avatars fall back to colour + initials */ }
+  }
+  function savePrefs() {
+    try { window.localStorage.setItem(PREF_KEY, JSON.stringify({ avatars: AV, compact: !!UI.compact })); }
+    catch (e) { /* ignore */ }
+  }
+  function setAvatar(agentId, patch) {
+    var cfg = AV[agentId] || (AV[agentId] = {});
+    for (var k in patch) { if (patch[k]) cfg[k] = patch[k]; else delete cfg[k]; }
+    if (!cfg.emoji && !cfg.img && !cfg.color) delete AV[agentId];
+    savePrefs(); render();
+  }
+  function saveUI() {
+    try {
+      window.localStorage.setItem(LS_KEY, JSON.stringify({
+        groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
+        activity: UI.activity, search: UI.search, filterAgent: UI.filterAgent
+      }));
+    } catch (e) { /* ignore */ }
+  }
+  function agentById(id) { for (var i = 0; i < S.agents.length; i++) if (S.agents[i].id === id) return S.agents[i]; return null; }
+  function agentName(id) { var a = agentById(id); return (a && a.displayName) || id || ''; }
+  function isManual(id) { var a = agentById(id); return !!(a && a.manual); }
+  function workers() { return S.agents.filter(function (a) { return a.role !== 'MANAGER'; }); }
+  function managers() { return S.agents.filter(function (a) { return a.role === 'MANAGER'; }); }
+  function taskById(id) { for (var i = 0; i < S.tasks.length; i++) if (S.tasks[i].id === id) return S.tasks[i]; return null; }
+  function liveness(a) {
+    var t = tms(a.lastSeen);
+    if (t === null) return 'silent';
+    var s = (Date.now() - t) / 1000;
+    if (s < 90) return 'active';
+    if (s < 600) return 'quiet';
+    return 'silent';
+  }
+  function isWaiting(a) { var t = tms(a.waitingUntil); return t !== null && t > Date.now(); }
+  function statusSince(t) {          // when the task entered the status it is in now
+    var log = t.progressLog || [];
+    for (var i = log.length - 1; i >= 0; i--) {
+      if (log[i].status && log[i].status !== t.status) return tms(log[i].at) || tms(t.updatedAt);
+    }
+    if (t.status !== 'backlog') return tms(t.claimedAt) || tms(t.updatedAt);
+    return tms(t.updatedAt);
+  }
+  function timerNode(t, opts) {
+    opts = opts || {};
+    var since = statusSince(t);
+    if (!since) return agoNode(t.updatedAt, opts.class || '');
+    var live = t.status !== 'done' && t.status !== 'cancelled';
+    var stale = opts.staleAt || 0;
+    var node = el('span', {
+      class: 'timer ' + (opts.class || ''), title: 'in ' + STATUS_LABEL[t.status] + ' for ' + durationText(Date.now() - since),
+      dataset: { since: String(since), staleAt: String(stale) }, text: '⏱ ' + durationText(Date.now() - since)
+    });
+    return live ? node : agoNode(t.updatedAt, opts.class || '');
+  }
+  function taskWorkload(agentId) {
+    var counts = {}, list = [];
+    S.tasks.forEach(function (t) {
+      if ((t.assignee || t.assignedIDE) !== agentId || t.status === 'cancelled') return;
+      counts[t.status] = (counts[t.status] || 0) + 1; list.push(t);
+    });
+    return { counts: counts, total: list.length, open: list.filter(function (t) { return t.status !== 'done'; }).length };
+  }
+  function workloadBar(agentId) {
+    var w = taskWorkload(agentId), order = ['in_progress', 'claimed', 'blocked', 'review', 'backlog', 'done'];
+    var bar = el('div', { class: 'wload', title: order.filter(function (k) { return w.counts[k]; })
+      .map(function (k) { return w.counts[k] + ' ' + STATUS_LABEL[k]; }).join(' · ') || 'no tasks' }, []);
+    order.forEach(function (k) {
+      if (!w.counts[k]) return;
+      bar.appendChild(el('i', { class: 's-' + k, style: { flex: String(w.counts[k]) } }));
+    });
+    bar.style.opacity = w.total ? '' : '.45';
+    return bar;
+  }
+  function currentTaskOf(a) {
+    for (var i = 0; i < S.tasks.length; i++) {
+      var t = S.tasks[i];
+      if ((t.assignedIDE === a.id || (!t.assignedIDE && t.assignee === a.id)) && (t.status === 'claimed' || t.status === 'in_progress' || t.status === 'blocked')) return t;
+    }
+    return null;
+  }
+
+  /* 3. api + websocket */
+  function readResponse(status, text) {
+    var data = null;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    if (status < 200 || status >= 300 || (data && data.error)) {
+      toast((data && data.error) || ('Request failed (' + status + ')'), 'error');
+      return null;
+    }
+    if (data && data.message) toast(data.message, 'success');
+    return data || { success: true };
+  }
+  function api(path, body) {
+    if (DEMO) return demoApi(path, body);
+    var payload = JSON.stringify(body || {});
+    if (typeof fetch === 'function') {
+      return fetch(path, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: payload, credentials: 'same-origin'
+      }).then(function (res) {
+        return res.text().then(function (text) { return readResponse(res.status, text); });
+      }).catch(function (err) { toast('Network error — ' + err.message, 'error'); return null; });
+    }
+    // very old browsers without fetch: same contract over XMLHttpRequest
+    return new Promise(function (resolve) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', path, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function () { resolve(readResponse(xhr.status, xhr.responseText)); };
+      xhr.onerror = function () { toast('Network error — the request did not go through', 'error'); resolve(null); };
+      try { xhr.send(payload); } catch (e) { toast('Network error — ' + e.message, 'error'); resolve(null); }
+    });
+  }
+  var ws = null, backoff = 1000, reconnectTimer = null;
+  function setConn(state, text) {
+    var c = $('#conn');
+    c.className = 'conn ' + (state === 'live' ? 'live' : state === 'down' ? 'down' : '');
+    setText($('#connText'), text);
+  }
+  function connect() {
+    if (DEMO) { setConn('live', 'live'); return; }
+    var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var closed = false;
+    try { ws = new WebSocket(proto + '//' + location.host); }
+    catch (e) { scheduleReconnect(); return; }
+    ws.onopen = function () { backoff = 1000; setConn('live', 'live'); };
+    ws.onmessage = function (ev) {
+      var m = null;
+      try { m = JSON.parse(ev.data); } catch (e) { return; }
+      if (m && (m.type === 'MESH_INIT' || m.type === 'MESH_UPDATE') && m.data) applyState(m.data);
+    };
+    ws.onclose = function () { if (closed) return; closed = true; setConn('down', 'daemon not reachable, retrying'); scheduleReconnect(); };
+    ws.onerror = function () { try { ws.close(); } catch (e) { } };
+  }
+  function scheduleReconnect() {
+    if (reconnectTimer) return;
+    reconnectTimer = window.setTimeout(function () {
+      reconnectTimer = null;
+      connect();
+    }, backoff);
+    backoff = Math.min(backoff * 2, 8000);
+  }
+  function adoptDemoAvatars(data) {
+    if (!data.demoAvatars) return;
+    for (var id in data.demoAvatars) { if (!AV[id]) AV[id] = data.demoAvatars[id]; }
+  }
+  function applyState(data) {
+    S.tasks = Array.isArray(data.tasks) ? data.tasks : [];
+    S.locks = Array.isArray(data.locks) ? data.locks : [];
+    S.events = Array.isArray(data.events) ? data.events : [];
+    S.agents = Array.isArray(data.agents) ? data.agents : [];
+    S.launchers = Array.isArray(data.launchers) ? data.launchers : [];
+    if (DEMO) adoptDemoAvatars(data);
+    if (data.workspacePath) S.workspacePath = data.workspacePath;
+    if (T.open && !taskById(T.taskId)) closeTask();
+    else if (T.open) updateTaskModal(false);
+    render();
+  }
+  function push() { render(); if (T.open) updateTaskModal(false); }
+
+  /* 4. filtering */
+  var COLS = [
+    { key: 'backlog', label: 'Waiting', statuses: ['backlog'] },
+    { key: 'working', label: 'Working', statuses: ['claimed', 'in_progress'] },
+    { key: 'blocked', label: 'Needs answer', statuses: ['blocked'] },
+    { key: 'review', label: 'In review', statuses: ['review'] },
+    { key: 'done', label: 'Done', statuses: ['done'] }
+  ];
+  var STATUS_LABEL = { backlog: 'waiting', claimed: 'claimed', in_progress: 'working', blocked: 'blocked', review: 'in review', done: 'done', cancelled: 'cancelled' };
+  function matchesFilter(t) {
+    if (UI.filterAgent && (t.assignee || t.assignedIDE || '') !== UI.filterAgent) return false;
+    var q = UI.search.trim().toLowerCase();
+    if (!q) return true;
+    return [t.id, t.title, t.assignee || '', t.assignedIDE || '', t.brief || ''].join('\u0000').toLowerCase().indexOf(q) >= 0;
+  }
+  function visibleTasks() { return S.tasks.filter(matchesFilter); }
+  function colTasks(tasks, col) { return tasks.filter(function (t) { return col.statuses.indexOf(t.status) >= 0; }); }
+  function laneKey(t) { return t.assignee || t.assignedIDE || ''; }
+
+  /* 5. render: counts, needs, rail, board, activity */
+  function render() {
+    renderCounts();
+    renderNeeds();
+    renderAgentFilter();
+    renderRail();
+    renderBoard();
+    renderActivity();
+    updateTitle();
+    refreshTimes();
+  }
+  function renderCounts() {
+    var t = visibleTasks();
+    var w = workers();
+    var waiting = w.filter(isWaiting).length;
+    var working = t.filter(function (x) { return x.status === 'claimed' || x.status === 'in_progress'; }).length;
+    var blocked = t.filter(function (x) { return x.status === 'blocked'; }).length;
+    var review = t.filter(function (x) { return x.status === 'review'; }).length;
+    var done = t.filter(function (x) { return x.status === 'done'; }).length;
+    var stale = t.filter(function (x) {
+      return (x.status === 'claimed' || x.status === 'in_progress' || x.status === 'review') &&
+        (Date.now() - (statusSince(x) || Date.now())) > 30 * 60000;
+    }).length;
+    replace($('#counts'),
+      el('span', {}, el('b', { text: String(w.length) }), ' (' + waiting + ' waiting) workers'),
+      el('span', {}, el('b', { text: String(working) }), ' working'),
+      el('span', { class: blocked ? 'warn' : '' }, el('b', { text: String(blocked) }), ' need answer'),
+      el('span', { class: review ? 'purple' : '' }, el('b', { text: String(review) }), ' in review'),
+      el('span', { class: stale ? 'warn' : '' }, el('b', { text: String(stale) }), ' idle > 30m'),
+      el('span', {}, el('b', { text: String(done) }), ' done'));
+  }
+  function needsItems() {
+    var out = [];
+    visibleTasks().forEach(function (t) {
+      var who = agentName(t.assignedIDE || t.assignee);
+      if (t.status === 'blocked') out.push({ kind: 'blocked', task: t, text: '❓ ' + t.id + ' is blocked — answer ' + (who || 'the agent') });
+      if (t.status === 'review') out.push({ kind: 'review', task: t, text: '👀 ' + t.id + ' is ready for review' });
+      if (t.violations && t.violations.length && t.status !== 'done' && t.status !== 'cancelled') out.push({ kind: 'violation', task: t, text: '⚠ ' + t.id + ' changed ' + t.violations.length + ' file(s) outside its boundary' });
+      if (isManual(t.assignee || t.assignedIDE) && (t.status === 'backlog' || t.status === 'claimed' || t.status === 'in_progress')) out.push({ kind: 'manual', task: t, text: '✍ ' + t.id + ' needs a pasted response from ' + agentName(t.assignee || t.assignedIDE) });
+    });
+    return out;
+  }
+  function renderNeeds() {
+    var strip = $('#needs'), items = needsItems();
+    if (!items.length) { strip.classList.add('hidden'); clear(strip); return; }
+    strip.classList.remove('hidden');
+    replace(strip, el('span', { class: 'needs-label', text: 'Needs you' }), items.slice(0, 12).map(function (it) {
+      return el('button', {
+        class: 'need ' + (it.kind === 'violation' || it.kind === 'blocked' ? 'warning' : ''),
+        title: 'Open ' + it.task.id, text: it.text,
+        onclick: function () { openTask(it.task.id); }
+      });
+    }));
+  }
+  function updateTitle() {
+    var items = needsItems(), emoji = '';
+    if (items.some(function (i) { return i.kind === 'blocked'; })) emoji = '❓';
+    else if (items.some(function (i) { return i.kind === 'violation'; })) emoji = '⚠';
+    else if (items.some(function (i) { return i.kind === 'review'; })) emoji = '👀';
+    else if (items.some(function (i) { return i.kind === 'manual'; })) emoji = '✍';
+    document.title = emoji ? emoji + ' AgentMesh' : 'AgentMesh';
+  }
+  function renderAgentFilter() {
+    var sel = $('#agentFilter'), cur = UI.filterAgent;
+    var opts = [el('option', { value: '', text: 'All agents' })];
+    workers().forEach(function (a) { opts.push(el('option', { value: a.id, text: agentName(a.id) })); });
+    if (cur && !agentById(cur)) cur = '';
+    replace(sel, opts);
+    sel.value = cur;
+    replace($('#agentIds'), workers().map(function (a) { return el('option', { value: a.id, text: agentName(a.id) }); }));
+  }
+  function renderRail() {
+    var rail = $('#rail'), keep = captureScroll(rail);
+    var team = el('div', { class: 'section' }, el('h2', { text: 'Team' }),
+      el('div', { class: 'rail-filter', role: 'group', 'aria-label': 'Filter the board by agent' },
+        el('button', {
+          class: 'btn small' + (UI.filterAgent ? '' : ' primary'), text: 'All',
+          'aria-pressed': UI.filterAgent ? 'false' : 'true',
+          onclick: function () { UI.filterAgent = ''; saveUI(); render(); }
+        }),
+        workers().map(function (a) {
+          var on = UI.filterAgent === a.id;
+          return el('button', {
+            class: 'chip-avatar', 'aria-pressed': on ? 'true' : 'false',
+            title: 'Only ' + agentName(a.id) + "'s tasks",
+            'aria-label': 'Show only the tasks of ' + agentName(a.id),
+            onclick: function () { UI.filterAgent = on ? '' : a.id; saveUI(); render(); }
+          }, avatarNode(a.id, 'sm'));
+        })));
+    workers().forEach(function (a) { team.appendChild(agentCard(a)); });
+    if (!workers().length) team.appendChild(el('div', { class: 'empty', text: 'No worker agents yet.' }));
+    var addAgent = el('div', { class: 'card' },
+      el('div', { class: 'muted', text: 'Add an agent' }),
+      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Pick an id, then paste the prompt into that IDE\'s chat.' }),
+      el('div', { class: 'row', style: { display: 'flex', gap: '6px' } },
+        (function () {
+          var inp = el('input', { type: 'text', placeholder: 'e.g. agent-c', 'aria-label': 'New agent id', style: { flex: '1 1 auto', minWidth: '0' } });
+          addAgentInput = inp; return inp;
+        })(),
+        el('button', {
+          class: 'btn small', text: 'Copy prompt', onclick: function () {
+            var id = (addAgentInput && addAgentInput.value || '').trim();
+            if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
+            copyText(startPromptFor(id), 'Start prompt');
+          }
+        })));
+    var addManual = el('div', { class: 'card' },
+      el('div', { class: 'muted', text: 'Add a manual agent' }),
+      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'For a chatbot with no access to your code (ChatGPT, Gemini…). You copy its request and paste its answer back.' }),
+      (function () {
+        var idIn = el('input', { type: 'text', placeholder: 'e.g. chatgpt-web', 'aria-label': 'Manual agent id' });
+        var lblIn = el('input', { type: 'text', placeholder: 'Label (optional)', 'aria-label': 'Manual agent label' });
+        manualInputs = { id: idIn, label: lblIn };
+        return el('div', { class: 'section' }, idIn, lblIn, el('button', {
+          class: 'btn small primary', text: 'Add', onclick: function () {
+            var id = idIn.value.trim();
+            if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
+            api('/api/mesh/agent', { id: id, label: lblIn.value.trim() || id }).then(function (r) { if (r) { idIn.value = ''; lblIn.value = ''; if (DEMO) push(); } });
+          }
+        }));
+      })());
+    var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
+    var launcherBlock = pending.length ? el('div', { class: 'section' }, el('h2', { text: 'Can be started' }),
+      pending.map(function (l) {
+        return el('div', { class: 'card launcher', dataset: { zone: 'launcher', agent: l.id } },
+          el('div', { class: 'row' }, el('span', { class: 'badge', text: l.mode === 'command' ? 'command' : 'app' }),
+            el('span', { class: 'name trunc', text: l.label || l.id })),
+          el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Not joined yet — start it and it appears in the team.' }),
+          launchButton(l.id, l.label, !!(l.running)));
+      })) : null;
+    var mgrs = managers();
+    var mgrBlock = mgrs.length ? el('div', { class: 'card' },
+      el('div', { class: 'muted', text: 'Managers' }),
+      mgrs.map(function (a) {
+        return el('div', { class: 'sub muted' }, avatarNode(a.id), el('span', { text: agentName(a.id) }), el('span', { class: 'badge', text: a.ide || 'agent' }));
+      })) : null;
+    var locks = el('div', { class: 'section' }, el('h2', { text: 'File locks' }));
+    var lockCard = el('div', { class: 'card' });
+    if (!S.locks.length) lockCard.appendChild(el('div', { class: 'muted', text: 'None held.' }));
+    S.locks.forEach(function (l) {
+      lockCard.appendChild(el('div', { class: 'lock' },
+        el('span', { class: 'path', title: l.filePath, text: l.filePath }),
+        el('span', { class: 'muted', text: agentName(l.lockedByIDE) }),
+        el('button', {
+          class: 'btn small ghost', 'aria-label': 'Release lock on ' + l.filePath, text: '✕', onclick: function () {
+            api('/api/mesh/release-lock', { filePath: l.filePath }).then(function (r) { if (r && DEMO) push(); });
+          }
+        })));
+    });
+    locks.appendChild(lockCard);
+    replace(rail, team, launcherBlock, addAgent, addManual, mgrBlock, locks);
+    restoreScroll(rail, keep);
+  }
+  var addAgentInput = null, manualInputs = null;
+  function agentCard(a) {
+    var card = el('div', {
+      class: 'card clickable agent-card', dataset: { zone: 'agent', agent: a.id },
+      role: 'button', tabindex: '0', 'aria-label': 'Agent ' + agentName(a.id) + ', open details',
+      style: { '--card-accent': 'hsl(' + hueOf(a.id) + ' 56% 52%)' },
+      onclick: function (e) { if (e.target.closest('button,input')) return; openAgent(a.id); },
+      onkeydown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAgent(a.id); } }
+    });
+    var live = liveness(a), cur = currentTaskOf(a), waiting = isWaiting(a);
+    var dotClass = waiting ? 'st-done' : cur ? 'st-in_progress' : 'st-backlog';
+    card.appendChild(el('div', { class: 'row' },
+      avatarNode(a.id),
+      el('span', { class: 'name agent-card-name' },
+        el('span', { class: 'trunc', text: agentName(a.id) }),
+        a.manual ? el('span', { class: 'badge', text: 'manual' }) : null,
+        a.role === 'MANAGER' ? el('span', { class: 'badge', text: 'manager' }) : null),
+      el('span', { class: 'status-dot ' + dotClass + (cur ? ' beat' : ''), title: waiting ? 'waiting' : cur ? 'working' : live })));
+    if (a.displayName && a.displayName !== a.id) card.appendChild(el('div', { class: 'id', text: a.id }));
+    var sub;
+    if (waiting) sub = el('span', { class: 'badge ok', text: 'waiting for work' });
+    else if (cur) sub = el('span', {}, el('span', { text: 'working on ' + cur.id + ' · ' }), timerNode(cur, { staleAt: 30 * 60000 }));
+    else sub = el('span', { text: (a.ide || 'agent') + ' · ' + live });
+    card.appendChild(el('div', { class: 'sub' }, sub, el('span', { text: '·' }),
+      el('span', { class: 'timer', title: 'last seen' }, agoNode(a.lastSeen))));
+    var w = taskWorkload(a.id);
+    card.appendChild(el('div', { class: 'sub' },
+      workloadBar(a.id),
+      el('span', { text: w.total ? (w.open + ' open · ' + (w.counts.done || 0) + ' done') : 'no tasks' })));
+    card.appendChild(agentCardActions(a));
+    return card;
+  }
+  function agentCardActions(a) {
+    var box = el('div', { class: 'actions' });
+    if (!a.manual && a.launch) box.appendChild(launchButton(a.id, a.launch.label, !!a.launch.running));
+    if (!a.manual) box.appendChild(el('button', {
+      class: 'btn small', text: 'Copy start prompt', 'aria-label': 'Copy the start prompt for ' + a.id,
+      onclick: function (e) { e.stopPropagation(); copyText(startPromptFor(a.id), 'Start prompt'); }
+    }));
+    box.appendChild(el('button', {
+      class: 'btn small', text: '✎ Rename', 'aria-label': 'Rename ' + a.id,
+      onclick: function (e) { e.stopPropagation(); beginRename(a, box); }
+    }));
+    return box;
+  }
+  function beginRename(a, box) {
+    var inp = el('input', { type: 'text', value: a.displayName || '', placeholder: a.id, 'aria-label': 'New display name for ' + a.id, style: { flex: '1 1 auto', minWidth: '0' } });
+    var hint = el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Enter saves · Esc cancels · empty resets to the id' });
+    replace(box, inp, hint);
+    inp.focus(); inp.select();
+    var done = false;
+    function save() {
+      if (done) return; done = true;
+      api('/api/mesh/agent/' + encodeURIComponent(a.id) + '/rename', { name: inp.value.trim() })
+        .then(function (r) { if (r) { toast('Agent renamed', 'success'); if (DEMO) push(); } });
+    }
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); save(); }
+      else if (e.key === 'Escape') { e.preventDefault(); done = true; render(); }
+    });
+    inp.addEventListener('blur', save);
+    inp.addEventListener('click', function (e) { e.stopPropagation(); });
+  }
+  function launchButton(id, label, running) {
+    return el('button', {
+      class: 'btn small launch' + (running ? ' running' : ''),
+      disabled: running ? true : null,
+      title: running ? 'Already started' : 'Start ' + (label || id) + ' with the start prompt',
+      'aria-label': running ? 'Running ' + (label || id) : 'Run ' + (label || id),
+      text: running ? 'Running…' : '▶ Run ' + (label || id),
+      onclick: function (e) {
+        e.stopPropagation();
+        runAgent(id);
+      }
+    });
+  }
+  function runAgent(id) {
+    api('/api/mesh/agent/' + encodeURIComponent(id) + '/launch', {}).then(function (r) {
+      if (r) { toast(r.message || ('Started ' + agentName(id)), 'success'); if (DEMO) push(); }
+    });
+  }
+  function captureScroll(root) {
+    var m = { x: root.scrollLeft, y: root.scrollTop, els: {} };
+    var list = root.querySelectorAll('[data-scrollkey]');
+    for (var i = 0; i < list.length; i++) m.els[list[i].dataset.scrollkey] = [list[i].scrollLeft, list[i].scrollTop];
+    return m;
+  }
+  function restoreScroll(root, m) {
+    root.scrollLeft = m.x; root.scrollTop = m.y;
+    var list = root.querySelectorAll('[data-scrollkey]');
+    for (var i = 0; i < list.length; i++) {
+      var v = m.els[list[i].dataset.scrollkey];
+      if (v) { list[i].scrollLeft = v[0]; list[i].scrollTop = v[1]; }
+    }
+  }
+  function renderEmptyState() {
+    var box = $('#boardEmpty');
+    if (visibleTasks().length) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    if (S.tasks.length) {   // filtered everything away
+      box.className = 'notice';
+      replace(box, el('span', { text: 'No tasks match the current search or filter.' }));
+      return;
+    }
+    box.className = 'welcome';
+    replace(box,
+      el('div', { class: 'big', text: '◆' }),
+      el('h3', { text: DEMO ? 'This demo board is empty' : 'Waiting for the AgentMesh daemon…' }),
+      el('p', { class: 'muted', text: DEMO ? 'Create a task to fill it up.'
+        : 'This page talks to whatever serves it: a WebSocket on this host plus a few POST endpoints. Start your daemon and the board fills itself in.' }),
+      DEMO ? null : el('button', {
+        class: 'btn primary', text: 'Open the demo board',
+        onclick: function () { enterDemo(); }
+      }),
+      DEMO ? null : el('p', { class: 'muted', text: 'Same file, sample data: every button, drag and popup works.' }));
+  }
+  function renderBoard() {
+    var board = $('#board'), keep = captureScroll(board);
+    renderEmptyState();
+    var tasks = visibleTasks();
+    var nodes = [];
+    board.classList.toggle('lanes', UI.groupBy === 'agent');
+    if (UI.groupBy === 'status') {
+      var row = el('div', { class: 'board-row' });
+      COLS.forEach(function (col) { row.appendChild(columnEl(col.label, col.key, colTasks(tasks, col), { zone: 'col:' + col.key, sk: col.key })); });
+      if (UI.showCancelled) row.appendChild(columnEl('Cancelled', 'cancelled', tasks.filter(function (t) { return t.status === 'cancelled'; }), { zone: 'cancel', sk: 'cancelled', narrow: true }));
+      nodes.push(row);
+    } else {
+      var lanes = workers().slice().sort(function (a, b) {
+        var wa = isWaiting(a) ? 1 : 0, wb = isWaiting(b) ? 1 : 0;
+        return wa - wb || agentName(a.id).localeCompare(agentName(b.id));
+      });
+      var keys = lanes.map(function (a) { return a.id; });
+      if (tasks.some(function (t) { return !laneKey(t); })) keys.push('');
+      if (!keys.length) keys.push('');
+      keys.forEach(function (key) {
+        var lane = el('div', { class: 'lane', dataset: key ? { zone: 'agent', agent: key } : {} });
+        var head = el('div', { class: 'lane-head' });
+        if (key) {
+          var a = agentById(key);
+          head.appendChild(avatarNode(key));
+          head.appendChild(el('strong', { text: agentName(key) }));
+          head.appendChild(el('span', { class: 'muted', text: (a && a.ide) || 'agent' }));
+          if (a && isWaiting(a)) head.appendChild(el('span', { class: 'badge ok', text: 'waiting for work' }));
+          head.appendChild(workloadBar(key));
+          head.appendChild(el('span', { class: 'muted', style: { fontSize: '11px' }, text: taskWorkload(key).open + ' open' }));
+        } else head.appendChild(el('strong', { text: 'Unassigned' }));
+        var mine = tasks.filter(function (t) { return laneKey(t) === key; });
+        head.appendChild(el('span', { class: 'col-count', text: String(mine.length) }));
+        var cols = el('div', { class: 'lane-cols' });
+        COLS.forEach(function (col) { cols.appendChild(columnEl(col.label, col.key, colTasks(mine, col), { zone: 'col:' + col.key, sk: 'lane:' + key + ':' + col.key })); });
+        if (UI.showCancelled) cols.appendChild(columnEl('Cancelled', 'cancelled', mine.filter(function (t) { return t.status === 'cancelled'; }), { zone: 'cancel', sk: 'lane:' + key + ':cancelled', narrow: true }));
+        lane.appendChild(head);
+        lane.appendChild(cols);
+        nodes.push(lane);
+      });
+    }
+    replace(board, nodes);
+    restoreScroll(board, keep);
+    // remember what was on screen so only new/changed cards animate next time
+    var ids = {}, stat = {};
+    S.tasks.forEach(function (t) { ids[t.id] = 1; stat[t.id] = t.status; });
+    seen.ids = ids; seen.status = stat;
+  }
+  function columnEl(label, key, tasks, opts) {
+    opts = opts || {};
+    var count = el('span', { class: 'col-count', text: String(tasks.length) });
+    var body = el('div', { class: 'col-body', dataset: { scrollkey: opts.sk || key } });
+    if (!tasks.length) body.appendChild(el('div', { class: 'empty', text: 'No tasks' }));
+    tasks.forEach(function (t) { body.appendChild(tile(t)); });
+    var col = el('div', { class: 'col' + (opts.narrow ? ' narrow' : ''), dataset: { zone: opts.zone || ('col:' + key), colkey: key } },
+      el('div', { class: 'col-head' }, el('span', { class: 'col-title', text: label }), count), body);
+    return col;
+  }
+  function statusBadgeText(t) {
+    var extra = '';
+    if (t.status === 'blocked') extra = '❓ question';
+    else if (t.violations && t.violations.length) extra = '⚠ outside boundary';
+    else if (isManual(t.assignee || t.assignedIDE)) extra = '✍ manual';
+    else if (t.filesModified && t.filesModified.length) extra = '📎 ' + t.filesModified.length + ' files';
+    return extra;
+  }
+  function tileDraggable(t) {
+    // a live tile always drags: the drop rules decide what is allowed and explain the rest
+    return t.status !== 'done' && t.status !== 'cancelled';
+  }
+  function tile(t) {
+    var owner = t.assignee || t.assignedIDE, manual = isManual(owner);
+    var node = el('div', {
+      class: 'tile' + (manual ? ' mine' : ''), draggable: tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
+      dataset: { id: t.id, status: t.status },
+      'aria-label': t.id + ' — ' + t.title + ' (' + STATUS_LABEL[t.status] + (owner ? ', ' + agentName(owner) : '') + ')',
+      onclick: function (e) { if (e.target.closest('.tile-menu-btn')) return; openTask(t.id); },
+      onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); openTask(t.id); } },
+      ondragstart: function (e) { startDrag(e, t); },
+      ondragend: function () { endDrag(); }
+    });
+    if (!seen.ids[t.id]) node.classList.add('tile-enter');
+    if (seen.status[t.id] && seen.status[t.id] !== t.status) node.classList.add('tile-flash');
+    var menuBtn = el('button', {
+      class: 'tile-menu-btn', 'aria-label': 'Move ' + t.id + ' to another column',
+      title: 'Move to…', text: '⋯', onclick: function (e) { e.stopPropagation(); openMoveMenu(t, menuBtn); }
+    });
+    var working = t.status === 'claimed' || t.status === 'in_progress';
+    node.appendChild(el('div', { class: 'tile-top' },
+      el('span', { class: 'status-dot st-' + t.status + (working ? ' beat' : ''), title: STATUS_LABEL[t.status] }),
+      el('span', { class: 'tile-id', text: t.id }),
+      timerNode(t, { staleAt: 30 * 60000, class: 'tile-time' }),
+      menuBtn));
+    node.appendChild(el('div', { class: 'tile-title', text: t.title }));
+    var badges = el('div', { class: 'badges' });
+    var txt = statusBadgeText(t);
+    if (txt) badges.appendChild(el('span', { class: 'badge ' + (t.violations && t.violations.length ? 'danger' : t.status === 'blocked' ? 'warn' : ''), text: txt }));
+    badges.appendChild(el('span', { class: 'badge status-pill st-' + t.status, text: STATUS_LABEL[t.status] }));
+    node.appendChild(el('div', { class: 'tile-foot' },
+      owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
+      el('span', { class: 'trunc', text: owner ? agentName(owner) : 'unassigned' }),
+      el('span', { class: 'muted', style: { marginLeft: 'auto' }, title: 'last update' }, agoNode(t.updatedAt))));
+    if (badges.childNodes.length) node.appendChild(badges);
+    return node;
+  }
+  var seen = { ids: {}, status: {}, events: {} };
+
+  function renderActivity() {
+    var feed = $('#activityFeed'), keep = feed.scrollTop;
+    var events = S.events.slice(0, 40);
+    replace(feed, events.length ? events.map(function (ev) {
+      return el('div', { class: 'event' + (ev.id && !seen.events[ev.id] ? ' event-enter' : '') },
+        el('div', { class: 'meta' },
+          el('span', { class: 'badge-type bt-' + (ev.badgeType || 'info'), 'aria-hidden': 'true' }),
+          el('span', { text: clockText(ev.timestamp) || ev.timestamp || '' }),
+          el('span', { text: ev.ideName || '' }),
+          el('span', { text: ev.action || '' })),
+        el('div', { class: 'msg', text: ev.message || '' }));
+    }) : el('div', { class: 'empty', text: 'No activity yet.' }));
+    var evIds = {};
+    S.events.slice(0, 40).forEach(function (ev) { if (ev.id) evIds[ev.id] = 1; });
+    seen.events = evIds;
+    setText($('#activityCount'), '(' + S.events.length + ')');
+    feed.scrollTop = keep;
+    $('.activity-head strong', $('#activity')).textContent = 'Activity';
+    $('#activity').classList.toggle('open', !!UI.activity);
+  }
+
+  /* 6. task modal */
+  var T = { open: false, taskId: null, tab: 'overview', ov: null, refs: {}, sendBack: false, pending: {}, draft: {}, lastFocus: null, pasteOpen: false, settingsTab: 'team', avatarPickerFor: null };
+  function openTask(id, opts) {
+    opts = opts || {};
+    var t = taskById(id);
+    if (!t) return;
+    if (T.open && T.taskId === id) {
+      if (opts.tab) setTaskTab(opts.tab);
+      if (opts.sendBack) startSendBack();
+      return;
+    }
+    if (T.open) closeTask();
+    T.open = true; T.taskId = id; T.tab = opts.tab || 'overview'; T.sendBack = false; T.pending = {}; T.draft = {}; T.pasteOpen = false;
+    T.lastFocus = document.activeElement;
+    T.refs.head = el('div', { class: 'head-main' });
+    T.refs.tabs = el('nav', { class: 'tabs', role: 'tablist', 'aria-label': 'Task sections' });
+    T.refs.panel = el('div', { class: 'panel' });
+    T.refs.bar = el('div', { class: 'action-bar', style: { display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' } });
+    T.ov = openDialog({
+      cls: 'task-dialog', label: 'Task ' + id, returnFocus: T.lastFocus,
+      head: [T.refs.head], tabs: T.refs.tabs, body: [T.refs.panel], foot: [T.refs.bar],
+      onClose: function () { T.open = false; T.lastFocus = null; }
+    });
+    [T.refs.panel, T.refs.bar].forEach(function (n) {
+      n.addEventListener('focusout', function () {
+        window.setTimeout(function () {
+          if (typingIn(T.refs.panel) || typingIn(T.refs.bar)) return;
+          var t2 = taskById(T.taskId);
+          if (!t2) return;
+          if (T.pending.panel) { T.pending.panel = false; replace(T.refs.panel, panelContent(t2)); }
+          if (T.pending.bar) { T.pending.bar = false; replace(T.refs.bar, barContent(t2)); }
+        }, 0);
+      });
+    });
+    updateTaskModal(true);
+    if (opts.sendBack) startSendBack();
+  }
+  function closeTask() { if (T.ov) closeOverlay(T.ov); }
+  function typingIn(node) {
+    var a = document.activeElement, ov = a && a.closest ? a.closest('[role=dialog]') : null;
+    if (ov && T.ov && ov !== T.ov.dialog) return false;   // typing somewhere else must not freeze the board
+    return !!(a && node.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  }
+  function setTaskTab(tab) { T.tab = tab; T.sendBack = false; updateTaskModal(true); }
+  function updateTaskModal(force) {
+    if (!T.open) return;                       // settings or agent dialog open: nothing to update
+    var t = taskById(T.taskId);
+    if (!t) { closeTask(); return; }
+    var forced = !!(force || T.forceNext); // an action I just took always wins over the "keep my typing" guard
+    replace(T.refs.head, headContent(t));
+    replace(T.refs.tabs, tabContent(t));
+    if (forced || !typingIn(T.refs.panel)) replace(T.refs.panel, panelContent(t));
+    else T.pending.panel = true;
+    if (forced || !typingIn(T.refs.bar)) replace(T.refs.bar, barContent(t));
+    else T.pending.bar = true;
+    T.forceNext = false;
+    T.ov.dialog.setAttribute('aria-label', 'Task ' + t.id + ': ' + t.title);
+  }
+  function headContent(t) {
+    return [
+      el('h2', { class: 'dialog-title', text: t.title }),
+      el('div', { class: 'dialog-sub' },
+        el('span', { class: 'chip mono', text: t.id }),
+        el('span', { class: 'badge ' + statusBadgeClass(t.status) },
+          el('span', { class: 'status-dot st-' + t.status, style: { display: 'inline-block', marginRight: '5px' } }),
+          STATUS_LABEL[t.status]),
+        el('span', { text: '·' }),
+        avatarNode(t.assignee || t.assignedIDE || ''),
+        el('span', { text: (t.assignee || t.assignedIDE) ? agentName(t.assignee || t.assignedIDE) : 'unassigned' }),
+        t.featureTitle ? el('span', { text: '·' }) : null,
+        t.featureTitle ? el('span', { class: 'muted', text: t.featureTitle }) : null)
+    ];
+  }
+  function statusBadgeClass(s) {
+    return s === 'blocked' ? 'warn' : s === 'review' ? 'purple' : s === 'done' ? 'ok' : s === 'in_progress' || s === 'claimed' ? '' : '';
+  }
+  function tabContent(t) {
+    var tabs = [
+      { key: 'overview', label: 'Overview' }, { key: 'progress', label: 'Progress' }
+    ];
+    if (t.deliverable) tabs.push({ key: 'response', label: 'Response' });
+    tabs.push({ key: 'edit', label: 'Edit' });
+    if (tabs.every(function (x) { return x.key !== T.tab; })) T.tab = 'overview';
+    return tabs.map(function (x) {
+      return el('button', {
+        class: 'tab', role: 'tab', 'aria-selected': T.tab === x.key ? 'true' : 'false',
+        text: x.label, onclick: function () { setTaskTab(x.key); }
+      });
+    });
+  }
+  function panelContent(t) {
+    if (T.tab === 'progress') return progressPanel(t);
+    if (T.tab === 'response' && t.deliverable) return responsePanel(t);
+    if (T.tab === 'edit') return editPanel(t);
+    return overviewPanel(t);
+  }
+  function listOrNone(arr, noneText) {
+    if (!arr || !arr.length) return el('div', { class: 'muted', text: noneText || 'none listed' });
+    return el('ul', { class: 'plain' }, arr.map(function (x) { return el('li', { text: x }); }));
+  }
+  function overviewPanel(t) {
+    var agent = t.assignee || t.assignedIDE;
+    return [
+      el('div', { class: 'meta-grid' },
+        meta('Project folder', t.workspacePath || S.workspacePath || '—'),
+        meta('Reserved for', t.assignee ? agentName(t.assignee) : (agent && t.assignedIDE ? agentName(t.assignedIDE) + ' (holder)' : 'any waiting worker')),
+        meta('Held by', t.assignedIDE ? agentName(t.assignedIDE) : '—'),
+        meta('Target role', t.targetRole || '—'),
+        el('div', { class: 'meta' }, el('b', { text: 'In ' + STATUS_LABEL[t.status] + ' for' }),
+          (function () {
+            var since = statusSince(t);
+            if (!since) return el('span', { text: '—' });
+            return el('span', {}, timerNode(t, { staleAt: 30 * 60000 }),
+              el('span', { class: 'muted', text: '  ·  since ' + clockText(new Date(since).toISOString()) }), 
+              t.claimedAt ? el('span', { class: 'muted', text: '  ·  claimed ' + agoText(t.claimedAt) }) : null);
+          })()),
+        meta('Last update', agoText(t.updatedAt) + (t.updatedAt ? ' (' + clockText(t.updatedAt) + ')' : '')),
+        meta('Tokens spent', String(t.tokensSpent || 0))),
+      el('div', { class: 'section' }, el('h3', { text: 'Brief — the agent sees only this' }),
+        el('pre', { class: 'pre', text: t.brief || '(empty)' })),
+      t.description ? el('div', { class: 'section' }, el('h3', { text: 'One-line description' }), el('div', { text: t.description })) : null,
+      el('div', { class: 'section' }, el('h3', { text: 'Files it may change' }), listOrNone(t.allowedFiles)),
+      el('div', { class: 'section' }, el('h3', { text: 'Files it must never touch' }), listOrNone(t.forbiddenFiles)),
+      el('div', { class: 'section' }, el('h3', { text: 'Done when' }), listOrNone(t.acceptance)),
+      t.managerAnswer ? el('div', { class: 'section' }, el('h3', { text: 'Your last answer' }), el('div', { class: 'notice' }, el('div', { class: 'pre', style: { background: 'transparent', border: '0', padding: '0', maxHeight: '160px' }, text: t.managerAnswer }))) : null
+    ];
+  }
+  function meta(label, value) { return el('div', { class: 'meta' }, el('b', { text: label }), el('span', { text: value })); }
+  function progressPanel(t) {
+    var log = (t.progressLog || []).slice().reverse();
+    return [
+      el('div', { class: 'section' }, el('h3', { text: 'Timeline (newest first)' }),
+        log.length ? el('div', { class: 'timeline' }, log.map(function (p) {
+          return el('div', { class: 'tl-item' },
+            el('div', { class: 'tl-meta' }, el('span', { class: 'badge', text: STATUS_LABEL[p.status] || p.status }),
+              agoNode(p.at), el('span', { text: clockText(p.at) })),
+            el('div', { text: p.summary || '' }));
+        })) : el('div', { class: 'muted', text: 'Nothing logged yet.' })),
+      t.changesSummary ? el('div', { class: 'section' }, el('h3', { text: 'Latest report' }), el('div', { class: 'pre', text: t.changesSummary })) : null,
+      t.violations && t.violations.length ? el('div', { class: 'section' }, el('h3', { text: 'Outside the boundary' }),
+        el('div', { class: 'notice danger' },
+          el('div', { style: { fontWeight: '700' }, text: '⚠ ' + t.violations.length + ' file(s) changed outside the allowed set' }),
+          el('ul', { class: 'plain' }, t.violations.map(function (v) { return el('li', { text: v }); })))) : null,
+      el('div', { class: 'section' }, el('h3', { text: 'Files modified' }), listOrNone(t.filesModified, 'none reported')),
+      t.diffPreview ? el('div', { class: 'section' }, el('h3', { text: 'Diff preview' }), el('pre', { class: 'pre', text: t.diffPreview })) : null,
+      t.reviewFeedback ? el('div', { class: 'section' }, el('h3', { text: 'Your review feedback' }), el('div', { class: 'notice' , text: t.reviewFeedback })) : null
+    ];
+  }
+  function responsePanel(t) {
+    var MAX = 20000, text = String(t.deliverable || '');
+    var truncated = text.length > MAX;
+    var pre = el('pre', { class: 'pre', style: { maxHeight: '360px' }, text: truncated ? text.slice(0, MAX) : text });
+    return [
+      el('div', { class: 'notice warn', text: 'Untrusted text from a chatbot. Nothing here is executed.' }),
+      el('div', { class: 'section' },
+        el('h3', { text: 'Pasted response' }),
+        pre,
+        truncated ? el('div', { class: 'muted', text: 'Truncated at 20,000 characters (' + text.length + ' total). Copy gets the whole text.' }) : null,
+        el('div', { style: { display: 'flex', gap: '8px' } },
+          el('button', { class: 'btn small', text: 'Copy', onclick: function () { copyText(text, 'Response'); } }))),
+      t.changesSummary ? el('div', { class: 'section' }, el('h3', { text: 'Agent report' }), el('div', { class: 'pre', text: t.changesSummary })) : null
+    ];
+  }
+  function field(name, label, hint, node) {
+    return el('label', { class: 'field' }, el('span', { text: label }), node, hint ? el('span', { class: 'hint', text: hint }) : null);
+  }
+  function textareaFor(name, rows, value, onInput) {
+    return el('textarea', { rows: String(rows), name: name, value: value || '', oninput: onInput });
+  }
+  function editPanel(t) {
+    var d = T.draft;
+    var titleIn = el('input', { type: 'text', name: 'title', value: d.title !== undefined ? d.title : (t.title || '') });
+    var briefIn = textareaFor('brief', 8, d.brief !== undefined ? d.brief : t.brief, function () { T.draft.brief = briefIn.value; });
+    var assigneeIn = el('input', {
+      type: 'text', name: 'assignee', list: 'agentIds',
+      value: d.assignee !== undefined ? d.assignee : (t.assignee || ''),
+      disabled: t.status !== 'backlog' ? true : null,
+      placeholder: t.status === 'backlog' ? 'empty = any waiting worker' : 'locked while the agent works'
+    });
+    var allowedIn = textareaFor('allowedFiles', 4, d.allowedFiles !== undefined ? d.allowedFiles : (t.allowedFiles || []).join('\n'));
+    var forbiddenIn = textareaFor('forbiddenFiles', 4, d.forbiddenFiles !== undefined ? d.forbiddenFiles : (t.forbiddenFiles || []).join('\n'));
+    var acceptIn = textareaFor('acceptance', 4, d.acceptance !== undefined ? d.acceptance : (t.acceptance || []).join('\n'));
+    var wsIn = el('input', { type: 'text', name: 'workspacePath', value: d.workspacePath !== undefined ? d.workspacePath : (t.workspacePath || S.workspacePath || '') });
+    var err = el('div', { class: 'field err hidden' });
+    var readOnly = t.status === 'review' || t.status === 'done' || t.status === 'cancelled';
+    [titleIn, assigneeIn, wsIn].forEach(function (n) { n.addEventListener('input', function () { T.draft[n.name] = n.value; }); });
+    [briefIn, allowedIn, forbiddenIn, acceptIn].forEach(function (n) { n.addEventListener('input', function () { T.draft[n.name] = n.value; }); });
+    var saveBtn = el('button', {
+      class: 'btn primary', text: 'Save changes', disabled: readOnly ? true : null,
+      onclick: function () {
+        var payload = {
+          title: titleIn.value.trim(), brief: briefIn.value,
+          allowedFiles: allowedIn.value, forbiddenFiles: forbiddenIn.value,
+          acceptance: acceptIn.value, workspacePath: wsIn.value.trim()
+        };
+        if (t.status === 'backlog') payload.assignee = assigneeIn.value.trim();
+        if (!payload.title) { err.textContent = 'A title is required.'; err.classList.remove('hidden'); return; }
+        if (!payload.brief.trim()) { err.textContent = 'The instructions are required — the agent sees only this.'; err.classList.remove('hidden'); return; }
+        api('/api/mesh/task/' + encodeURIComponent(t.id) + '/edit', payload).then(function (r) {
+          if (r) { T.draft = {}; setTaskTab('overview'); if (DEMO) push(); }
+        });
+      }
+    });
+    return [
+      readOnly ? el('div', { class: 'notice', text: 'A task in ' + STATUS_LABEL[t.status] + ' can no longer be edited. ' + (t.status === 'review' ? 'Send it back first if it needs work.' : '') }) : null,
+      err,
+      el('div', { class: 'form-grid' },
+        el('div', { class: 'full' }, field('title', 'Title', null, titleIn)),
+        el('div', { class: 'full' }, field('brief', 'Instructions for the agent', 'The agent sees only this', briefIn)),
+        field('assignee', 'Assign to', t.status === 'backlog' ? 'agent id, empty = any waiting worker' : 'only changeable while waiting', assigneeIn),
+        field('workspacePath', 'Project folder', null, wsIn),
+        field('allowedFiles', 'Files it may change', 'one per line', allowedIn),
+        field('forbiddenFiles', 'Files it must never touch', 'one per line', forbiddenIn),
+        el('div', { class: 'full' }, field('acceptance', 'Done when', 'one per line', acceptIn))),
+      el('div', { style: { display: 'flex', gap: '8px' } }, saveBtn)
+    ];
+  }
+  function barContent(t) {
+    var out = [];
+    var hasFinal = t.status === 'done' || t.status === 'cancelled';
+    if (t.status === 'blocked') {
+      var ans = el('textarea', { rows: '3', placeholder: 'Answer the agent…', 'aria-label': 'Answer the blocked agent', style: { width: '100%' } });
+      var err = el('div', { class: 'field err hidden' });
+      return [
+        el('div', { class: 'notice amber', style: { width: '100%' } },
+          el('div', { style: { fontWeight: '700' }, text: 'The agent is blocked and asked:' }),
+          el('div', { class: 'message', style: { color: 'inherit' }, text: t.blockedQuestion || '(no question text)' })),
+        el('div', { style: { width: '100%' } }, ans, err),
+        el('button', {
+          class: 'btn primary', text: 'Send answer', onclick: function () {
+            if (!ans.value.trim()) { err.textContent = 'Write an answer first.'; err.classList.remove('hidden'); return; }
+            T.forceNext = true;
+            api('/api/mesh/answer', { taskId: t.id, answer: ans.value }).then(function (r) { if (r && DEMO) push(); });
+          }
+        }),
+        el('button', { class: 'btn danger', text: 'Cancel task', onclick: function () { doCancel(t); } })
+      ];
+    }
+    if (t.status === 'review') {
+      if (T.sendBack) {
+        var fb = el('textarea', { rows: '3', placeholder: 'What must change?', 'aria-label': 'Feedback for sending the task back', style: { width: '100%' } });
+        var ferr = el('div', { class: 'field err hidden' });
+        out.push(el('div', { style: { width: '100%' } }, el('h3', { class: 'muted', style: { margin: '0 0 4px' }, text: 'Send back with feedback' }), fb, ferr));
+        out.push(el('button', {
+          class: 'btn primary', text: 'Send back to the agent', onclick: function () {
+            if (!fb.value.trim()) { ferr.textContent = 'Feedback is required — the agent needs to know what to change.'; ferr.classList.remove('hidden'); fb.focus(); return; }
+            T.forceNext = true;
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: false, feedback: fb.value }).then(function (r) { if (r) { T.sendBack = false; if (DEMO) push(); } });
+          }
+        }));
+        out.push(el('button', { class: 'btn', text: 'Keep reviewing', onclick: function () { T.sendBack = false; updateTaskModal(true); } }));
+        window.setTimeout(function () { try { fb.focus(); } catch (e) { } }, 30);
+        return out;
+      }
+      out.push(el('button', {
+        class: 'btn primary', text: 'Approve → Done', onclick: function () {
+          uiConfirm({
+            title: 'Approve ' + t.id + '?',
+            message: 'Check the real changes in the project first.',
+            detail: 'The board only knows what the agent reported. Verify the diff, run the tests, then approve.',
+            confirmLabel: 'Approve'
+          }).then(function (ok) {
+            if (!ok) return;
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
+          });
+        }
+      }));
+      if (!isManual(t.assignee || t.assignedIDE)) out.push(el('button', { class: 'btn', text: 'Send back…', onclick: startSendBack }));
+      else out.push(moveMenuButton(t, 'Move to…'));
+      out.push(el('button', { class: 'btn danger', text: 'Cancel task', onclick: function () { doCancel(t); } }));
+      return out;
+    }
+    if (!hasFinal && isManual(t.assignee || t.assignedIDE)) {
+      var holder = agentName(t.assignee || t.assignedIDE);
+      out.push(el('button', {
+        class: 'btn', text: 'Copy request for ' + holder, onclick: function () {
+          api('/api/mesh/task/' + encodeURIComponent(t.id) + '/request', {}).then(function (r) {
+            if (r && typeof r.text === 'string') copyText(r.text, 'Request for ' + holder);
+          });
+        }
+      }));
+      var paste = el('textarea', { rows: '4', placeholder: 'Paste the chatbot’s answer here…', 'aria-label': 'Paste the chatbot response', style: { width: '100%' } });
+      if (T.pasteOpen) {
+        out.push(el('div', { style: { width: '100%' } }, paste));
+        out.push(el('button', {
+          class: 'btn primary', text: 'Submit for review', onclick: function () {
+            if (!paste.value.trim()) { toast('Paste the response first', 'error'); paste.focus(); return; }
+            T.forceNext = true;
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/response', { text: paste.value }).then(function (r) {
+              if (r) { T.pasteOpen = false; if (DEMO) push(); }
+            });
+          }
+        }));
+        out.push(el('button', { class: 'btn', text: 'Never mind', onclick: function () { T.pasteOpen = false; updateTaskModal(true); } }));
+      } else {
+        out.push(el('button', {
+          class: 'btn primary', text: 'Paste response…', onclick: function () {
+            T.pasteOpen = true; updateTaskModal(true);
+            window.setTimeout(function () { try { paste.focus(); } catch (e) { } }, 30); }
+        }));
+      }
+      if (t.status !== 'review' && t.status !== 'blocked') out.push(moveMenuButton(t, 'Move to…'));
+    }
+    if (!hasFinal && !isManual(t.assignee || t.assignedIDE) && t.status === 'backlog') {
+      // a waiting task reserved for a launchable agent, or free for any of them
+      var res = t.assignee ? agentById(t.assignee) : null;
+      if (res && !res.manual && res.launch && !res.launch.running) out.push(el('button', {
+        class: 'btn primary', text: '▶ Run ' + (res.launch.label || res.id) + ' to start this task',
+        onclick: function () { runAgent(res.id); } }));
+      else if (!t.assignee) out.push(runAgentMenuButton(t));
+    }
+    if (!hasFinal) {
+      out.push(el('button', { class: 'btn', text: 'Edit', onclick: function () { setTaskTab('edit'); } }));
+      if (t.status !== 'review') {
+        out.push(el('button', {
+          class: 'btn danger', text: 'Cancel task',
+          onclick: function () { doCancel(t); }
+        }));
+      }
+    } else {
+      out.push(el('span', { class: 'muted', style: { alignSelf: 'center' }, text: t.status === 'done' ? 'Done — read-only.' : 'Cancelled — read-only.' }));
+    }
+    return out;
+  }
+  function startSendBack() { T.sendBack = true; T.tab = 'overview'; updateTaskModal(true); }
+  function moveMenuButton(t, label) {
+    var btn;
+    btn = el('button', { class: 'btn', text: label, 'aria-haspopup': 'menu', onclick: function () { openMoveMenu(t, btn); } });
+    return btn;
+  }
+  function runAgentMenuButton(t) {
+    var btn;
+    btn = el('button', {
+      class: 'btn primary', text: '▶ Run an agent…', 'aria-haspopup': 'menu',
+      onclick: function () {
+        var list = runnableAgents();
+        if (!list.length) { toast('No agent can be started from the board right now', 'warn'); return; }
+        openMenu(btn, 'Start an agent for ' + t.id, list.map(function (a) {
+          return { label: '▶ Run ' + (a.launch ? a.launch.label : a.id) + (t.assignee ? '' : ' (any agent)'), run: function () { runAgent(a.id); } };
+        }));
+      }
+    });
+    return btn;
+  }
+  function doCancel(t) {
+    uiConfirm({
+      title: 'Cancel ' + t.id + '?',
+      message: 'The agent will be told to stop. This cannot be undone.',
+      confirmLabel: 'Cancel task', danger: true
+    }).then(function (ok) {
+      if (!ok) return;
+      uiPrompt({ title: 'Reason (optional)', label: 'Why is this task cancelled?', required: false, confirmLabel: 'Cancel task' })
+        .then(function (reason) {
+          api('/api/mesh/task/' + encodeURIComponent(t.id) + '/cancel', { reason: reason || '' })
+            .then(function (r) { if (r && DEMO) push(); });
+        });
+    });
+  }
+  function copyText(text, label) {
+    function fallback() { try { window.prompt('Copy this text (select all, then copy):', text); } catch (e) { toast('Could not copy automatically', 'error'); } }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { toast((label || 'Text') + ' copied to the clipboard', 'success'); }, fallback);
+      } else fallback();
+    } catch (e) { fallback(); }
+  }
+  function startPromptFor(id) {
+    return 'Join AgentMesh as WORKER with agent_id ' + id + '. Call mesh_register_agent, then call mesh_wait_for_task repeatedly until a task arrives, and follow its brief exactly. Never commit, push or deploy unless the brief says so. Do not run any dispatch script.';
+  }
+
+  /* 7. new task modal */
+  function openNewTask() {
+    var newest = S.tasks.slice().sort(function (a, b) { return (tms(b.updatedAt) || 0) - (tms(a.updatedAt) || 0); })[0];
+    var defaultWs = (newest && newest.workspacePath) || S.workspacePath || '';
+    var titleIn = el('input', { type: 'text', name: 'title' });
+    var briefIn = el('textarea', { rows: '8', name: 'brief' });
+    var assigneeIn = el('input', { type: 'text', name: 'assignee', list: 'agentIds', placeholder: 'agent id — empty = any waiting worker' });
+    var allowedIn = el('textarea', { rows: '4', name: 'allowedFiles' });
+    var forbiddenIn = el('textarea', { rows: '4', name: 'forbiddenFiles' });
+    var acceptIn = el('textarea', { rows: '4', name: 'acceptance' });
+    var wsIn = el('input', { type: 'text', name: 'workspacePath', value: defaultWs });
+    var err = el('div', { class: 'field err hidden' });
+    [titleIn, assigneeIn, wsIn].forEach(function (n) {
+      n.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
+    });
+    briefIn.addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) submit(); });
+    function submit() {
+      var title = titleIn.value.trim(), brief = briefIn.value;
+      if (!title) { err.textContent = 'A title is required.'; err.classList.remove('hidden'); titleIn.focus(); return; }
+      if (!brief.trim()) { err.textContent = 'The instructions are required — the agent sees only this.'; err.classList.remove('hidden'); briefIn.focus(); return; }
+      api('/api/mesh/task', {
+        title: title, brief: brief, assignee: assigneeIn.value.trim() || undefined,
+        allowedFiles: allowedIn.value, forbiddenFiles: forbiddenIn.value,
+        acceptance: acceptIn.value, workspacePath: wsIn.value.trim()
+      }).then(function (r) {
+        if (!r) return;
+        ov.close();
+        if (DEMO) push();
+        toast('Task created', 'success');
+      });
+    }
+    var ov = openDialog({
+      wide: true, title: 'New task',
+      body: [
+        err,
+        el('div', { class: 'form-grid' },
+          el('div', { class: 'full' }, field('title', 'Title', null, titleIn)),
+          el('div', { class: 'full' }, field('brief', 'Instructions for the agent', 'The agent sees only this · Ctrl+Enter to create', briefIn)),
+          field('assignee', 'Assign to', 'empty = any waiting worker · known ids are suggested', assigneeIn),
+          field('workspacePath', 'Project folder', 'defaults to the newest task’s folder', wsIn),
+          field('allowedFiles', 'Files it may change', 'one per line', allowedIn),
+          field('forbiddenFiles', 'Files it must never touch', 'one per line', forbiddenIn),
+          el('div', { class: 'full' }, field('acceptance', 'Done when', 'one per line', acceptIn)))
+      ],
+      foot: [
+        el('button', { class: 'btn', text: 'Cancel', onclick: function () { ov.close(); } }),
+        el('button', { class: 'btn primary', text: 'Create task', onclick: submit })
+      ]
+    });
+    titleIn.focus();
+  }
+
+  /* 8. agent popup */
+  function openAgent(id) {
+    var a = agentById(id);
+    if (!a) { toast('Unknown agent ' + id, 'error'); return; }
+    var body = el('div', { class: 'panel' });
+    var renameIn = el('input', { type: 'text', value: a.displayName || '', placeholder: a.id + ' (empty resets to the id)', 'aria-label': 'Display name for ' + a.id });
+    var ov = openDialog({
+      title: agentName(a.id) + (a.manual ? ' · manual' : ''),
+      label: 'Agent ' + a.id,
+      head: [el('div', { class: 'head-main' },
+        el('div', { class: 'dialog-sub' },
+          avatarNode(a.id, 'xl'),
+          el('span', { class: 'mono', text: a.id }),
+          el('span', { class: 'badge', text: a.ide || 'agent' }),
+          el('span', { class: 'badge', text: (a.role || 'WORKER').toLowerCase() }),
+          a.manual ? el('span', { class: 'badge', text: 'manual' }) : null,
+          a.launch ? el('span', { class: 'badge ' + (a.launch.running ? 'ok' : ''), text: a.launch.running ? 'running' : 'startable' }) : null,
+          el('span', { text: 'last seen ' + agoText(a.lastSeen) })))],
+      body: [body],
+      foot: [
+        el('button', { class: 'btn', text: '⚙ Avatar & team settings', onclick: function () { openSettings('team'); } }),
+        !a.manual && a.launch ? launchButton(a.id, a.launch.label, !!a.launch.running) : null,
+        !a.manual ? el('button', { class: 'btn', text: 'Copy start prompt', onclick: function () { copyText(startPromptFor(a.id), 'Start prompt'); } }) : null,
+        el('button', {
+          class: 'btn', text: 'Save name', onclick: function () {
+            api('/api/mesh/agent/' + encodeURIComponent(a.id) + '/rename', { name: renameIn.value.trim() })
+              .then(function (r) { if (r) { toast('Agent renamed', 'success'); if (DEMO) push(); ov.close(); } });
+          }
+        })
+      ]
+    });
+    function paint() {
+      var cur = currentTaskOf(a);
+      var mine = S.tasks.filter(function (t) { return (t.assignee || t.assignedIDE) === a.id; });
+      var cur0 = currentTaskOf(a), w0 = taskWorkload(a.id);
+      replace(body,
+        el('div', { class: 'meta-grid' },
+          meta('Specialization', a.specialization || '—'),
+          meta('State', isWaiting(a) ? 'waiting for work' : (liveness(a) + ' · ' + agoText(a.lastSeen))),
+          meta('Open tasks', String(mine.filter(function (t) { return t.status !== 'done' && t.status !== 'cancelled'; }).length)),
+          (function () {
+            var m = el('div', { class: 'meta' }, el('b', { text: 'Workload' }));
+            m.appendChild(workloadBar(a.id));
+            m.appendChild(el('span', { class: 'muted', style: { fontSize: '11px' }, text: w0.open + ' open · ' + (w0.counts.done || 0) + ' done' }));
+            return m;
+          })()),
+        el('div', { class: 'section' }, el('h3', { text: 'Display name' }), renameIn,
+          el('div', { class: 'muted', text: 'Empty value resets to the id. The name is used everywhere the agent appears.' })),
+        !a.manual ? el('div', { class: 'section' }, el('h3', { text: 'Start prompt for this agent' }),
+          el('div', { class: 'pre', text: startPromptFor(a.id) }),
+          el('button', { class: 'btn small', text: 'Copy start prompt', onclick: function () { copyText(startPromptFor(a.id), 'Start prompt'); } })) : null,
+        cur ? el('div', { class: 'section' }, el('h3', { text: 'Currently working on' }),
+          el('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } },
+            el('button', { class: 'need', style: { maxWidth: '100%' }, text: cur.id + ' — ' + cur.title, onclick: function () { openTask(cur.id); } }),
+            el('span', { class: 'timer badge time', title: 'time in ' + STATUS_LABEL[cur.status] }, timerNode(cur, { staleAt: 30 * 60000 })))) : null,
+        el('div', { class: 'section' }, el('h3', { text: 'Tasks' }),
+          myTasksView(a.id))
+      );
+    }
+    function myTasksView(agentId) {
+      var mine = S.tasks.filter(function (t) { return (t.assignee || t.assignedIDE) === agentId; });
+      if (!mine.length) return el('div', { class: 'muted', text: 'No tasks assigned.' });
+      var order = ['blocked', 'review', 'in_progress', 'claimed', 'backlog', 'done', 'cancelled'];
+      var groups = {};
+      mine.forEach(function (t) { (groups[t.status] = groups[t.status] || []).push(t); });
+      return el('div', { class: 'section' }, order.filter(function (s) { return groups[s]; }).map(function (s) {
+        return el('div', { class: 'section' },
+          el('h3', { text: STATUS_LABEL[s] + ' (' + groups[s].length + ')' }),
+          groups[s].map(function (t) {
+            return el('button', {
+              class: 'need', style: { maxWidth: '100%' }, text: t.id + ' — ' + t.title,
+              onclick: function () { openTask(t.id); }
+            });
+          }));
+      }));
+    }
+    paint();
+  }
+
+  /* 9. move menu (keyboard equivalent of drag & drop) */
+  function movesFor(t) {
+    var out = [];
+    if (t.status === 'done' || t.status === 'cancelled') return out;
+    var manual = isManual(t.assignee || t.assignedIDE);
+    if (manual) {   // a manual agent's task is mine to move by hand
+      var opts = [['backlog', 'Waiting'], ['in_progress', 'Working'], ['review', 'In review'], ['done', 'Done'], ['cancelled', 'Cancelled']];
+      opts.forEach(function (o) {
+        if (o[0] === t.status) return;
+        out.push({ label: 'Move to ' + o[1], run: function () { moveTask(t, o[0]); } });
+      });
+      return out;
+    }
+    if (t.status === 'review') {
+      out.push({ label: 'Approve → Done', run: function () { approveTask(t); } });
+      out.push({ label: 'Send back → Working', run: function () { openTask(t.id, { sendBack: true }); } });
+    }
+    if (t.status === 'backlog') {
+      workers().forEach(function (a) {
+        out.push({ label: 'Assign to ' + agentName(a.id), run: function () { reassign(t, a.id); } });
+      });
+      if (t.assignee) out.push({ label: 'Unassign', run: function () { reassign(t, ''); } });
+      runnableAgents().forEach(function (a) {
+        out.push({ label: '▶ Run ' + (a.launch ? a.launch.label : a.id) + ' now', run: function () { runAgent(a.id); } });
+      });
+    }
+    out.push({ label: 'Cancel task', run: function () { doCancel(t); } });
+    return out;
+  }
+  function runnableAgents() {
+    var out = workers().filter(function (a) { return !a.manual && a.launch && !a.launch.running; });
+    (S.launchers || []).forEach(function (l) {
+      if (out.some(function (a) { return a.id === l.id; })) return;
+      out.push({ id: l.id, launch: { label: l.label, running: !!l.running } });
+    });
+    return out.filter(function (a) { return !a.launch.running; });
+  }
+  function openMenu(anchor, title, items, extra) {
+    closeMenus();
+    var box = el('div', { class: 'menu', role: 'menu', 'aria-label': title });
+    box.appendChild(el('div', { class: 'menu-title', text: title }));
+    if (!items.length) box.appendChild(el('div', { class: 'menu-title', text: 'No moves available' }));
+    items.forEach(function (m) {
+      box.appendChild(el('button', { role: 'menuitem', text: m.label, onclick: function () { closeMenus(); m.run(); } }));
+    });
+    (extra || []).forEach(function (m) {
+      box.appendChild(el('div', { class: 'menu-sep' }));
+      box.appendChild(el('button', { role: 'menuitem', text: m.label, onclick: function () { closeMenus(); m.run(); } }));
+    });
+    document.body.appendChild(box);
+    var r = anchor.getBoundingClientRect();
+    var top = Math.min(r.bottom + 4, window.innerHeight - box.offsetHeight - 8);
+    var left = Math.min(r.left, window.innerWidth - box.offsetWidth - 8);
+    box.style.top = Math.max(8, top) + 'px';
+    box.style.left = Math.max(8, left) + 'px';
+    var menu = { el: box, close: function () { if (box.parentNode) box.parentNode.removeChild(box); }, isMenu: true };
+    overlays.push(menu);
+    var first = box.querySelector('button');
+    if (first) first.focus();
+    window.setTimeout(function () { document.addEventListener('mousedown', onDocDown, true); }, 0);
+    function onDocDown(e) { if (!box.contains(e.target)) { document.removeEventListener('mousedown', onDocDown, true); closeOverlay(menu); } }
+  }
+  function openMoveMenu(t, anchor) {
+    openMenu(anchor, 'Move ' + t.id + ' (' + STATUS_LABEL[t.status] + ')', movesFor(t),
+      [{ label: 'Open details', run: function () { openTask(t.id); } }]);
+  }
+  function closeMenus() {
+    var closed = false;
+    for (var i = overlays.length - 1; i >= 0; i--) if (overlays[i].isMenu) { closeOverlay(overlays[i]); closed = true; }
+    return closed;
+  }
+  function approveTask(t) {
+    uiConfirm({
+      title: 'Approve ' + t.id + '?',
+      message: 'Check the real changes in the project first.',
+      confirmLabel: 'Approve'
+    }).then(function (ok) {
+      if (!ok) return;
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
+    });
+  }
+  function moveTask(t, to) {
+    var labels = { backlog: 'Waiting', in_progress: 'Working', review: 'In review', done: 'Done', cancelled: 'Cancelled' };
+    if (to === 'done' || to === 'cancelled') {
+      uiConfirm({
+        title: to === 'done' ? 'Move ' + t.id + ' to Done?' : 'Cancel ' + t.id + '?',
+        message: to === 'done' ? 'Nothing verifies a manual agent’s work — you are the check.' : 'The task is marked cancelled.',
+        confirmLabel: to === 'done' ? 'Move to Done' : 'Cancel task', danger: to === 'cancelled'
+      }).then(function (ok) { if (ok) sendMove(t, to, labels[to]); });
+      return;
+    }
+    sendMove(t, to, labels[to]);
+  }
+  function sendMove(t, to, label) {
+    api('/api/mesh/task/' + encodeURIComponent(t.id) + '/move', { to: to }).then(function (r) {
+      if (r) { toast(t.id + ' → ' + (label || to), 'success'); if (DEMO) push(); }
+    });
+  }
+  function reassign(t, agentId) {
+    if (t.status !== 'backlog') { toast('Only waiting tasks can be reassigned', 'error'); return; }
+    api('/api/mesh/task/' + encodeURIComponent(t.id) + '/edit', { assignee: agentId }).then(function (r) {
+      if (r) { toast(agentId ? 'Assigned to ' + agentName(agentId) : 'Unassigned', 'success'); if (DEMO) push(); }
+    });
+  }
+
+
+  /* 9b. settings: team management, avatars, appearance */
+  var EMOJI_CHOICES = ['🦊', '🐺', '🐧', '🐬', '🚀', '🧠', '🤖', '👾',
+    '🧪', '💡', '🧱', '📝', '🔍', '🛠\uFE0F', '🧹', '📦',
+    '\u26A1', '🔥', '🌱', '🎯', '🎨', '📊', '🔗', '\u2705'];
+  var COLOR_CHOICES = ['#3b5bdb', '#0ca678', '#d6336c', '#7048e8', '#f08c00', '#1098ad', '#e8590c', '#495057'];
+  function openSettings(tab) {
+    T.settingsTab = tab || T.settingsTab || 'team';
+    var refs = { body: el('div', { class: 'panel' }), tabs: el('div', { class: 'settings-tabs', role: 'tablist', 'aria-label': 'Settings sections' }) };
+    var ov = openDialog({
+      wide: true, title: 'Settings', label: 'Settings',
+      head: [el('div', { class: 'head-main' },
+        el('div', { class: 'dialog-sub', text: 'Team, avatars and how the board looks. Anything that must reach other agents goes through the daemon; the rest is stored in this browser.' }))],
+      tabs: refs.tabs, body: [refs.body]
+    });
+    function paint() {
+      var tabs = [['team', 'Team & avatars'], ['appearance', 'Appearance'], ['about', 'About & storage']];
+      replace(refs.tabs, tabs.map(function (x) {
+        return el('button', {
+          class: 'btn small', role: 'tab', 'aria-pressed': T.settingsTab === x[0] ? 'true' : 'false', text: x[1],
+          onclick: function () { T.settingsTab = x[0]; paint(); }
+        });
+      }));
+      if (T.settingsTab === 'team') replace(refs.body, teamSettings(paint));
+      else if (T.settingsTab === 'appearance') replace(refs.body, appearanceSettings(paint));
+      else replace(refs.body, aboutSettings());
+    }
+    paint();
+    return ov;
+  }
+  function teamSettings(repaint) {
+    // --- bulk add: several agents at once, one id per line ---
+    var idsIn = el('textarea', { rows: '4', placeholder: 'agent-c\nchatgpt-web\nreviewer-2', 'aria-label': 'Agent ids, one per line' });
+    var roleIn = el('select', { 'aria-label': 'Agent kind' },
+      el('option', { value: 'worker', text: 'Worker (an IDE that can run tasks)' }),
+      el('option', { value: 'manual', text: 'Manual (a chatbot you relay by hand)' }));
+    var addMsg = el('div', { class: 'field err hidden' });
+    var addBtn = el('button', {
+      class: 'btn primary', text: 'Add agents', onclick: function () {
+        var raw = idsIn.value.split(/[\n,]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+        var ids = [], bad = [];
+        raw.forEach(function (id) {
+          if (!/^[A-Za-z0-9_-]+$/.test(id)) { bad.push(id); return; }
+          if (ids.indexOf(id) < 0) ids.push(id);
+        });
+        if (bad.length) { addMsg.textContent = 'Not a valid id: ' + bad.join(', ') + ' — ids use letters, digits, "-" and "_".'; addMsg.classList.remove('hidden'); return; }
+        if (!ids.length) { addMsg.textContent = 'Write at least one agent id, one per line.'; addMsg.classList.remove('hidden'); return; }
+        addMsg.classList.add('hidden');
+        addBtn.disabled = true; setText(addBtn, 'Adding ' + ids.length + '…');
+        var manual = roleIn.value === 'manual', done = 0, failed = [];
+        ids.reduce(function (chain, id) {
+          return chain.then(function () {
+            return api('/api/mesh/agent', { id: id, label: id }).then(function (r) {
+              if (r) {
+                if (manual) { var cfg = AV[id] || (AV[id] = {}); cfg.flag = 'manual'; }   // only a hint for the avatar strip
+                done++;
+              } else failed.push(id);
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          savePrefs();
+          addBtn.disabled = false;
+          setText(addBtn, 'Add agents');
+          idsIn.value = '';
+          repaint();
+          if (DEMO) push();
+          if (done) toast(done + ' agent' + (done > 1 ? 's' : '') + ' asked to join' + (failed.length ? ' — ' + failed.length + ' refused (see toasts)' : ''), failed.length ? 'warn' : 'success');
+        });
+      }
+    });
+
+    var agents = workers().slice().sort(function (a, b) { return agentName(a.id).localeCompare(agentName(b.id)); });
+    var rows = agents.map(function (a) { return agentRow(a, repaint); });
+
+    return [
+      el('div', { class: 'section' },
+        el('h3', { text: 'Add agents' }),
+        el('div', { class: 'field' }, el('label', { text: 'One id per line' }), idsIn,
+          el('span', { class: 'hint', text: 'Each line becomes a POST /api/mesh/agent. Manual agents are relays you paste into by hand; workers are IDEs that run tasks themselves.' })),
+        el('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } }, roleIn, addBtn),
+        addMsg),
+      el('div', { class: 'section' },
+        el('h3', { text: 'Team (' + agents.length + ')' }),
+        agents.length ? rows : el('div', { class: 'empty', text: 'No worker agents yet.' }),
+        el('div', { class: 'field' }, el('span', { class: 'hint', text: 'Avatar, colour and emoji are per browser and never sent to the daemon. Rename goes through POST /api/mesh/agent/:id/rename.' })))
+    ];
+  }
+  function agentRow(a, repaint) {
+    var cfg = avatarCfg(a.id);
+    var nameIn = el('input', { type: 'text', value: a.displayName || '', placeholder: a.id + ' (empty resets to the id)', 'aria-label': 'Display name for ' + a.id });
+    var nameBtn = el('button', {
+      class: 'btn small', text: 'Save', onclick: function () {
+        api('/api/mesh/agent/' + encodeURIComponent(a.id) + '/rename', { name: nameIn.value.trim() })
+          .then(function (r) { if (r) { toast('Renamed ' + a.id, 'success'); if (DEMO) push(); repaint(); } });
+      }
+    });
+    var picker = el('div', { class: 'section hidden' });
+    var pickBtn = el('button', {
+      class: 'btn small', text: '🎨 Avatar', 'aria-expanded': 'false',
+      onclick: function () {
+        var show = picker.classList.toggle('hidden');
+        T.avatarPickerFor = show ? null : a.id;
+        pickBtn.setAttribute('aria-expanded', show ? 'false' : 'true');
+        if (!show) paintPicker();
+      }
+    });
+    var fileInput = el('input', { type: 'file', accept: 'image/*', class: 'hidden', 'aria-label': 'Upload an avatar image for ' + a.id });
+    fileInput.addEventListener('change', function () {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      if (f.size > 300 * 1024) { toast('That image is larger than 300 KB — pick a smaller one', 'error'); fileInput.value = ''; return; }
+      var reader = new FileReader();
+      reader.onload = function () { setAvatar(a.id, { img: String(reader.result), emoji: '', color: '' }); repaint(); };
+      reader.onerror = function () { toast('Could not read that file', 'error'); };
+      reader.readAsDataURL(f);
+    });
+    function paintPicker() {
+      replace(picker,
+        el('div', { class: 'avatar-pick' }, avatarNode(a.id, 'lg'),
+          el('span', { class: 'emoji-grid' }, EMOJI_CHOICES.map(function (em) {
+            return el('button', { text: em, 'aria-label': 'Use ' + em + ' for ' + a.id, onclick: function () { setAvatar(a.id, { emoji: em, img: '' }); repaint(); } });
+          }))),
+        el('div', { class: 'avatar-pick' },
+          el('span', { class: 'muted', style: { fontSize: '11px' }, text: 'Colour' }),
+          COLOR_CHOICES.map(function (c) {
+            return el('button', { class: 'swatch', style: { background: c }, 'aria-pressed': cfg.color === c ? 'true' : 'false', 'aria-label': 'Colour ' + c, onclick: function () { setAvatar(a.id, { color: c }); repaint(); } });
+          }),
+          el('button', {
+            class: 'btn small', text: 'Auto colour',
+            onclick: function () { setAvatar(a.id, { color: '' }); repaint(); }
+          })),
+        el('div', { class: 'avatar-pick' },
+          el('button', { class: 'btn small', text: '\u2B06 Upload image', onclick: function () { fileInput.click(); } }),
+          el('button', {
+            class: 'btn small', text: 'Reset avatar',
+            onclick: function () { setAvatar(a.id, { emoji: '', img: '', color: '' }); repaint(); }
+          }),
+          el('span', { class: 'hint muted', text: 'Images stay in this browser (localStorage, max 300 KB).' })),
+        fileInput);
+    }
+    if (T.avatarPickerFor === a.id) { picker.classList.remove('hidden'); pickBtn.setAttribute('aria-expanded', 'true'); paintPicker(); }
+    var row = el('div', { class: 'agent-row' },
+      avatarNode(a.id, 'lg'),
+      el('div', { class: 'main' },
+        el('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } },
+          nameIn, nameBtn,
+          a.manual ? el('span', { class: 'badge', text: 'manual' }) : null,
+          a.launch ? el('span', { class: 'badge', text: a.launch.running ? 'running' : 'startable' }) : null),
+        el('div', { class: 'id', text: a.id + '  \u00b7  ' + (a.ide || 'agent') + '  \u00b7  ' + (a.specialization || 'no specialisation') }),
+        el('div', { class: 'sub' }, workloadBar(a.id),
+          el('span', { class: 'muted', style: { fontSize: '11px' }, text: taskWorkload(a.id).open + ' open' }))),
+      pickBtn);
+    row.appendChild(picker);
+    return row;
+  }
+  function appearanceSettings(repaint) {
+    var themes = [['auto', 'Auto / system'], ['light', 'Light'], ['dark', 'Dark']];
+    var groups = [['status', 'Status'], ['agent', 'Agent']];
+    return [
+      el('div', { class: 'section' }, el('h3', { text: 'Theme' }),
+        el('div', { style: { display: 'flex', gap: '6px', flexWrap: 'wrap' } }, themes.map(function (x) {
+          return el('button', {
+            class: 'btn small', 'aria-pressed': UI.theme === x[0] ? 'true' : 'false', text: x[1],
+            onclick: function () { UI.theme = x[0]; saveUI(); applyTheme(); repaint(); }
+          });
+        }))),
+      el('div', { class: 'section' }, el('h3', { text: 'Density' }),
+        el('div', { style: { display: 'flex', gap: '6px' } },
+          el('button', { class: 'btn small', 'aria-pressed': UI.compact ? 'false' : 'true', text: 'Comfortable', onclick: function () { UI.compact = false; savePrefs(); applyDensity(); repaint(); } }),
+          el('button', { class: 'btn small', 'aria-pressed': UI.compact ? 'true' : 'false', text: 'Compact', onclick: function () { UI.compact = true; savePrefs(); applyDensity(); repaint(); } }))),
+      el('div', { class: 'section' }, el('h3', { text: 'Board' }),
+        el('label', { class: 'check' }, (function () {
+          var cb = el('input', { type: 'checkbox' });
+          cb.checked = !!UI.showCancelled;
+          cb.addEventListener('change', function () { UI.showCancelled = cb.checked; $('#showCancelled').checked = cb.checked; saveUI(); render(); });
+          return cb;
+        })(), el('span', { text: 'Show the Cancelled lane' })),
+        el('div', { style: { display: 'flex', gap: '6px' } }, groups.map(function (x) {
+          return el('button', {
+            class: 'btn small', 'aria-pressed': UI.groupBy === x[0] ? 'true' : 'false', text: 'Group by ' + x[1],
+            onclick: function () { UI.groupBy = x[0]; saveUI(); applyGroup(); render(); repaint(); }
+          });
+        }))),
+      el('div', { class: 'section' }, el('h3', { text: 'Motion' }),
+        el('p', { class: 'muted', text: 'Animations are subtle on purpose; if your system asks for reduced motion the board turns them off completely.' }))
+    ];
+  }
+  function aboutSettings() {
+    var rows = [
+      ['Live state', 'ws(s)://location.host — {type:"MESH_INIT"|"MESH_UPDATE", data:{tasks, locks, events, agents, launchers, workspacePath}}'],
+      ['Create / edit task', 'POST /api/mesh/task \u00b7 POST /api/mesh/task/:id/edit'],
+      ['Review', 'POST /api/mesh/task/:id/review {approved} (feedback when sending back)'],
+      ['Cancel / answer', 'POST /api/mesh/task/:id/cancel \u00b7 POST /api/mesh/answer {taskId, answer}'],
+      ['Manual relay', 'POST /api/mesh/task/:id/request \u00b7 POST /api/mesh/task/:id/response {text}'],
+      ['Manual move', 'POST /api/mesh/task/:id/move {to:"backlog|in_progress|review|done|cancelled"}'],
+      ['Agents', 'POST /api/mesh/agent {id, label} \u00b7 POST /api/mesh/agent/:id/rename {name} \u00b7 POST /api/mesh/agent/:id/launch {}'],
+      ['Locks', 'POST /api/mesh/release-lock {filePath}'],
+      ['This browser', 'agentmesh.ui.v1 (view, theme, filters) \u00b7 agentmesh.prefs.v1 (avatars, density). Both are wrapped in try/catch; without storage the page still works.'],
+      ['Safety', 'every string from an agent, chatbot or file is rendered with textContent; no innerHTML, no eval, no external requests.']
+    ];
+    var clear = el('button', {
+      class: 'btn small danger', text: 'Forget avatars & preferences', onclick: function () {
+        uiConfirm({
+          title: 'Forget this browser\u2019s settings?', message: 'Theme, filters, avatars and density go back to their defaults. The daemon is not touched.',
+          confirmLabel: 'Forget them', danger: true
+        }).then(function (ok) {
+          if (!ok) return;
+          try { window.localStorage.removeItem(PREF_KEY); window.localStorage.removeItem(LS_KEY); } catch (e) { }
+          AV = {}; UI.compact = false; toast('Preferences cleared', 'success'); render();
+        });
+      }
+    });
+    return [
+      el('div', { class: 'section' }, el('h3', { text: 'What this page talks to' }),
+        el('dl', { class: 'kv' }, rows.map(function (r) { return [el('dt', { text: r[0] }), el('dd', { text: r[1] })]; }))),
+      el('div', { class: 'section' }, el('h3', { text: 'Housekeeping' }),
+        el('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } },
+          el('button', { class: 'btn small', text: 'Keyboard shortcuts', onclick: function () { showShortcuts(); } }),
+          clear))
+    ];
+  }
+
+  /* 10. drag & drop */
+  var dragTask = null;
+  function dropAction(t, rawZone, agentId) {
+    var s = t.status;
+    var zone = rawZone.indexOf('col:') === 0 ? rawZone.slice(4) : rawZone; // "col:working" -> "working"
+    var manual = isManual(t.assignee || t.assignedIDE);
+    if (s === 'done') return { ok: false, why: "Done tasks can't be moved" };
+    if (s === 'cancelled') return { ok: false, why: "Cancelled tasks can't be moved" };
+    if (zone === 'cancel') return { ok: true, kind: 'cancel' };
+    if (zone === 'agent') {
+      if (manual) return { ok: false, why: 'A manual task has no agent working in your repo — move it between columns instead' };
+      if (s !== 'backlog') return { ok: false, why: 'Only waiting tasks can be reassigned — this one is already in the agent’s hands' };
+      if ((t.assignee || '') === agentId) return { ok: false, why: 'Already assigned to ' + agentName(agentId) };
+      return { ok: true, kind: 'assign', agentId: agentId };
+    }
+    if (manual) {   // Waiting / Working / In review / Done belong to me for manual agents
+      if (zone === 'blocked') return { ok: false, why: 'Only an agent can ask a question — a manual task never goes here' };
+      if (zone === 'backlog') return s === 'backlog' ? { ok: false, why: 'Already waiting' } : { ok: true, kind: 'move', to: 'backlog' };
+      if (zone === 'working') return s === 'in_progress' ? { ok: false, why: 'Already in Working' } : { ok: true, kind: 'move', to: 'in_progress' };
+      if (zone === 'review') return s === 'review' ? { ok: false, why: 'Already in review' } : { ok: true, kind: 'move', to: 'review' };
+      if (zone === 'done') return { ok: true, kind: 'move', to: 'done' };
+      return { ok: false, why: 'That column is not part of the manual flow' };
+    }
+    if (zone === 'done') return s === 'review' ? { ok: true, kind: 'approve' } : { ok: false, why: 'Only review tasks can be approved — the agent has to finish the work first' };
+    if (zone === 'working') return s === 'review' ? { ok: true, kind: 'sendback' } : { ok: false, why: 'Only the agent can start work — assign it instead' };
+    if (zone === 'backlog') return { ok: false, why: 'Waiting is where new tasks start — assign it to an agent instead' };
+    if (zone === 'review') return { ok: false, why: 'The agent finishes the work — drag to Done to approve it' };
+    if (zone === 'blocked') return { ok: false, why: 'The agent marks itself blocked when it has a question' };
+    return { ok: false, why: 'The board columns follow the agent’s progress, not your drags' };
+  }
+  function startDrag(e, t) {
+    if (!tileDraggable(t)) {
+      e.preventDefault();
+      toast(t.status === 'done' || t.status === 'cancelled' ? "Done tasks can't be moved" : 'This tile cannot be moved', 'warn');
+      return;
+    }
+    dragTask = t;
+    try { e.dataTransfer.setData('text/plain', t.id); e.dataTransfer.effectAllowed = 'move'; } catch (err) { }
+    e.currentTarget.classList.add('dragging');
+    document.body.classList.add('is-dragging');
+    var st = $('#cancelStrip'); if (st) st.setAttribute('aria-hidden', 'false');
+    markZones(t);
+  }
+  function endDrag() {
+    dragTask = null;
+    document.body.classList.remove('is-dragging');
+    var st = $('#cancelStrip'); if (st) st.setAttribute('aria-hidden', 'true');
+    var d = document.querySelectorAll('.dragging');
+    for (var i = 0; i < d.length; i++) d[i].classList.remove('dragging');
+    var z = document.querySelectorAll('.drop-valid,.drop-invalid,.over');
+    for (var j = 0; j < z.length; j++) z[j].classList.remove('drop-valid', 'drop-invalid', 'over');
+  }
+  function markZones(t) {
+    var zones = document.querySelectorAll('[data-zone]');
+    for (var i = 0; i < zones.length; i++) {
+      var z = zones[i], a = dropAction(t, z.dataset.zone, z.dataset.agent || '');
+      z.classList.add(a.ok ? 'drop-valid' : 'drop-invalid');
+    }
+    var strip = $('#cancelStrip');
+    if (strip) strip.classList.toggle('drop-valid', dropAction(t, 'cancel', '').ok);
+  }
+  function initStrip() {
+    var strip = $('#cancelStrip');
+    if (!strip) return;
+    strip.dataset.zone = 'cancel';
+    strip.addEventListener('dragleave', function () { strip.classList.remove('over'); });
+  }
+  function zoneFrom(target) {
+    var n = target && target.closest ? target.closest('[data-zone]') : null;
+    return n ? { zone: n.dataset.zone, agent: n.dataset.agent || '' } : null;
+  }
+  document.addEventListener('dragover', function (e) {
+    if (!dragTask) return;
+    var strip = $('#cancelStrip');
+    if (strip) strip.classList.toggle('over', !!(e.target.closest && e.target.closest('#cancelStrip')));
+    var z = zoneFrom(e.target);
+    if (!z) return;
+    // preventDefault on every zone so we can explain invalid drops with a toast
+    e.preventDefault();
+    try { e.dataTransfer.dropEffect = dropAction(dragTask, z.zone, z.agent).ok ? 'move' : 'none'; } catch (err) { }
+  });
+  document.addEventListener('drop', function (e) {
+    if (!dragTask) return;
+    var t = dragTask, z = zoneFrom(e.target);
+    e.preventDefault();
+    if (!z) { endDrag(); return; }
+    var a = dropAction(t, z.zone, z.agent);
+    endDrag();
+    if (!a.ok) { if (a.why) toast(a.why, 'warn'); return; }
+    if (a.kind === 'approve') approveTask(t);
+    else if (a.kind === 'sendback') openTask(t.id, { sendBack: true });
+    else if (a.kind === 'assign') reassign(t, a.agentId);
+    else if (a.kind === 'cancel') doCancel(t);
+    else if (a.kind === 'move') moveTask(t, a.to);
+  });
+
+  /* 11. keyboard */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (closeMenus()) { e.preventDefault(); return; }
+      if (closeTopOverlay()) e.preventDefault();
+      return;
+    }
+    var inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement && document.activeElement.tagName) ||
+      (document.activeElement && document.activeElement.isContentEditable);
+    if (inField || overlays.length) return;
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openNewTask(); }
+    else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openSettings('team'); }
+    else if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
+    else if (e.key === '?') { e.preventDefault(); showShortcuts(); }
+  });
+  function showShortcuts() {
+    var ov = openDialog({
+      cls: 'small', title: 'Keyboard shortcuts',
+      body: [el('ul', { class: 'plain' },
+        el('li', { text: 'N — new task' }),
+        el('li', { text: 'G — settings (team, avatars, appearance)' }),
+        el('li', { text: '/ — focus search' }),
+        el('li', { text: '? — this help' }),
+        el('li', { text: 'Esc — close menu or dialog' }),
+        el('li', { text: 'Enter on a focused tile — open details' }),
+        el('li', { text: '⋯ on a tile — “Move to…” without the mouse' }),
+        el('li', { text: 'Ctrl/Cmd+Enter — create the task from the instructions box' }))],
+      foot: [el('button', { class: 'btn primary', text: 'Got it', onclick: function () { ov.close(); } })]
+    });
+  }
+
+  /* 12. demo mode (?demo=1): sample data + every action applied in memory */
+function iso(ms){ return new Date(ms).toISOString(); }
+function demoState(){
+  var now = Date.now(), m = 60000, h = 3600000;
+  var agents = [
+    { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-75*1000) },
+    { id:'agent-a', ide:'codex', role:'WORKER', specialization:'Backend, data and CI', lastSeen:iso(now-31*1000),
+      launch:{ label:'Codex', mode:'open-app', running:false } },
+    { id:'agent-b', ide:'antigravity', role:'WORKER', specialization:'Frontend features', lastSeen:iso(now-11*m),
+      waitingUntil:iso(now+150*1000), launch:{ label:'Antigravity', mode:'command', running:false } },
+    { id:'chatgpt-web', ide:'ChatGPT', role:'WORKER', manual:true, specialization:'Copy and UX review', lastSeen:iso(now-9*m) }
+  ];
+  var launchers = [
+    { id:'agent-c', label:'Codex CLI', mode:'command', running:false },
+    { id:'agent-d', label:'Claude Code', mode:'open-app', running:false } ];
+  var T = [], ws = '/home/demo/project';
+  function task(o){
+    T.push(Object.assign({ id:'', featureTitle:'', title:'', description:'', brief:'', assignee:null, assignedIDE:null,
+      targetRole:'WORKER', status:'backlog', allowedFiles:[], forbiddenFiles:[], acceptance:[], workspacePath:ws, tokensSpent:0,
+      filesModified:[], violations:[], progressLog:[], updatedAt:iso(now-10*m) }, o));
+  }
+  task({ id:'TASK-H42T1', featureTitle:'Board sync', title:'Board sync: stop re-uploading the whole board on every page load',
+    description:'Only send dirtied tasks to the daemon instead of the full cache.',
+    brief:'The board POSTs the entire task cache on every reload, which the daemon rejects or stores stale.\n\n1. Track a per-task dirty flag.\n2. On flush, send only dirty tasks plus a `full: false` marker.\n3. After a successful flush, clear the flags.\n4. Keep a full upload path for recovery (first load, forced refresh).\n\nRun the focused tests before reporting.',
+    allowedFiles:['features/ideas/ideas-board.tsx','app/api/v1/tasks/sync/route.ts','tests/unit/tasks/sync-route.test.ts'],
+    forbiddenFiles:['prisma/**','scripts/dispatch*'],
+    acceptance:['Reload posts only dirty tasks','Full upload still works when forced','Focused tests pass'],
+    updatedAt:iso(now-42*1000) });
+  task({ id:'TASK-H42T2', featureTitle:'Board sync', title:'Add one-GET-based confirmation seed after local hydration',
+    description:'Seed confirmation state from the first GET instead of assuming local data is fresh.',
+    brief:'The initial POST is now gated until the seed completes; every local task whose normalized server payload matches is marked confirmed, while differing/offline-local tasks remain dirty and upload. Server-only tasks are ignored and never deleted.',
+    assignee:'agent-a', assignedIDE:'agent-a', status:'claimed', claimedAt:iso(now-12*m),
+    allowedFiles:['app/api/v1/tasks/sync/route.ts','lib/board/store.ts'], forbiddenFiles:['prisma/schema.prisma'],
+    acceptance:['1 GET + 0 POST when everything matches','POST contains only dirty tasks'],
+    progressLog:[{ at:iso(now-12*m), status:'claimed', summary:'Claimed while waiting for the next free slot.' }],
+    updatedAt:iso(now-3*m) });
+  task({ id:'TASK-H42T3', featureTitle:'Board sync', title:'Cache task snapshots on the daemon and reuse them between polls',
+    description:'Avoid re-normalising the same payload on every poll.',
+    brief:'Add an in-memory snapshot cache keyed by workspace + task id with a short TTL.\n\nKeep behaviour identical when the cache is cold. Log cache hits at debug level only.',
+    assignee:'agent-a', assignedIDE:'agent-a', status:'in_progress', claimedAt:iso(now-26*m),
+    allowedFiles:['lib/board/store.ts','lib/board/selectors.ts'], forbiddenFiles:['lib/board/legacy/**'],
+    acceptance:['Warm polls skip normalisation','Cold path unchanged'],
+    filesModified:['lib/board/store.ts','lib/board/selectors.ts','tests/legacy/board.spec.ts'],
+    violations:['tests/legacy/board.spec.ts — outside the allowed set'],
+    changesSummary:'Snapshot cache added behind the existing store facade. One test file outside the allowed set was touched to keep the legacy suite green.',
+    progressLog:[{ at:iso(now-26*m), status:'in_progress', summary:'Started on the snapshot cache.' },
+      { at:iso(now-8*m), status:'in_progress', summary:'Cache in place; noticed the legacy board spec needed an update — flagged as a boundary violation.' }],
+    tokensSpent:41200, updatedAt:iso(now-8*m) });
+  task({ id:'TASK-Q7K2M', featureTitle:'Sync cleanup', title:'Delete the legacy sync route behind a feature flag?',
+    description:'Decide whether the old route can go now.',
+    brief:'Remove the legacy sync route if nothing in the app still calls it.\n\nThe brief does not say whether the route must stay behind a flag for one release.',
+    assignee:'agent-b', assignedIDE:'agent-b', status:'blocked', claimedAt:iso(now-44*m),
+    blockedQuestion:'Nothing else in the repo imports the legacy route, but the release notes mention it may be needed for one more release. Should I delete it outright, or keep it behind a flag for one release?',
+    allowedFiles:['app/api/v1/tasks/sync/legacy/route.ts'], forbiddenFiles:['lib/board/**'],
+    acceptance:['No remaining importers','Focused tests pass'], updatedAt:iso(now-31*m) });
+  task({ id:'TASK-R9D3N', featureTitle:'API hardening', title:'Rate-limit the public mesh endpoints',
+    description:'Per-token limits with a clear 429 body.',
+    brief:'Add a token-bucket limiter in front of the public mesh routes. 60 requests/minute per token, burst 10, 429 with `Retry-After`.',
+    assignee:'agent-a', assignedIDE:'agent-a', status:'review', claimedAt:iso(now-3*h),
+    allowedFiles:['middleware/ratelimit.ts','app/api/mesh/**'], forbiddenFiles:['prisma/**'],
+    acceptance:['429 with Retry-After','No limiter on health checks'],
+    filesModified:['middleware/ratelimit.ts','app/api/mesh/task/route.ts','tests/unit/ratelimit.test.ts'],
+    changesSummary:'Token-bucket limiter added and wired to the mesh routes; health checks excluded. 7 new unit tests, all green. tsc clean.',
+    diffPreview:'+ export function rateLimit(req: Request, token: string) {\n+   const bucket = buckets.get(token) ?? newBucket();\n+   if (!bucket.take()) return tooMany(bucket.retryAfter());\n+   return null;\n+ }',
+    tokensSpent:88000,
+    progressLog:[{ at:iso(now-3*h), status:'in_progress', summary:'Limiter written.' },
+      { at:iso(now-40*m), status:'review', summary:'Reported: 7 unit tests green, tsc clean. Ready for review.' }],
+    updatedAt:iso(now-40*m) });
+  task({ id:'TASK-M2W8P', featureTitle:'Onboarding copy', title:'Rewrite the empty-state copy for the board',
+    description:'Shorter, calmer empty state.',
+    brief:'Rewrite the empty state so a first-time user knows what to do: one line of what the board is, one line of what to do next, no exclamation marks.',
+    assignee:'chatgpt-web', status:'in_progress', claimedAt:iso(now-19*m),
+    allowedFiles:['copy/board-empty.md'], forbiddenFiles:['src/**'], acceptance:['Two lines, no exclamation marks'],
+    updatedAt:iso(now-19*m) });
+  task({ id:'TASK-M5X1Q', featureTitle:'Onboarding copy', title:'Propose the error-state wording for blocked tasks',
+    description:'Blocked-task wording for the board.',
+    brief:'Write the wording shown when a task is blocked: title, one-line explanation, and the label of the button the human presses.',
+    assignee:'chatgpt-web', status:'review', claimedAt:iso(now-5*h),
+    deliverable:'Blocked task wording\n\nTitle: “Waiting on you”\nExplanation: “Your agent stopped because it needs a decision it cannot make on its own.”\nButton: “Answer and continue”\n\nRationale: the word “blocked” reads like a failure; “waiting on you” keeps the responsibility where it is. The button names the action instead of the state.\n\nAlternative (shorter): “Needs your call”.',
+    allowedFiles:['copy/blocked-state.md'], acceptance:['One title, one explanation, one button label'],
+    changesSummary:'Three wording options for the blocked state plus rationale.',
+    progressLog:[{ at:iso(now-47*m), status:'review', summary:'Pasted the answer back into the board for review.' }],
+    updatedAt:iso(now-47*m) });
+  task({ id:'TASK-C1V0Z', featureTitle:'Board store', title:'Split the board store into selectors',
+    description:'One selector per column so re-renders are cheap.',
+    brief:'Extract per-column selectors and keep the public store API unchanged.',
+    assignee:'agent-a', assignedIDE:'agent-a', status:'done', claimedAt:iso(now-26*h),
+    allowedFiles:['lib/board/selectors.ts','lib/board/store.ts'], acceptance:['Store API unchanged','Focused tests pass'],
+    filesModified:['lib/board/selectors.ts','lib/board/store.ts'],
+    changesSummary:'Selectors extracted, store API unchanged, focused tests green.',
+    progressLog:[{ at:iso(now-25*h), status:'done', summary:'Approved by the manager.' }], tokensSpent:30500, updatedAt:iso(now-25*h) });
+  task({ id:'TASK-V3L9K', featureTitle:'Dispatch script', title:'Auto-dispatch tasks to idle agents',
+    description:'Cancelled: the brief forbids dispatch scripts.',
+    brief:'Write a script that pushes tasks to the first idle agent every 30 seconds.',
+    assignee:'agent-b', status:'cancelled',
+    changesSummary:'Cancelled: never auto-dispatch; the manager assigns work explicitly.', updatedAt:iso(now-2*86400000) });
+  var locks = [
+    { filePath:'tests/unit/tasks/sync-route.test.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-7*m) },
+    { filePath:'lib/board/store.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-22*m) } ];
+  function ev(id, offset, ide, action, message, badge){ var t = new Date(now+offset);
+    return { id:id, timestamp:t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), ideName:ide, action:action, message:message, badgeType:badge }; }
+  var events = [
+    ev('e1', -42*1000, 'agent-a', 'progress', 'Cache in place; the legacy board spec needed an update — flagged outside the boundary.', 'warning'),
+    ev('e2', -6*m, 'System', 'Mesh', 'AgentMesh daemon started.', 'info'),
+    ev('e3', -9*m, 'chatgpt-web', 'response', 'TASK-M5X1Q: response pasted by the manager, moved to review.', 'purple'),
+    ev('e4', -19*m, 'manager', 'claim', 'TASK-M2W8P reserved for chatgpt-web.', 'info'),
+    ev('e5', -31*m, 'agent-b', 'blocked', 'TASK-Q7K2M: needs a decision about the legacy route.', 'warning'),
+    ev('e6', -40*m, 'agent-a', 'review', 'TASK-R9D3N: 7 unit tests green, tsc clean; ready for review.', 'purple'),
+    ev('e7', -12*m, 'agent-a', 'claim', 'TASK-H42T2 claimed.', 'info'),
+    ev('e8', -25*h, 'manager', 'approve', 'TASK-C1V0Z approved and archived.', 'success') ];
+  return { tasks:T, locks:locks, events:events, agents:agents, launchers:launchers, workspacePath:ws,
+    // only used by the demo: avatars for the sample agents (the real page keeps them in localStorage)
+    demoAvatars: { 'agent-a':{ emoji:'🦊', color:'#3b5bdb' }, 'agent-b':{ emoji:'🐺', color:'#0ca678' },
+      'chatgpt-web':{ emoji:'🤖', color:'#7048e8' }, 'agent-c':{ emoji:'🚀', color:'#e8590c' }, 'agent-d':{ emoji:'🧠', color:'#1098ad' },
+      'manager':{ emoji:'🧭', color:'#495057' } } };
+}
+function addDemoEvent(ideName, action, message, badgeType){
+  S.events.unshift({ id:'e'+Math.random().toString(36).slice(2,8),
+    timestamp:new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }),
+    ideName:ideName, action:action, message:message, badgeType:badgeType || 'info' });
+  S.events = S.events.slice(0, 60);
+}
+function demoId(){ return 'TASK-' + Math.random().toString(36).slice(2,7).toUpperCase(); }
+function splitLines(s){ return String(s || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
+function demoApi(path, body){
+  body = body || {};
+  var parts = path.split('/').filter(Boolean);          // api / mesh / …
+  var id = parts[3], verb = parts[4], t = id ? taskById(id) : null;
+  var fail = function (msg) { toast(msg, 'error'); return Promise.resolve(null); };
+  var done = function (extra, ide, action, msg, badge) {
+    if (msg) addDemoEvent(ide || 'manager', action || 'action', msg, badge || 'info');
+    return Promise.resolve(Object.assign({ success:true }, extra || {}));
+  };
+  if (parts[2] === 'task' && parts.length === 3){
+    var nt = { id:demoId(), featureTitle:'', title:body.title || 'Untitled', description:'', brief:body.brief || '',
+      assignee:body.assignee || null, assignedIDE:null, targetRole:'WORKER', status:'backlog',
+      allowedFiles:splitLines(body.allowedFiles), forbiddenFiles:splitLines(body.forbiddenFiles),
+      acceptance:splitLines(body.acceptance), workspacePath:body.workspacePath || S.workspacePath,
+      tokensSpent:0, filesModified:[], violations:[], progressLog:[], updatedAt:new Date().toISOString() };
+    S.tasks.unshift(nt);
+    return done({}, 'manager', 'created', 'Created ' + nt.id + ': “' + nt.title + '”' + (nt.assignee ? ' for ' + agentName(nt.assignee) : '') + '.', 'success');
+  }
+  if (!t && parts[2] === 'task') return fail('Unknown task ' + id);
+  if (parts[2] === 'task' && verb === 'edit'){
+    if (t.status === 'review' || t.status === 'done' || t.status === 'cancelled') return fail('This task can no longer be edited');
+    if (body.title) t.title = body.title;
+    if (body.brief !== undefined) t.brief = body.brief;
+    ['allowedFiles', 'forbiddenFiles', 'acceptance'].forEach(function (k) { if (body[k] !== undefined) t[k] = splitLines(body[k]); });
+    if (body.workspacePath) t.workspacePath = body.workspacePath;
+    if (body.assignee !== undefined){
+      if (t.status !== 'backlog') return fail('The assignee can only change while the task is waiting');
+      t.assignee = body.assignee || null;
+    }
+    t.updatedAt = new Date().toISOString();
+    return done({}, 'manager', 'edit', 'Updated ' + t.id + '.', 'info');
+  }
+  if (parts[2] === 'task' && verb === 'review'){
+    if (t.status !== 'review') return fail('Only a task in review can be approved or sent back');
+    if (body.approved){
+      t.status = 'done'; t.updatedAt = new Date().toISOString();
+      t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Approved by the manager.' });
+      return done({}, 'manager', 'approve', 'Approved ' + t.id + '.', 'success');
+    }
+    if (!body.feedback) return fail('Feedback is required to send a task back');
+    t.status = 'in_progress'; t.reviewFeedback = body.feedback; t.updatedAt = new Date().toISOString();
+    t.progressLog.push({ at:t.updatedAt, status:'in_progress', summary:'Sent back: ' + body.feedback });
+    return done({}, 'manager', 'review', 'Sent ' + t.id + ' back: ' + body.feedback, 'warning');
+  }
+  if (parts[2] === 'task' && verb === 'cancel'){
+    if (t.status === 'done' || t.status === 'cancelled') return fail('This task cannot be cancelled');
+    t.status = 'cancelled'; t.changesSummary = 'Cancelled' + (body.reason ? ': ' + body.reason : '.');
+    t.updatedAt = new Date().toISOString();
+    return done({}, 'manager', 'cancel', 'Cancelled ' + t.id + (body.reason ? ': ' + body.reason : '.'), 'warning');
+  }
+  if (parts[2] === 'task' && verb === 'request'){
+    var text = 'Task ' + t.id + ' — ' + t.title + '\nProject folder: ' + t.workspacePath + '\n\nInstructions:\n' + (t.brief || '(none)') +
+      '\n\nFiles you may change:\n' + ((t.allowedFiles || []).join('\n') || '(none)') +
+      '\n\nFiles you must never touch:\n' + ((t.forbiddenFiles || []).join('\n') || '(none)') +
+      '\n\nDone when:\n' + ((t.acceptance || []).join('\n') || '(none)') +
+      '\n\nReply with the finished work and a short report. Nothing you write will be executed.';
+    return Promise.resolve({ success:true, text:text });
+  }
+  if (parts[2] === 'task' && verb === 'response'){
+    if (!body.text) return fail('The pasted response is empty');
+    t.deliverable = body.text; t.status = 'review'; t.updatedAt = new Date().toISOString();
+    t.progressLog.push({ at:t.updatedAt, status:'review', summary:'Pasted the answer back into the board for review.' });
+    return done({}, 'chatgpt-web', 'response', t.id + ': response pasted by the manager, moved to review.', 'purple');
+  }
+  if (parts[2] === 'answer'){
+    var at = taskById(body.taskId);
+    if (!at) return fail('Unknown task ' + body.taskId);
+    if (!body.answer) return fail('Write an answer first');
+    at.status = 'in_progress'; at.managerAnswer = body.answer; at.blockedQuestion = ''; at.updatedAt = new Date().toISOString();
+    at.progressLog.push({ at:at.updatedAt, status:'in_progress', summary:'Manager answered: ' + body.answer });
+    return done({}, 'manager', 'answer', 'Answered ' + at.id + ' — the agent continues.', 'success');
+  }
+  if (parts[2] === 'agent' && parts.length === 3){
+    if (!/^[A-Za-z0-9_-]+$/.test(body.id || '')) return fail('Agent id: letters, digits, "-" and "_" only');
+    if (agentById(body.id)) return fail('An agent with that id already exists');
+    S.agents.push({ id:body.id, displayName:(body.label && body.label !== body.id) ? body.label : undefined, ide:'manual',
+      role:'WORKER', manual:true, specialization:'Manual relay', lastSeen:new Date().toISOString() });
+    return done({}, 'manager', 'agent', 'Added manual agent ' + body.id + '.', 'info');
+  }
+  if (parts[2] === 'agent' && verb === 'launch'){
+    var ag = agentById(id), wasJoined = !!ag;
+    if (!ag){
+      var l = (S.launchers || []).filter(function (x) { return x.id === id; })[0];
+      if (!l) return fail('Unknown agent ' + id);
+      ag = { id:id, displayName:l.label, ide:'codex', role:'WORKER', specialization:'Started from the board',
+        lastSeen:new Date().toISOString(), launch:{ label:l.label, mode:l.mode, running:true } };
+      S.agents.push(ag);
+      l.running = true;
+    } else {
+      if (ag.manual) return fail('A manual agent is started by you, not by the board');
+      ag.launch = ag.launch || { label:ag.ide || ag.id, mode:'command', running:false };
+      if (ag.launch.running) return fail((ag.launch.label || id) + ' is already running');
+      ag.launch.running = true;
+    }
+    ag.lastSeen = new Date().toISOString();
+    addDemoEvent(agentName(id), 'launch', agentName(id) + (wasJoined ? ' started again' : ' joined the mesh') + ' (demo).', 'success');
+    // pretend the agent settles after a few seconds, like the real daemon would
+    window.setTimeout(function () {
+      var a2 = agentById(id);
+      if (a2 && a2.launch) { a2.launch.running = false; a2.lastSeen = new Date().toISOString(); push(); }
+    }, 6000);
+    return Promise.resolve({ success:true, message:'Start prompt copied and ' + agentName(id) + ' started (demo).' });
+  }
+  if (parts[2] === 'agent' && verb === 'rename'){
+    var ag = agentById(id);
+    if (!ag) return fail('Unknown agent ' + id);
+    ag.displayName = (body.name || '').trim() || undefined;
+    return done({}, 'manager', 'agent', 'Renamed ' + id + ' to ' + (ag.displayName || id) + '.', 'info');
+  }
+  if (parts[2] === 'task' && verb === 'move'){
+    if (!isManual(t.assignee || t.assignedIDE)) return fail('Only a manual agent’s task can be moved by hand — this one belongs to a real agent');
+    if (['backlog', 'in_progress', 'review', 'done', 'cancelled'].indexOf(body.to) < 0) return fail('Unknown column');
+    if (t.status === body.to) return fail('Already there');
+    t.status = body.to; t.updatedAt = new Date().toISOString();
+    if (body.to === 'backlog') { t.deliverable = ''; t.progressLog.push({ at:t.updatedAt, status:'backlog', summary:'Moved back to Waiting by the manager.' }); }
+    if (body.to === 'done') t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Moved to Done by the manager.' });
+    if (body.to === 'in_progress') t.progressLog.push({ at:t.updatedAt, status:'in_progress', summary:'Moved to Working by the manager.' });
+    if (body.to === 'review') t.progressLog.push({ at:t.updatedAt, status:'review', summary:'Moved to review by the manager.' });
+    if (body.to === 'cancelled') t.changesSummary = 'Cancelled by the manager.';
+    return done({}, 'manager', 'move', t.id + ' → ' + body.to + ' (manual task).', 'info');
+  }
+  if (parts[2] === 'release-lock'){
+    S.locks = S.locks.filter(function (l) { return l.filePath !== body.filePath; });
+    return done({}, 'manager', 'lock', 'Released the lock on ' + body.filePath + '.', 'info');
+  }
+  return fail('Unsupported request in demo mode');
+}
+
+  /* 13. top bar wiring + boot */
+  function enterDemo() {   // only ever reached because the user pressed the button; ?demo=1 stays the documented way in
+    if (DEMO) return;
+    DEMO = true;
+    if (reconnectTimer) { window.clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (ws) { try { ws.onclose = null; ws.close(); } catch (e) { } ws = null; }
+    $('#demoBadge').classList.remove('hidden');
+    setConn('live', 'demo');
+    toast('Demo mode: sample data, nothing is connected to a daemon.', 'warn');
+    applyState(demoState());
+  }
+  function applyDensity() { document.body.classList.toggle('compact', !!UI.compact); }
+  function applyTheme() {
+    var root = document.documentElement;
+    if (UI.theme === 'auto') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', UI.theme);
+    var b = $('#themeBtn');
+    b.textContent = UI.theme === 'light' ? '☀' : UI.theme === 'dark' ? '☾' : '◐';
+    b.setAttribute('aria-label', 'Theme: ' + UI.theme + ' (click to change)');
+    b.title = 'Theme: ' + UI.theme;
+  }
+  function applyGroup() {
+    $('#groupStatus').setAttribute('aria-pressed', UI.groupBy === 'status' ? 'true' : 'false');
+    $('#groupAgent').setAttribute('aria-pressed', UI.groupBy === 'agent' ? 'true' : 'false');
+    setText($('#boardHint'), UI.groupBy === 'agent' ? 'Swimlanes per agent' : '');
+  }
+  var searchTimer = null;
+  function wire() {
+    $('#search').value = UI.search;
+    $('#search').addEventListener('input', function (e) {
+      var v = e.target.value;
+      window.clearTimeout(searchTimer);
+      searchTimer = window.setTimeout(function () { UI.search = v; saveUI(); render(); }, 160);
+    });
+    $('#agentFilter').addEventListener('change', function (e) { UI.filterAgent = e.target.value; saveUI(); render(); });
+    $('#showCancelled').addEventListener('change', function (e) { UI.showCancelled = e.target.checked; saveUI(); render(); });
+    $('#newTaskBtn').addEventListener('click', openNewTask);
+    $('#settingsBtn').addEventListener('click', function () { openSettings('team'); });
+    $('#themeBtn').addEventListener('click', function () {
+      UI.theme = UI.theme === 'auto' ? 'light' : UI.theme === 'light' ? 'dark' : 'auto';
+      saveUI(); applyTheme();
+    });
+    $('#groupStatus').addEventListener('click', function () { UI.groupBy = 'status'; saveUI(); applyGroup(); render(); });
+    $('#groupAgent').addEventListener('click', function () { UI.groupBy = 'agent'; saveUI(); applyGroup(); render(); });
+    $('#activityToggle').addEventListener('click', function () { UI.activity = !UI.activity; saveUI(); $('#activity').classList.toggle('open', UI.activity); });
+    $('#activityClose').addEventListener('click', function () { UI.activity = false; saveUI(); $('#activity').classList.remove('open'); });
+    document.addEventListener('visibilitychange', refreshTimes);
+  }
+  loadUI();
+  loadPrefs();
+  applyTheme();
+  applyDensity();
+  applyGroup();
+  initStrip();
+  wire();
+  $('#showCancelled').checked = !!UI.showCancelled;
+  if (DEMO) {
+    $('#demoBadge').classList.remove('hidden');
+    setConn('live', 'demo');
+    applyState(demoState());
+  } else {
+    setConn('', 'connecting…');
+    render();
+    connect();
+  }
+
+  window.addEventListener('resize', function () { if (window.innerWidth > 1200) { $('#activity').classList.toggle('open', !!UI.activity); } });
+  // expose a couple of internals for manual debugging only
+  window.AgentMesh = { get state() { return S; }, render: render };
+})();</script>
+</body>
+</html>
