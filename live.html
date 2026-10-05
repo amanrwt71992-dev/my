@@ -390,6 +390,18 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 .runner-line .runner-dot.failed{background:var(--danger)}
 .runner-line .runner-meta{font-variant-numeric:tabular-nums}
 
+
+/* V2-11 team screen: identity badge, rejected panel, tidy menu */
+.bound-line{font-size:11px;color:var(--muted);display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.bound-line .badge{font-size:10px}
+.rejected-panel{border:1px solid var(--warn);background:var(--warn-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.rejected-panel h3{margin:0;font-size:12px;font-weight:700;color:var(--warn)}
+.rejected-item{border:1px solid var(--border);background:var(--panel);border-radius:8px;padding:7px 9px;display:flex;flex-direction:column;gap:5px}
+.rejected-item-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rejected-item-actions{display:flex;gap:6px;flex-wrap:wrap}
+.agent-menu-btn{margin-left:auto;background:transparent;border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:12px;color:var(--muted)}
+.agent-menu-btn:hover{background:var(--panel-2);color:var(--text)}
+
 </style>
 </head>
 <body>
@@ -642,7 +654,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
 
   /* 2. state + persisted view options */
-  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [] };
+  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [], rejected: [] };
   var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0 };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
@@ -852,6 +864,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     S.agentState = data.agentState && typeof data.agentState === 'object' ? data.agentState : {};
     S.handoverHints = Array.isArray(data.handoverHints) ? data.handoverHints : [];
     S.attention = Array.isArray(data.attention) ? data.attention : [];
+    S.rejected = Array.isArray(data.rejected) ? data.rejected : [];
     if (DEMO) adoptDemoAvatars(data);
     if (data.workspacePath) S.workspacePath = data.workspacePath;
     if (T.open && !taskById(T.taskId)) closeTask();
@@ -1080,6 +1093,11 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         a.role === 'MANAGER' ? el('span', { class: 'badge', text: 'manager' }) : null),
       el('span', { class: 'status-dot ' + dotClass + (cur ? ' beat' : ''), title: waiting ? 'waiting' : cur ? 'working' : live })));
     if (a.displayName && a.displayName !== a.id) card.appendChild(el('div', { class: 'id', text: a.id }));
+    if (a.bound && (a.bound.ide || a.bound.boundId)){
+      var ide = a.bound.ide || 'unknown';
+      var bid = a.bound.boundId || a.id;
+      card.appendChild(el('div', { class:'bound-line' }, el('span', { text:'Runs in ' + ide + ' · fixed id ' + bid })));
+    }
     var sub;
     if (waiting) sub = el('span', { class: 'badge ok', text: 'waiting for work' });
     else if (cur) sub = el('span', {}, el('span', { text: 'working on ' + cur.id + ' · ' }), timerNode(cur, { staleAt: 30 * 60000 }));
@@ -1090,7 +1108,6 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     card.appendChild(el('div', { class: 'sub' },
       workloadBar(a.id),
       el('span', { text: w.total ? (w.open + ' open · ' + (w.counts.done || 0) + ' done') : 'no tasks' })));
-    // runner status line if present
     if (a.runner){
       var rLine = el('div', { class: 'runner-line' },
         el('span', { class: 'runner-dot ' + runnerDotClass(a.runner) }),
@@ -1105,19 +1122,20 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
   function agentCardActions(a) {
     var box = el('div', { class: 'actions' });
-    if (!a.manual && a.launch) box.appendChild(launchButton(a.id, a.launch.label, !!a.launch.running));
-    if (!a.manual) box.appendChild(el('button', {
-      class: 'btn small', text: 'Copy start prompt', 'aria-label': 'Copy the start prompt for ' + a.id,
-      onclick: function (e) { e.stopPropagation(); copyText(startPromptFor(a.id), 'Start prompt'); }
-    }));
-    box.appendChild(el('button', {
-      class: 'btn small nudge-btn', text: 'Copy nudge', 'aria-label': 'Copy nudge for ' + a.id,
-      onclick: function (e) { e.stopPropagation(); copyNudge(a.id); }
-    }));
-    box.appendChild(el('button', {
-      class: 'btn small', text: '✎ Rename', 'aria-label': 'Rename ' + a.id,
-      onclick: function (e) { e.stopPropagation(); beginRename(a, box); }
-    }));
+    var menuBtn = el('button', { class:'agent-menu-btn', text:'⋯ Actions', 'aria-label':'Actions for ' + a.id, title:'Actions', onclick:function(e){
+      e.stopPropagation();
+      var items = [];
+      items.push({ label:'✎ Rename', run:function(){ beginRename(a, box); } });
+      if (!a.manual && a.launch) {
+        if (!a.launch.running) items.push({ label:'▶ Run ' + (a.launch.label||a.id), run:function(){ runAgent(a.id); } });
+        items.push({ label:'Launch settings', run:function(){ openSettings('team'); } });
+      }
+      items.push({ label:'Copy nudge', run:function(){ copyNudge(a.id); } });
+      if (!a.manual) items.push({ label:'Copy start prompt', run:function(){ copyText(startPromptFor(a.id), 'Start prompt'); } });
+      if (a.role!=='MANAGER') items.push({ label:'Remove…', run:function(){ openRemoveAgent(a.id); } });
+      openMenu(menuBtn, 'Actions for ' + agentName(a.id), items);
+    }});
+    box.appendChild(menuBtn);
     return box;
   }
   function beginRename(a, box) {
@@ -1395,34 +1413,45 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   function stopRunner(id){
     api('/api/mesh/agent/' + encodeURIComponent(id) + '/runner/stop', {}).then(function(r){ if (r) { toast('Runner stop requested for ' + agentName(id), 'success'); if (DEMO) push(); } });
   }
-  var ATT_KIND_ICON = { question:'❓', review:'👀', silent:'🔇', answer_waiting:'⏳', offline_owner:'📴', violations:'⚠', runner_failed:'💥' };
+  var ATT_KIND_ICON = { question:'❓', review:'👀', silent:'🔇', answer_waiting:'⏳', offline_owner:'📴', violations:'⚠', runner_failed:'💥', rejected:'🚫' };
   function attentionIcon(kind){ return ATT_KIND_ICON[kind] || '•'; }
   function renderAttention(){
     var panel = $('#attention'), feed = $('#attentionFeed'), badge = $('#attentionBadge'), countEl = $('#attentionCount');
     var items = S.attention || [];
+    var rejectedList = S.rejected || [];
+    var extra = [];
+    rejectedList.forEach(function(r){
+      var exists = items.some(function(it){ return it.kind==='rejected' && (it.id===r.id || it.message && it.message.indexOf(r.id)>=0); });
+      if (!exists) extra.push({ id:'rej-'+r.id, kind:'rejected', taskId:'', agentId:'', message:'Unknown agent ' + r.id + ' tried to join as ' + (r.ideName||'unknown'), since:r.at, action:'Add as agent or dismiss', rej:r });
+    });
+    var allItems = items.concat(extra);
     if (badge){
-      if (items.length){
-        badge.textContent = String(items.length);
+      if (allItems.length){
+        badge.textContent = String(allItems.length);
         badge.classList.remove('hidden');
       } else {
         badge.classList.add('hidden');
       }
     }
-    if (countEl) setText(countEl, '(' + items.length + ')');
+    if (countEl) setText(countEl, '(' + allItems.length + ')');
     if (panel){
       panel.classList.toggle('open', !!UI.attention);
     }
     var ab = $('#attentionBackdrop');
     if (ab) ab.classList.toggle('open', !!UI.attention);
     if (!feed) return;
-    if (!items.length){
+    if (!allItems.length){
       replace(feed, el('div', { class:'empty', text:'No attention needed.' }));
       return;
     }
-    var nodes = items.map(function(it){
+    var nodes = allItems.map(function(it){
       var sinceText = '';
       if (it.since){
         var diff = Date.now() - tms(it.since);
+        if (diff>0) sinceText = durationText(diff) + ' ago';
+        else sinceText = 'just now';
+      } else if (it.at){
+        var diff = Date.now() - tms(it.at);
         if (diff>0) sinceText = durationText(diff) + ' ago';
         else sinceText = 'just now';
       }
@@ -1439,9 +1468,101 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       if (it.agentId && (it.kind==='answer_waiting' || it.kind==='silent' || it.kind==='offline_owner')){
         actions.appendChild(el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(){ copyNudge(it.agentId); } }));
       }
+      if (it.kind==='rejected'){
+        var innerRej = it.rej || null;
+        if (!innerRej){
+          var rid = (it.id||'').replace(/^rej-/,'');
+          for (var ri=0; ri<rejectedList.length; ri++){ if (rejectedList[ri].id===rid){ innerRej = rejectedList[ri]; break; } }
+        }
+        if (!innerRej){
+          var filtered = (S.rejected||[]).filter(function(r){ return it.message && it.message.indexOf(r.id)>=0; });
+          if (filtered.length) innerRej = filtered[0];
+        }
+        var targetRej = it.rej || innerRej;
+        if (!targetRej && it.id){
+          var cleanId = it.id.replace(/^rej-/,'');
+          var found = (S.rejected||[]).filter(function(r){ return r.id===cleanId; });
+          if (found.length) targetRej = found[0];
+        }
+        if (targetRej){
+          (function(tr){
+            actions.appendChild(el('button', { class:'btn small primary', text:'Add as agent', onclick:function(){ addRejectedAsAgent(tr); } }));
+            actions.appendChild(el('button', { class:'btn small', text:'Dismiss', onclick:function(){ dismissRejected(tr); } }));
+          })(targetRej);
+        }
+      }
       return el('div', { class:'attention-item' }, top, act, actions);
     });
     replace(feed, nodes);
+  }
+
+
+  /* V2-11 helpers: remove agent, identity badge, rejected */
+  function tasksForAgent(agentId){
+    return S.tasks.filter(function(t){ return (t.assignee===agentId || t.assignedIDE===agentId) && t.status!=='done' && t.status!=='cancelled'; });
+  }
+  function openRemoveAgent(agentId){
+    var a = agentById(agentId);
+    if (!a) { toast('Unknown agent '+agentId,'error'); return; }
+    if (a.role==='MANAGER'){ toast('Manager cannot be removed','error'); return; }
+    var held = tasksForAgent(agentId);
+    var otherAgents = workers().filter(function(x){ return x.id!==agentId && !x.manual; });
+    var transferSel = el('select', { 'aria-label':'Move tasks to' });
+    transferSel.appendChild(el('option', { value:'', text:'Open to any worker' }));
+    otherAgents.forEach(function(o){ transferSel.appendChild(el('option', { value:o.id, text: agentName(o.id) })); });
+    var bodyNodes = [];
+    bodyNodes.push(el('div', { class:'muted', style:{fontSize:'12px'}, text:'Remove ' + agentName(agentId) + ' (' + agentId + ')? This cannot be undone.' }));
+    if (held.length){
+      bodyNodes.push(el('div', { class:'notice warn', text: held.length + ' task(s) are held or reserved for this agent. Choose where to move them.' }));
+      bodyNodes.push(el('div', { class:'field' }, el('label', { text:'Move its tasks to' }), transferSel));
+      bodyNodes.push(el('div', { class:'plain', style:{fontSize:'11px'} }, el('ul', { class:'plain' }, held.slice(0,8).map(function(t){ return el('li', { text: t.id + ' - ' + t.title }); }))));
+      if (held.length>8) bodyNodes.push(el('div', { class:'muted', style:{fontSize:'11px'}, text:'+ ' + (held.length-8) + ' more' }));
+    } else {
+      bodyNodes.push(el('div', { class:'muted', style:{fontSize:'12px'}, text:'No open tasks for this agent.' }));
+    }
+    var ov = openDialog({
+      title:'Remove ' + agentName(agentId) + '?',
+      body: bodyNodes,
+      foot:[
+        el('button', { class:'btn', text:'Cancel', onclick:function(){ ov.close(); } }),
+        el('button', { class:'btn danger', text:'Remove', onclick:function(){
+          var transferTo = held.length ? transferSel.value : '';
+          api('/api/mesh/agent/' + encodeURIComponent(agentId) + '/remove', { transferTo: transferTo }).then(function(r){
+            if (r){ ov.close(); if (DEMO) push(); toast('Removed ' + agentName(agentId), 'success'); }
+          });
+        }})
+      ]
+    });
+  }
+  function addRejectedAsAgent(rej){
+    api('/api/mesh/agent', { id: rej.id, kind:'worker', label: rej.ideName || rej.id }).then(function(r){ if (r && DEMO) push(); });
+  }
+  function dismissRejected(rej){
+    api('/api/mesh/rejected/dismiss', { id: rej.id }).then(function(r){ if (r && DEMO) push(); });
+  }
+  function rejectedPanel(){
+    var list = S.rejected || [];
+    if (!list.length) return null;
+    var items = list.map(function(rej){
+      var when = rej.at ? agoText(rej.at) + ' (' + clockText(rej.at) + ')' : '';
+      var cnt = rej.count ? ' · ' + rej.count + ' attempt(s)' : '';
+      return el('div', { class:'rejected-item' },
+        el('div', { class:'rejected-item-top' },
+          el('span', { class:'badge', text: rej.id }),
+          el('span', { text: rej.ideName || 'unknown IDE' }),
+          el('span', { class:'muted', style:{fontSize:'11px'}, text: when + cnt })
+        ),
+        el('div', { class:'rejected-item-actions' },
+          el('button', { class:'btn small primary', text:'Add as agent', onclick:function(){ addRejectedAsAgent(rej); } }),
+          el('button', { class:'btn small', text:'Dismiss', onclick:function(){ dismissRejected(rej); } })
+        )
+      );
+    });
+    return el('div', { class:'rejected-panel' },
+      el('h3', { text:'Unknown agents tried to join (' + list.length + ')' }),
+      el('div', { class:'muted', style:{fontSize:'11px'}, text:'An IDE tried to register an unknown agent id. Add it as a worker or dismiss.' }),
+      items
+    );
   }
 
   function statusBadgeText(t) {
@@ -2661,7 +2782,9 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           launchButton(l.id, l.label, !!(l.running)));
       })) : null;
 
+    var rejPanel = rejectedPanel();
     return [
+      rejPanel,
       el('div', { class: 'section' },
         el('h3', { text: 'Add agents' }),
         el('div', { class: 'field' }, el('label', { text: 'One id per line' }), idsIn,
@@ -2734,10 +2857,17 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       el('div', { class: 'main' },
         el('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } },
           nameIn, nameBtn,
-          el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(){ copyNudge(a.id); } }),
+          el('button', { class:'btn small', text:'Actions…', onclick:function(e){
+            var items = [];
+            items.push({ label:'Copy nudge', run:function(){ copyNudge(a.id); } });
+            if (!a.manual) items.push({ label:'Copy start prompt', run:function(){ copyText(startPromptFor(a.id), 'Start prompt'); } });
+            if (a.role!=='MANAGER') items.push({ label:'Remove…', run:function(){ openRemoveAgent(a.id); } });
+            openMenu(e.target, 'Actions for ' + a.id, items);
+          }}),
           a.manual ? el('span', { class: 'badge', text: 'manual' }) : null,
           a.launch ? el('span', { class: 'badge', text: a.launch.running ? 'running' : 'startable' }) : null),
         el('div', { class: 'id', text: a.id + '  \u00b7  ' + (a.ide || 'agent') + '  \u00b7  ' + (a.specialization || 'no specialisation') }),
+        a.bound && (a.bound.ide || a.bound.boundId) ? el('div', { class:'bound-line' }, el('span', { text:'Runs in ' + (a.bound.ide||'unknown') + ' · fixed id ' + (a.bound.boundId||a.id) })) : null,
         el('div', { class: 'sub' }, workloadBar(a.id),
           el('span', { class: 'muted', style: { fontSize: '11px' }, text: taskWorkload(a.id).open + ' open' })),
         a.runner ? el('div', { class: 'runner-line' },
@@ -2974,11 +3104,11 @@ function demoState(){
   var agents = [
     { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-75*1000), nudge:'Resume manager: check attention panel' },
     { id:'agent-a', ide:'codex', role:'WORKER', specialization:'Backend, data and CI', lastSeen:iso(now-31*1000),
-      launch:{ label:'Codex', mode:'open-app', running:false }, nudge:'Hey agent-a, please resume TASK-H42T3, you were silent for 12 min', runner:{running:true,pid:1234,startedAt:iso(now-15*m),lastExit:null,startsLastHour:2} },
+      launch:{ label:'Codex', mode:'open-app', running:false }, nudge:'Hey agent-a, please resume TASK-H42T3, you were silent for 12 min', runner:{running:true,pid:1234,startedAt:iso(now-15*m),lastExit:null,startsLastHour:2}, bound:{ide:'Codex', boundId:'agent-a'} },
     { id:'agent-b', ide:'antigravity', role:'WORKER', specialization:'Frontend features', lastSeen:iso(now-11*m),
       waitingUntil:iso(now+150*1000), launch:{ label:'Antigravity', mode:'command', running:false }, nudge:'agent-b, your task TASK-Q7K2M needs answer', runner:{running:false,pid:null,startedAt:null,lastExit:{code:1,at:iso(now-5*m)},startsLastHour:5} },
-    { id:'agent-busy', ide:'codex', role:'WORKER', specialization:'Busy worker', lastSeen:iso(now-20*1000), launch:{ label:'Busy', mode:'command', running:false }, nudge:'agent-busy, you hold TASK-HAND1 too long' },
-    { id:'agent-idle', ide:'codex', role:'WORKER', specialization:'Idle worker', lastSeen:iso(now-30*1000), waitingUntil:iso(now+300*1000), launch:{ label:'Idle', mode:'command', running:false }, nudge:'agent-idle, pick up TASK-HAND1' },
+    { id:'agent-c', ide:'cursor', role:'WORKER', specialization:'Docs', lastSeen:iso(now-5*m), nudge:'agent-c nudge' },
+    { id:'agent-d', ide:'vscode', role:'WORKER', specialization:'Tests', lastSeen:iso(now-8*m), nudge:'agent-d nudge' },
     { id:'chatgpt-web', ide:'ChatGPT', role:'WORKER', manual:true, specialization:'Copy and UX review', lastSeen:iso(now-9*m), nudge:'chatgpt-web, please continue' }
   ];
   var launchers = [
@@ -3147,10 +3277,15 @@ function demoState(){
     { id:'att1', kind:'question', taskId:'TASK-Q7K2M', agentId:'agent-b', message:'TASK-Q7K2M needs answer', since:iso(now-10*m), action:'Answer the question' },
     { id:'att2', kind:'silent', taskId:'TASK-SILENT1', agentId:'agent-a', message:'TASK-SILENT1 silent 12 min', since:iso(now-12*m), action:'Nudge the agent' },
     { id:'att3', kind:'offline_owner', taskId:'TASK-DEP1', agentId:'agent-busy', message:'Owner offline for TASK-DEP1', since:iso(now-20*m), action:'Reassign or nudge' },
-    { id:'att4', kind:'review', taskId:'TASK-R9D3N', agentId:'agent-a', message:'TASK-R9D3N ready for review', since:iso(now-5*m), action:'Review the changes' }
+    { id:'att4', kind:'review', taskId:'TASK-R9D3N', agentId:'agent-a', message:'TASK-R9D3N ready for review', since:iso(now-5*m), action:'Review the changes' },
+    { id:'att5', kind:'rejected', message:'Unknown agent ghost-1 tried to join as Codex', since:iso(now-3*m), action:'Add as agent or dismiss' }
+  ];
+  var rejected = [
+    { id:'ghost-1', ideName:'Codex', at:iso(now-3*m), count:2 },
+    { id:'ghost-2', ideName:'Cursor', at:iso(now-15*m), count:1 }
   ];
   return { tasks:T, locks:locks, events:events, agents:agents, launchers:launchers, workspacePath:ws,
-    agentState: agentState, handoverHints: handoverHints, attention: attention,
+    agentState: agentState, handoverHints: handoverHints, attention: attention, rejected: rejected,
     demoAvatars: { 'agent-a':{ emoji:'🦊', color:'#3b5bdb' }, 'agent-b':{ emoji:'🐺', color:'#0ca678' },
       'agent-busy':{ emoji:'🔥', color:'#d9480f' }, 'agent-idle':{ emoji:'🌿', color:'#2b8a3e' },
       'chatgpt-web':{ emoji:'🤖', color:'#7048e8' }, 'agent-c':{ emoji:'🚀', color:'#e8590c' }, 'agent-d':{ emoji:'🧠', color:'#1098ad' },
@@ -3306,6 +3441,8 @@ function demoApi(path, body, method){
     var asWorker = body.kind === 'worker';
     S.agents.push({ id:body.id, displayName:(body.label && body.label !== body.id) ? body.label : undefined, ide:asWorker ? 'ide' : 'manual',
       role:'WORKER', manual:!asWorker, pending:asWorker || undefined, specialization:asWorker ? 'general' : 'Manual relay', lastSeen:new Date().toISOString() });
+    // if this was a rejected registration, remove it from rejected list
+    if (S.rejected) S.rejected = S.rejected.filter(function(r){ return r.id!==body.id; });
     return done({}, 'manager', 'agent', asWorker ? 'Added worker ' + body.id + '; waiting for its IDE to join.' : 'Added manual agent ' + body.id + '.', 'info');
   }
   if (parts[2] === 'agent' && verb === 'launch'){
@@ -3338,6 +3475,41 @@ function demoApi(path, body, method){
     ag.displayName = (body.name || '').trim() || undefined;
     return done({}, 'manager', 'agent', 'Renamed ' + id + ' to ' + (ag.displayName || id) + '.', 'info');
   }
+  if (parts[2] === 'agent' && verb === 'remove'){
+    var ag = agentById(id);
+    if (!ag) return fail('Unknown agent ' + id);
+    if (ag.role==='MANAGER') return fail('Manager cannot be removed');
+    var transferTo = body.transferTo || '';
+    // transfer tasks
+    S.tasks.forEach(function(t){
+      if (t.assignee===id) t.assignee = transferTo || null;
+      if (t.assignedIDE===id) t.assignedIDE = null;
+      if (transferTo && (t.assignee===transferTo || !t.assignee)) {
+        // keep as is, if transferTo empty, open to any worker
+      }
+      if (!transferTo) {
+        if (t.assignee===null) t.status = t.status==='backlog' ? 'backlog' : 'todo';
+      }
+    });
+    S.agents = S.agents.filter(function(a){ return a.id!==id; });
+    if (S.agentState) delete S.agentState[id];
+    return done({}, 'manager', 'agent', 'Removed ' + id + (transferTo ? ', tasks moved to ' + transferTo : ', tasks opened'), 'success');
+  }
+  if (parts[2] === 'rejected' && verb === 'dismiss'){
+    var rid = body.id || id;
+    S.rejected = (S.rejected||[]).filter(function(r){ return r.id!==rid; });
+    // also remove related attention
+    S.attention = (S.attention||[]).filter(function(it){ return !(it.kind==='rejected' && it.message && it.message.indexOf(rid)>=0); });
+    return done({}, 'manager', 'rejected', 'Dismissed ' + rid, 'info');
+  }
+  if (parts[2] === 'rejected' && parts.length===3 && method!=='GET'){
+    // POST /api/mesh/rejected/dismiss {id}
+    var rid2 = body.id || '';
+    S.rejected = (S.rejected||[]).filter(function(r){ return r.id!==rid2; });
+    S.attention = (S.attention||[]).filter(function(it){ return !(it.kind==='rejected' && it.message && it.message.indexOf(rid2)>=0); });
+    return done({}, 'manager', 'rejected', 'Dismissed ' + rid2, 'info');
+  }
+
   if (parts[2] === 'task' && verb === 'move'){
     if (!isManual(t.assignee || t.assignedIDE)) return fail('Only a manual agent’s task can be moved by hand — this one belongs to a real agent');
     if (['backlog', 'todo', 'in_progress', 'review', 'pending_deploy', 'done', 'cancelled'].indexOf(body.to) < 0) return fail('Unknown column');
@@ -3386,6 +3558,13 @@ function demoApi(path, body, method){
     ag.runner.pid = null;
     ag.runner.lastExit = {code:0,at:new Date().toISOString()};
     return done({}, 'manager', 'runner', 'Runner stopped for '+id, 'info');
+  }
+  if ((parts[2]==='rejected' && parts[3]==='dismiss') || (parts[2]==='rejected' && id==='dismiss')){
+    var rid3 = body.id || '';
+    if (!rid3 && parts[2]==='rejected' && parts[3] && parts[3]!=='dismiss') rid3 = parts[3];
+    S.rejected = (S.rejected||[]).filter(function(r){ return r.id!==rid3; });
+    S.attention = (S.attention||[]).filter(function(it){ return !(it.kind==='rejected' && it.message && it.message.indexOf(rid3)>=0); });
+    return done({}, 'manager', 'rejected', 'Dismissed ' + rid3, 'info');
   }
   if (parts[2] === 'release-lock'){
     S.locks = S.locks.filter(function (l) { return l.filePath !== body.filePath; });
