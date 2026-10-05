@@ -390,6 +390,35 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 .runner-line .runner-dot.failed{background:var(--danger)}
 .runner-line .runner-meta{font-variant-numeric:tabular-nums}
 
+
+/* V2-12 First-run setup screen */
+.setup{max-width:720px;margin:0 auto;padding:16px 14px;display:flex;flex-direction:column;gap:18px}
+.setup.hidden{display:none}
+.setup-title{font-size:22px;font-weight:700;margin:0}
+.setup-sub{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
+.setup-step{border:1px solid var(--border);border-radius:12px;background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:10px;position:relative}
+.setup-step.done{border-color:var(--ok);background:var(--ok-soft)}
+.setup-step-head{display:flex;align-items:center;gap:10px}
+.setup-step-num{width:26px;height:26px;border-radius:50%;background:var(--panel-2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:0 0 auto}
+.setup-step.done .setup-step-num{background:var(--ok);color:#fff;border-color:var(--ok)}
+.setup-step-title{font-weight:650;font-size:14px;flex:1 1 auto}
+.setup-step-tick{font-size:16px;color:var(--ok);flex:0 0 auto}
+.setup-step-body{display:flex;flex-direction:column;gap:10px}
+.ide-row{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:6px}
+.ide-row-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ide-name{font-weight:600;font-size:13px}
+.ide-chip{font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--border);background:var(--panel);color:var(--muted)}
+.ide-chip.found{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.ide-chip.connected{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.ide-row-cmd{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ide-row-cmd input{flex:1 1 120px;min-width:100px;font-family:ui-monospace,monospace;font-size:11px}
+.ide-cmd{font-family:ui-monospace,monospace;font-size:11px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:4px 6px;flex:1 1 220px;overflow:auto;white-space:nowrap}
+.prompt-box{background:var(--panel-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;max-height:220px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.5}
+.setup-form{display:flex;flex-direction:column;gap:8px}
+.setup-form .field{margin:0}
+.setup-form input[type=text], .setup-form textarea, .setup-form select{width:100%}
+@media (max-width:620px){ .setup{padding:10px 8px} .ide-row-cmd{flex-direction:column;align-items:stretch} }
+
 </style>
 </head>
 <body>
@@ -432,6 +461,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     <div id="needs" class="needs hidden" aria-live="polite"></div>
     <div id="cancelStrip" class="cancel-strip" aria-hidden="true">Drop here to cancel</div>
     <div id="boardEmpty" class="notice hidden" style="margin:10px 10px 0"></div>
+    <div id="setup" class="setup hidden" aria-label="First-run setup"></div>
     <div id="board" class="board" aria-label="Task board"></div>
   </section>
   <aside class="activity" id="activity" aria-label="Activity feed">
@@ -642,8 +672,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
 
   /* 2. state + persisted view options */
-  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [] };
-  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0 };
+  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [], ides: [], prompts: {} };
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0, forceBoard: false, idesSuggestions: {} };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
   function loadUI() {
@@ -657,6 +687,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       UI.showCancelled = !!o.showCancelled;
       UI.activity = !!o.activity;
       UI.attention = !!o.attention;
+      UI.forceBoard = !!o.forceBoard;
       UI.search = typeof o.search === 'string' ? o.search : '';
       UI.filterAgent = typeof o.filterAgent === 'string' ? o.filterAgent : '';
       if (typeof o.railCollapsed === 'boolean') UI.railCollapsed = o.railCollapsed;
@@ -688,7 +719,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     try {
       window.localStorage.setItem(LS_KEY, JSON.stringify({
         groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
-        activity: UI.activity, attention: !!UI.attention, search: UI.search, filterAgent: UI.filterAgent,
+        activity: UI.activity, attention: !!UI.attention, forceBoard: !!UI.forceBoard, search: UI.search, filterAgent: UI.filterAgent,
         railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0, attentionSeen: UI.attentionSeen || 0
       }));
     } catch (e) { /* ignore */ }
@@ -852,6 +883,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     S.agentState = data.agentState && typeof data.agentState === 'object' ? data.agentState : {};
     S.handoverHints = Array.isArray(data.handoverHints) ? data.handoverHints : [];
     S.attention = Array.isArray(data.attention) ? data.attention : [];
+    S.ides = Array.isArray(data.ides) ? data.ides : [];
+    S.prompts = data.prompts && typeof data.prompts === 'object' ? data.prompts : {};
     if (DEMO) adoptDemoAvatars(data);
     if (data.workspacePath) S.workspacePath = data.workspacePath;
     if (T.open && !taskById(T.taskId)) closeTask();
@@ -890,6 +923,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     renderBoard();
     renderActivity();
     renderAttention();
+    renderSetup();
     updateTitle();
     refreshTimes();
   }
@@ -1442,6 +1476,204 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       return el('div', { class:'attention-item' }, top, act, actions);
     });
     replace(feed, nodes);
+  }
+
+
+  /* V2-12 setup helpers */
+  var EMPTY_DEMO = false;
+  try { EMPTY_DEMO = new URLSearchParams(location.search).get('empty') === '1'; } catch(e){ EMPTY_DEMO = false; }
+  function isEmptyTeam(){ return workers().length === 0; }
+  function shouldShowSetup(){ return isEmptyTeam() && !UI.forceBoard; }
+  function portInfo(){
+    try { var p = location.port; return p ? ':' + p : ''; } catch(e){ return ''; }
+  }
+  function ideStatusChip(ide){
+    if (ide.connected) return { text: 'Connected as ' + (ide.boundId||ide.key), cls: 'connected' };
+    if (ide.detected) return { text: 'Found', cls: 'found' };
+    return { text: 'Not found', cls: '' };
+  }
+  function renderSetup(){
+    var setupEl = $('#setup'), boardEl = $('#board'), emptyEl = $('#boardEmpty'), toolbar = document.querySelector('.toolbar'), needs = $('#needs'), cancelStrip = $('#cancelStrip');
+    var show = shouldShowSetup();
+    if (!setupEl) return;
+    if (show){
+      if (boardEl) boardEl.classList.add('hidden');
+      if (emptyEl) emptyEl.classList.add('hidden');
+      if (toolbar) toolbar.classList.add('hidden');
+      if (needs) needs.classList.add('hidden');
+      if (cancelStrip) cancelStrip.classList.add('hidden');
+      setupEl.classList.remove('hidden');
+      replace(setupEl, setupContent());
+    } else {
+      setupEl.classList.add('hidden');
+      if (boardEl) boardEl.classList.remove('hidden');
+      if (toolbar) toolbar.classList.remove('hidden');
+      // needs and boardEmpty handled by renderBoard/renderNeeds
+    }
+  }
+  function setupContent(){
+    var port = portInfo();
+    var nodes = [];
+    nodes.push(el('div', {},
+      el('h1', { class:'setup-title', text:'Welcome to AgentMesh' }),
+      el('p', { class:'setup-sub', text:'Let\u2019s get your team connected. This takes just a minute.' })
+    ));
+    // Step 1
+    nodes.push(el('div', { class:'setup-step done' },
+      el('div', { class:'setup-step-head' },
+        el('span', { class:'setup-step-num', text:'1' }),
+        el('span', { class:'setup-step-title', text:'Daemon running' }),
+        el('span', { class:'setup-step-tick', text:'✓' })
+      ),
+      el('div', { class:'setup-step-body' },
+        el('div', { class:'muted', style:{fontSize:'12px'}, text:'Your board is live on port ' + (port || 'default') + ' — local only. No internet needed.' }),
+        el('div', { class:'badge ok', text:'Running' })
+      )
+    ));
+    // Step 2
+    var ides = S.ides && S.ides.length ? S.ides : (DEMO ? demoIdes() : []);
+    var ideRows = [];
+    ides.forEach(function(ide){
+      var key = ide.key || '';
+      var suggested = UI.idesSuggestions[key] || key;
+      if (!UI.idesSuggestions[key]) UI.idesSuggestions[key] = suggested;
+      var chipInfo = ideStatusChip(ide);
+      var idInput = el('input', { type:'text', value:suggested, placeholder:key, 'aria-label':'Suggested id for ' + key });
+      idInput.addEventListener('input', function(){ UI.idesSuggestions[key] = idInput.value.trim() || key; updateCmd(); });
+      var cmdText = 'agentmesh connect --ide ' + key + ' --id ' + suggested;
+      var cmdEl = el('code', { class:'ide-cmd', text: cmdText });
+      function updateCmd(){
+        var curId = UI.idesSuggestions[key] || key;
+        cmdEl.textContent = 'agentmesh connect --ide ' + key + ' --id ' + curId;
+      }
+      var copyBtn = el('button', { class:'btn small', text:'Copy command', onclick:function(){ copyText(cmdEl.textContent, 'Command'); toast('Command copied for ' + (ide.name||key), 'success'); } });
+      var row = el('div', { class:'ide-row' },
+        el('div', { class:'ide-row-top' },
+          el('span', { class:'ide-name', text: ide.name || key }),
+          el('span', { class:'ide-chip ' + chipInfo.cls, text: chipInfo.text }),
+          ide.configPath ? el('span', { class:'muted', style:{fontSize:'10px'}, text: ide.configPath }) : null
+        ),
+        el('div', { class:'ide-row-cmd' },
+          el('span', { class:'muted', style:{fontSize:'11px'}, text:'Suggested id:' }),
+          idInput,
+          cmdEl,
+          copyBtn
+        ),
+        el('div', { class:'muted', style:{fontSize:'11px'}, text:'Restart the IDE, then open your project folder in it.' })
+      );
+      ideRows.push(row);
+    });
+    var step2Done = ides.some(function(i){ return i.connected; });
+    nodes.push(el('div', { class:'setup-step' + (step2Done?' done':'') },
+      el('div', { class:'setup-step-head' },
+        el('span', { class:'setup-step-num', text:'2' }),
+        el('span', { class:'setup-step-title', text:'Connect your IDEs' }),
+        step2Done ? el('span', { class:'setup-step-tick', text:'✓' }) : null
+      ),
+      el('div', { class:'setup-step-body' },
+        el('p', { class:'setup-sub', text:'Pick the editors your team uses. Copy the command, run it in your terminal, and your IDE will appear here.' }),
+        ideRows.length ? ideRows : el('div', { class:'empty', text:'No IDEs detected yet. The list will appear when the daemon scans your system.' })
+      )
+    ));
+    // Step 3
+    var prompts = S.prompts || {};
+    var managerPrompt = prompts.manager || (DEMO ? demoPrompts().manager : '');
+    var workerPrompt = prompts.worker || (DEMO ? demoPrompts().worker : '');
+    var managerBox = el('div', { class:'prompt-box', text: managerPrompt || 'No manager prompt yet.' });
+    var copyMgrBtn = el('button', { class:'btn small', text:'Copy', onclick:function(){ copyText(managerPrompt, 'Manager prompt'); toast('Manager prompt copied', 'success'); } });
+    // worker prompt with select
+    var workerSelect = el('select', { 'aria-label':'Select agent id for worker prompt' });
+    var workerIds = [];
+    if (workers().length) workerIds = workers().map(function(a){ return a.id; });
+    else if (ides.length) workerIds = ides.map(function(i){ return UI.idesSuggestions[i.key] || i.key; });
+    else workerIds = ['agent-a'];
+    workerIds.forEach(function(id){ workerSelect.appendChild(el('option', { value:id, text:id })); });
+    var workerBox = el('div', { class:'prompt-box', text: workerPrompt || 'No worker prompt yet.' });
+    function updateWorkerBox(){
+      var selId = workerSelect.value || workerIds[0] || 'agent-a';
+      var txt = workerPrompt;
+      // if template contains <id> or {{id}} replace, else just show as is with note
+      if (txt && txt.indexOf('<id>')>=0) txt = txt.split('<id>').join(selId);
+      if (txt && txt.indexOf('{{id}}')>=0) txt = txt.split('{{id}}').join(selId);
+      workerBox.textContent = txt || 'No worker prompt yet.';
+    }
+    workerSelect.addEventListener('change', updateWorkerBox);
+    updateWorkerBox();
+    var copyWorkerBtn = el('button', { class:'btn small', text:'Copy', onclick:function(){ copyText(workerBox.textContent, 'Worker prompt'); toast('Worker prompt copied for ' + workerSelect.value, 'success'); } });
+    var step3Done = !!managerPrompt;
+    nodes.push(el('div', { class:'setup-step' + (step3Done?' done':'') },
+      el('div', { class:'setup-step-head' },
+        el('span', { class:'setup-step-num', text:'3' }),
+        el('span', { class:'setup-step-title', text:'Give the manager its instructions' }),
+        step3Done ? el('span', { class:'setup-step-tick', text:'✓' }) : null
+      ),
+      el('div', { class:'setup-step-body' },
+        el('p', { class:'setup-sub', text:'Copy the manager prompt and paste it into your main chat where the coordinator lives. This tells it how to create and review tasks.' }),
+        managerBox,
+        copyMgrBtn,
+        el('p', { class:'setup-sub', text:'Copy the worker prompt and paste it into each IDE agent. It tells the agent how to claim and finish work.' }),
+        el('div', { style:{display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'} }, el('span', { class:'muted', style:{fontSize:'11px'}, text:'Agent:' }), workerSelect, copyWorkerBtn),
+        workerBox
+      )
+    ));
+    // Step 4
+    var titleIn = el('input', { type:'text', placeholder:'e.g. Build landing page' });
+    var briefIn = el('textarea', { rows:'4', placeholder:'What should the agent do? Keep it short and clear.' });
+    var assigneeSel = el('select', {});
+    assigneeSel.appendChild(el('option', { value:'', text:'any worker' }));
+    workers().forEach(function(a){ assigneeSel.appendChild(el('option', { value:a.id, text:agentName(a.id) })); });
+    if (!workers().length && ides.length){
+      ides.forEach(function(i){ var sid = UI.idesSuggestions[i.key]||i.key; assigneeSel.appendChild(el('option', { value:sid, text:sid })); });
+    }
+    var wsIn = el('input', { type:'text', placeholder:'/path/to/project or leave empty', value: S.workspacePath || '' });
+    var err = el('div', { class:'field err hidden' });
+    var submitBtn = el('button', { class:'btn primary', text:'Create first task and go to board', onclick:function(){
+      var title = titleIn.value.trim();
+      var brief = briefIn.value.trim();
+      if (!title){ err.textContent='Title is required'; err.classList.remove('hidden'); return; }
+      if (!brief){ err.textContent='Brief is required'; err.classList.remove('hidden'); return; }
+      var payload = { title:title, brief:brief, assignee: assigneeSel.value || undefined, workspacePath: wsIn.value.trim() || undefined };
+      api('/api/mesh/task', payload).then(function(r){
+        if (!r) return;
+        UI.forceBoard = true;
+        saveUI();
+        toast('First task created', 'success');
+        if (DEMO) push();
+        render();
+      });
+    }});
+    var step4 = el('div', { class:'setup-step' },
+      el('div', { class:'setup-step-head' },
+        el('span', { class:'setup-step-num', text:'4' }),
+        el('span', { class:'setup-step-title', text:'Create your first task' })
+      ),
+      el('div', { class:'setup-step-body setup-form' },
+        el('p', { class:'setup-sub', text:'Write a small task your team can start on right away.' }),
+        err,
+        el('label', { class:'field' }, el('span', { text:'Title' }), titleIn),
+        el('label', { class:'field' }, el('span', { text:'Brief' }), briefIn),
+        el('label', { class:'field' }, el('span', { text:'Assign to' }), assigneeSel),
+        el('label', { class:'field' }, el('span', { text:'Project folder' }), wsIn),
+        submitBtn
+      )
+    );
+    nodes.push(step4);
+    return nodes;
+  }
+  function demoIdes(){
+    return [
+      { key:'codex', name:'Codex', detected:true, connected:true, boundId:'agent-a', configPath:'~/.codex/config.toml' },
+      { key:'antigravity', name:'Antigravity', detected:true, connected:false, boundId:'', configPath:'~/.antigravity/config.json' },
+      { key:'cursor', name:'Cursor', detected:false, connected:false, boundId:'', configPath:'~/.cursor/config' },
+      { key:'vscode', name:'VS Code', detected:true, connected:true, boundId:'agent-b', configPath:'~/.vscode/settings.json' },
+      { key:'claude-code', name:'Claude Code', detected:false, connected:false, boundId:'', configPath:'~/.claude/config' }
+    ];
+  }
+  function demoPrompts(){
+    return {
+      manager: 'You are the manager for AgentMesh. Create tasks with clear titles and briefs, review finished work, and keep the board tidy.\n\nPaste this into your coordinator chat.',
+      worker: 'You are a worker for AgentMesh. Claim a task, follow its brief exactly, and report back when done. Call mesh_register_agent first, then mesh_wait_for_task.\n\nAgent id: <id>'
+    };
   }
 
   function statusBadgeText(t) {
@@ -2476,7 +2708,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       tabs: refs.tabs, body: [refs.body]
     });
     function paint() {
-      var tabs = [['team', 'Team & avatars'], ['locks', 'File locks'], ['history', 'Activity history'], ['appearance', 'Appearance'], ['about', 'About & storage']];
+      var tabs = [['team', 'Team & avatars'], ['setup', 'Setup / connect an IDE'], ['locks', 'File locks'], ['history', 'Activity history'], ['appearance', 'Appearance'], ['about', 'About & storage']];
       replace(refs.tabs, tabs.map(function (x) {
         return el('button', {
           class: 'btn small', role: 'tab', 'aria-pressed': T.settingsTab === x[0] ? 'true' : 'false', text: x[1],
@@ -2484,6 +2716,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         });
       }));
       if (T.settingsTab === 'team') replace(refs.body, teamSettings(paint));
+      else if (T.settingsTab === 'setup') replace(refs.body, setupSettings(paint));
       else if (T.settingsTab === 'locks') replace(refs.body, fileLocksSettings(paint));
       else if (T.settingsTab === 'history') replace(refs.body, activityHistorySettings(paint));
       else if (T.settingsTab === 'appearance') replace(refs.body, appearanceSettings(paint));
@@ -2492,6 +2725,11 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     paint();
     return ov;
   }
+
+  function setupSettings(repaint){
+    return [el('div', { class:'section' }, el('h3', { text:'First-run setup' }), el('div', { class:'muted', style:{fontSize:'12px'}, text:'This is the same screen you see when no workers have joined yet.' })), el('div', { class:'setup', style:{maxWidth:'none',margin:'0',padding:'0'} }, setupContent())];
+  }
+
   function fileLocksSettings(repaint){
     var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
     var launcherBlock = pending.length ? el('div', { class: 'section' }, el('h2', { text: 'Can be started' }),
@@ -2971,6 +3209,23 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 function iso(ms){ return new Date(ms).toISOString(); }
 function demoState(){
   var now = Date.now(), m = 60000, h = 3600000;
+  if (EMPTY_DEMO){
+    var agents = [
+      { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-10*1000), nudge:'manager nudge' }
+    ];
+    var ides = [
+      { key:'codex', name:'Codex', detected:true, connected:false, boundId:'', configPath:'~/.codex/config.toml' },
+      { key:'antigravity', name:'Antigravity', detected:false, connected:false, boundId:'', configPath:'' },
+      { key:'cursor', name:'Cursor', detected:true, connected:false, boundId:'', configPath:'~/.cursor/config' },
+      { key:'vscode', name:'VS Code', detected:false, connected:false, boundId:'', configPath:'' },
+      { key:'claude-code', name:'Claude Code', detected:true, connected:false, boundId:'', configPath:'~/.claude/config' }
+    ];
+    var prompts = {
+      manager: 'You are the manager for AgentMesh. Create tasks with clear titles and briefs, review finished work, and keep the board tidy. Paste this into your coordinator chat.',
+      worker: 'You are a worker for AgentMesh. Claim a task, follow its brief exactly, and report back when done. Call mesh_register_agent first, then mesh_wait_for_task. Agent id: <id>'
+    };
+    return { tasks:[], locks:[], events:[], agents:agents, launchers:[], workspacePath:'/home/demo/project', ides:ides, prompts:prompts, agentState:{}, handoverHints:[], attention:[], demoAvatars:{ 'manager':{ emoji:'🧭', color:'#495057' } } };
+  }
   var agents = [
     { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-75*1000), nudge:'Resume manager: check attention panel' },
     { id:'agent-a', ide:'codex', role:'WORKER', specialization:'Backend, data and CI', lastSeen:iso(now-31*1000),
@@ -3149,8 +3404,19 @@ function demoState(){
     { id:'att3', kind:'offline_owner', taskId:'TASK-DEP1', agentId:'agent-busy', message:'Owner offline for TASK-DEP1', since:iso(now-20*m), action:'Reassign or nudge' },
     { id:'att4', kind:'review', taskId:'TASK-R9D3N', agentId:'agent-a', message:'TASK-R9D3N ready for review', since:iso(now-5*m), action:'Review the changes' }
   ];
+  var ides = [
+    { key:'codex', name:'Codex', detected:true, connected:true, boundId:'agent-a', configPath:'~/.codex/config.toml' },
+    { key:'antigravity', name:'Antigravity', detected:true, connected:false, boundId:'', configPath:'~/.antigravity/config.json' },
+    { key:'cursor', name:'Cursor', detected:false, connected:false, boundId:'', configPath:'~/.cursor/config' },
+    { key:'vscode', name:'VS Code', detected:true, connected:true, boundId:'agent-b', configPath:'~/.vscode/settings.json' },
+    { key:'claude-code', name:'Claude Code', detected:false, connected:false, boundId:'', configPath:'~/.claude/config' }
+  ];
+  var prompts = {
+    manager: 'You are the manager for AgentMesh. Create tasks with clear titles and briefs, review finished work, and keep the board tidy.\n\nPaste this into your coordinator chat (the main chat where you plan work).',
+    worker: 'You are a worker for AgentMesh. Claim a task, follow its brief exactly, and report back when done. Call mesh_register_agent first, then mesh_wait_for_task.\n\nAgent id: <id>\n\nPaste this into the IDE agent chat.'
+  };
   return { tasks:T, locks:locks, events:events, agents:agents, launchers:launchers, workspacePath:ws,
-    agentState: agentState, handoverHints: handoverHints, attention: attention,
+    agentState: agentState, handoverHints: handoverHints, attention: attention, ides: ides, prompts: prompts,
     demoAvatars: { 'agent-a':{ emoji:'🦊', color:'#3b5bdb' }, 'agent-b':{ emoji:'🐺', color:'#0ca678' },
       'agent-busy':{ emoji:'🔥', color:'#d9480f' }, 'agent-idle':{ emoji:'🌿', color:'#2b8a3e' },
       'chatgpt-web':{ emoji:'🤖', color:'#7048e8' }, 'agent-c':{ emoji:'🚀', color:'#e8590c' }, 'agent-d':{ emoji:'🧠', color:'#1098ad' },
@@ -3429,7 +3695,7 @@ function demoApi(path, body, method){
 }
 
   /* 13. top bar wiring + boot */
-  function enterDemo() {   // only ever reached because the user pressed the button; ?demo=1 stays the documented way in
+  function enterDemo() {
     if (DEMO) return;
     DEMO = true;
     if (reconnectTimer) { window.clearTimeout(reconnectTimer); reconnectTimer = null; }
@@ -3437,6 +3703,7 @@ function demoApi(path, body, method){
     $('#demoBadge').classList.remove('hidden');
     setConn('live', 'demo');
     toast('Demo mode: sample data, nothing is connected to a daemon.', 'warn');
+    UI.forceBoard = false;
     applyState(demoState());
   }
   function applyDensity() { document.body.classList.toggle('compact', !!UI.compact); }
