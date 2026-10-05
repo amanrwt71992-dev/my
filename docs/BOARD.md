@@ -319,3 +319,17 @@ Roughly in order of value. None of these block using the board today.
   no heavy gradients.
 - When you change behaviour, extend the suite in `tests/` and update the table in
   §6/§7 of this file.
+
+---
+
+## 10. V2 changes (agentmesh/V2-5)
+
+- Columns now 7 exact labels: Backlog (backlog), To do (todo), In progress (claimed+in_progress), Needs answer (blocked), Code review (review), Pending deployment (pending_deploy), Done (done). Migration backlog->todo handled in store, board shows both. Waiting renamed to To do.
+- S extended with agentState {agentId: busy|idle|offline} and handoverHints [{taskId, from, candidates}]. applyState reads them.
+- Tile redesign V2 per BOARD-V2 s5: type icon (TYPE_ICON), 2-line title clamp, priority mark high/urgent only, owner avatar+name+state dot from agentState, time in status via timerNode, labels up to 2 +n, chips Story parentId with progress, after dep (muted if unmet), Changes requested, Hand over button when handoverHints includes id. Compact, backdrop-filter off tiles, pill contrast 4.5:1 via badge colors.
+- Story tile type story: progress bar from progress {done,total} or derived from subtasks, mode label in parallel / in order, collapsible subtasks (UI2.expandedStories) with subtask chip opening task.
+- Views: Status default, Agent (existing), Story (new) one lane per story with subtasks as small tiles, tasks without story last lane. Group control added #groupStory, groups array extended, applyGroup and wire updated, renderBoard toggles lanes for story.
+- Handover dialog openHandover(taskId): shows holder, status, files changed count, warning Work already started; files changed: n for in-progress, list of workers sorted idle first with state dot, Open to any worker option, optional note, calls POST /api/mesh/task/:id/handover {to,note}. Triggered from tile Hand over button and task window Hand over... button in barContent.
+- New task form: added type select (feature/bug/test/docs/refactor/research/deploy/story), priority select (low/normal/high/urgent), labels input comma max5, for stories mode select + repeatable subtask list (title, assignee, dependsOn picker among other rows). Keeps two deploy checkboxes. Payload includes type, priority, labels, mode, subtasks.
+- Demo ?demo=1: parallel story TASK-S001 3 subtasks 2 agents (busy+idle), sequential story TASK-S002 3 subtasks with dependsOn chain, two tasks TASK-HAND1/HAND2 reserved for busy while idle with handoverHints, one task TASK-DEP1 unmet dependency in Backlog. agentState and handoverHints populated, demoAvatars extended.
+- All existing element ids preserved, no innerHTML/eval/external URLs, backdrop-filter off tiles, API calls kept same origin.
