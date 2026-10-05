@@ -363,6 +363,33 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 .story-lane-body{display:flex;gap:8px;padding:8px;overflow:auto;flex-wrap:wrap}
 .story-lane-body .tile{flex:0 0 260px;width:260px}
 
+
+/* Round2: nudge, silent badge, attention panel, runner status */
+.btn.nudge-btn{font-size:10px;padding:2px 6px;border-radius:999px;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);font-weight:600}
+.btn.nudge-btn:hover{background:var(--accent);color:#fff}
+.tile .nudge-btn{margin-left:4px}
+.silent-badge{background:#ffe0e0;border:1px solid #d33;color:#a00;font-weight:700;font-size:10.5px;padding:1px 6px;border-radius:999px}
+.attention-bell{position:relative}
+.attention-bell .count-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--panel)}
+.attention-bell .count-badge.hidden{display:none}
+.attention-panel{position:fixed;top:0;right:0;bottom:0;width:min(400px,92vw);z-index:71;transform:translateX(101%);transition:transform var(--t);box-shadow:var(--shadow);border-left:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.attention-panel.open{transform:translateX(0)}
+.attention-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.attention-feed{overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:10px}
+.attention-item{border:1px solid var(--border);border-radius:8px;padding:8px 9px;background:var(--panel-2);display:flex;flex-direction:column;gap:5px}
+.attention-item .att-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.attention-item .att-kind{font-size:12px;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--panel);border:1px solid var(--border);flex:0 0 auto}
+.attention-item .att-msg{font-weight:600;font-size:12px;flex:1 1 auto}
+.attention-item .att-since{font-size:10.5px;color:var(--muted)}
+.attention-item .att-action{font-size:11px;color:var(--muted)}
+.attention-item .att-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.runner-line{font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:3px 0;border-top:1px dashed var(--border);margin-top:4px}
+.runner-line .runner-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.runner-line .runner-dot.running{background:var(--acc-done)}
+.runner-line .runner-dot.stopped{background:var(--grey-dot)}
+.runner-line .runner-dot.failed{background:var(--danger)}
+.runner-line .runner-meta{font-variant-numeric:tabular-nums}
+
 </style>
 </head>
 <body>
@@ -387,11 +414,13 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       <button id="groupAgent" data-group="agent" aria-pressed="false">Agent</button>
       <button id="groupStory" data-group="story" aria-pressed="false">Story</button>
     </div>
+    <button id="attentionBtn" class="btn icon attention-bell" aria-label="Attention" title="Attention"><span>🔔</span><span id="attentionBadge" class="count-badge hidden">0</span></button>
     <button id="settingsBtn" class="btn icon" aria-label="Settings: team, avatars and appearance" title="Settings">⚙</button>
     <button id="activityToggle" class="btn icon has-dot" aria-label="Toggle activity feed" title="Activity (A)"><span>☰</span><span id="activityDot" class="dot-new hidden"></span></button>
   </div>
 </header>
 <div id="activityBackdrop" class="activity-backdrop"></div>
+<div id="attentionBackdrop" class="activity-backdrop"></div>
 <main>
   <aside class="rail" id="rail" aria-label="Team and file locks"></aside>
   <section class="center">
@@ -410,6 +439,12 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       <button class="btn small ghost" id="activityClose" aria-label="Close activity feed" style="margin-left:auto">✕</button>
     </div>
     <div class="activity-feed" id="activityFeed"></div>
+  </aside>
+  <aside class="attention-panel" id="attention" aria-label="Attention">
+    <div class="attention-head"><strong>Attention</strong><span class="muted" id="attentionCount"></span>
+      <button class="btn small ghost" id="attentionClose" aria-label="Close attention" style="margin-left:auto">✕</button>
+    </div>
+    <div class="attention-feed" id="attentionFeed"></div>
   </aside>
 </main>
 <datalist id="agentIds"></datalist>
@@ -607,8 +642,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
 
   /* 2. state + persisted view options */
-  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [] };
-  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0 };
+  var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [] };
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0 };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
   function loadUI() {
@@ -621,10 +656,12 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       if (o.theme === 'light' || o.theme === 'dark' || o.theme === 'auto') UI.theme = o.theme;
       UI.showCancelled = !!o.showCancelled;
       UI.activity = !!o.activity;
+      UI.attention = !!o.attention;
       UI.search = typeof o.search === 'string' ? o.search : '';
       UI.filterAgent = typeof o.filterAgent === 'string' ? o.filterAgent : '';
       if (typeof o.railCollapsed === 'boolean') UI.railCollapsed = o.railCollapsed;
       if (typeof o.activitySeen === 'number') UI.activitySeen = o.activitySeen;
+      if (typeof o.attentionSeen === 'number') UI.attentionSeen = o.attentionSeen;
     } catch (e) { /* storage unavailable — fine */ }
   }
   function loadPrefs() {
@@ -651,8 +688,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     try {
       window.localStorage.setItem(LS_KEY, JSON.stringify({
         groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
-        activity: UI.activity, search: UI.search, filterAgent: UI.filterAgent,
-        railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0
+        activity: UI.activity, attention: !!UI.attention, search: UI.search, filterAgent: UI.filterAgent,
+        railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0, attentionSeen: UI.attentionSeen || 0
       }));
     } catch (e) { /* ignore */ }
   }
@@ -814,6 +851,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     S.launchers = Array.isArray(data.launchers) ? data.launchers : [];
     S.agentState = data.agentState && typeof data.agentState === 'object' ? data.agentState : {};
     S.handoverHints = Array.isArray(data.handoverHints) ? data.handoverHints : [];
+    S.attention = Array.isArray(data.attention) ? data.attention : [];
     if (DEMO) adoptDemoAvatars(data);
     if (data.workspacePath) S.workspacePath = data.workspacePath;
     if (T.open && !taskById(T.taskId)) closeTask();
@@ -851,6 +889,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     renderRail();
     renderBoard();
     renderActivity();
+    renderAttention();
     updateTitle();
     refreshTimes();
   }
@@ -911,6 +950,11 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
   function updateTitle() {
     var items = needsItems(), emoji = '';
+    var att = S.attention || [];
+    if (att.length){
+      document.title = '(' + att.length + ') AgentMesh';
+      return;
+    }
     if (items.some(function (i) { return i.kind === 'blocked'; })) emoji = '❓';
     else if (items.some(function (i) { return i.kind === 'violation'; })) emoji = '⚠';
     else if (items.some(function (i) { return i.kind === 'review'; })) emoji = '👀';
@@ -1046,6 +1090,16 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     card.appendChild(el('div', { class: 'sub' },
       workloadBar(a.id),
       el('span', { text: w.total ? (w.open + ' open · ' + (w.counts.done || 0) + ' done') : 'no tasks' })));
+    // runner status line if present
+    if (a.runner){
+      var rLine = el('div', { class: 'runner-line' },
+        el('span', { class: 'runner-dot ' + runnerDotClass(a.runner) }),
+        el('span', { class: 'runner-meta', text: runnerStatusLine(a.runner) }),
+        el('button', { class: 'btn small', text: 'Start', onclick: function(e){ e.stopPropagation(); startRunner(a.id); } }),
+        el('button', { class: 'btn small', text: 'Stop', onclick: function(e){ e.stopPropagation(); stopRunner(a.id); } })
+      );
+      card.appendChild(rLine);
+    }
     card.appendChild(agentCardActions(a));
     return card;
   }
@@ -1055,6 +1109,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     if (!a.manual) box.appendChild(el('button', {
       class: 'btn small', text: 'Copy start prompt', 'aria-label': 'Copy the start prompt for ' + a.id,
       onclick: function (e) { e.stopPropagation(); copyText(startPromptFor(a.id), 'Start prompt'); }
+    }));
+    box.appendChild(el('button', {
+      class: 'btn small nudge-btn', text: 'Copy nudge', 'aria-label': 'Copy nudge for ' + a.id,
+      onclick: function (e) { e.stopPropagation(); copyNudge(a.id); }
     }));
     box.appendChild(el('button', {
       class: 'btn small', text: '✎ Rename', 'aria-label': 'Rename ' + a.id,
@@ -1299,6 +1357,93 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     render();
   }
 
+
+  /* Round2 helpers */
+  function getNudgeText(agentId){
+    var a = agentById(agentId);
+    if (a && typeof a.nudge === 'string' && a.nudge.trim()) return a.nudge;
+    return 'Resume AgentMesh: call mesh_resume with agent_id "' + agentId + '" and do what next_action says.';
+  }
+  function copyNudge(agentId){
+    var txt = getNudgeText(agentId);
+    var name = agentName(agentId) || agentId;
+    copyText(txt, 'Nudge');
+    toast('Nudge copied, paste it to ' + name, 'success');
+  }
+  function runnerStatusLine(runner){
+    if (!runner) return null;
+    var running = !!runner.running;
+    var since = runner.startedAt ? (Date.now() - tms(runner.startedAt)) : 0;
+    var txt = '';
+    if (running) txt = 'running since ' + durationText(since);
+    else if (runner.lastExit && runner.lastExit.code !== 0) txt = 'failed';
+    else txt = 'stopped';
+    var code = runner.lastExit ? ' (exit ' + runner.lastExit.code + ')' : '';
+    var pid = runner.pid ? ' pid ' + runner.pid : '';
+    var starts = runner.startsLastHour ? ' · ' + runner.startsLastHour + '/h' : '';
+    return txt + code + pid + starts;
+  }
+  function runnerDotClass(runner){
+    if (!runner) return 'stopped';
+    if (runner.running) return 'running';
+    if (runner.lastExit && runner.lastExit.code !== 0) return 'failed';
+    return 'stopped';
+  }
+  function startRunner(id){
+    api('/api/mesh/agent/' + encodeURIComponent(id) + '/runner/start', {}).then(function(r){ if (r) { toast('Runner start requested for ' + agentName(id), 'success'); if (DEMO) push(); } });
+  }
+  function stopRunner(id){
+    api('/api/mesh/agent/' + encodeURIComponent(id) + '/runner/stop', {}).then(function(r){ if (r) { toast('Runner stop requested for ' + agentName(id), 'success'); if (DEMO) push(); } });
+  }
+  var ATT_KIND_ICON = { question:'❓', review:'👀', silent:'🔇', answer_waiting:'⏳', offline_owner:'📴', violations:'⚠', runner_failed:'💥' };
+  function attentionIcon(kind){ return ATT_KIND_ICON[kind] || '•'; }
+  function renderAttention(){
+    var panel = $('#attention'), feed = $('#attentionFeed'), badge = $('#attentionBadge'), countEl = $('#attentionCount');
+    var items = S.attention || [];
+    if (badge){
+      if (items.length){
+        badge.textContent = String(items.length);
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+    if (countEl) setText(countEl, '(' + items.length + ')');
+    if (panel){
+      panel.classList.toggle('open', !!UI.attention);
+    }
+    var ab = $('#attentionBackdrop');
+    if (ab) ab.classList.toggle('open', !!UI.attention);
+    if (!feed) return;
+    if (!items.length){
+      replace(feed, el('div', { class:'empty', text:'No attention needed.' }));
+      return;
+    }
+    var nodes = items.map(function(it){
+      var sinceText = '';
+      if (it.since){
+        var diff = Date.now() - tms(it.since);
+        if (diff>0) sinceText = durationText(diff) + ' ago';
+        else sinceText = 'just now';
+      }
+      var top = el('div', { class:'att-top' },
+        el('span', { class:'att-kind', text: attentionIcon(it.kind), title: it.kind }),
+        el('span', { class:'att-msg', text: it.message || it.kind }),
+        sinceText ? el('span', { class:'att-since', text: sinceText }) : null
+      );
+      var act = it.action ? el('div', { class:'att-action', text: it.action }) : null;
+      var actions = el('div', { class:'att-actions' });
+      if (it.taskId){
+        actions.appendChild(el('button', { class:'btn small primary', text:'Open task', onclick:function(){ openTask(it.taskId); } }));
+      }
+      if (it.agentId && (it.kind==='answer_waiting' || it.kind==='silent' || it.kind==='offline_owner')){
+        actions.appendChild(el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(){ copyNudge(it.agentId); } }));
+      }
+      return el('div', { class:'attention-item' }, top, act, actions);
+    });
+    replace(feed, nodes);
+  }
+
   function statusBadgeText(t) {
     var extra = '';
     if (t.status === 'blocked') extra = '❓ question';
@@ -1411,6 +1556,15 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         node.appendChild(subBox);
       }
     }
+    if (t.silent === true && (t.status==='claimed' || t.status==='in_progress')){
+      var mins = t.silentMinutes != null ? t.silentMinutes : '?';
+      var silentBadge = el('span', { class:'silent-badge', text:'silent ' + mins + ' min' });
+      node.appendChild(silentBadge);
+    }
+    if ((t.status==='claimed' || t.status==='in_progress') && owner){
+      var nudgeBtn = el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(e){ e.stopPropagation(); copyNudge(owner); } });
+      node.appendChild(nudgeBtn);
+    }
     if (t.violations && t.violations.length){
       var b = el('div', { class:'badges' }, el('span', { class:'badge danger', text:'⚠ '+t.violations.length+' outside' }));
       node.appendChild(b);
@@ -1521,6 +1675,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         el('span', { class: 'badge ' + statusBadgeClass(t.status) },
           el('span', { class: 'status-dot st-' + (STATUS_LABEL[t.status]?t.status:'backlog'), style: { display: 'inline-block', marginRight: '5px' } }),
           (STATUS_LABEL[t.status]||t.status)),
+        t.silent===true && (t.status==='claimed'||t.status==='in_progress') ? el('span', { class:'silent-badge', text:'silent ' + (t.silentMinutes!=null?t.silentMinutes:'?') + ' min' }) : null,
         el('span', { text: '·' }),
         avatarNode(t.assignee || t.assignedIDE || ''),
         el('span', { text: (t.assignee || t.assignedIDE) ? agentName(t.assignee || t.assignedIDE) : 'unassigned' }),
@@ -2579,11 +2734,18 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       el('div', { class: 'main' },
         el('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } },
           nameIn, nameBtn,
+          el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(){ copyNudge(a.id); } }),
           a.manual ? el('span', { class: 'badge', text: 'manual' }) : null,
           a.launch ? el('span', { class: 'badge', text: a.launch.running ? 'running' : 'startable' }) : null),
         el('div', { class: 'id', text: a.id + '  \u00b7  ' + (a.ide || 'agent') + '  \u00b7  ' + (a.specialization || 'no specialisation') }),
         el('div', { class: 'sub' }, workloadBar(a.id),
-          el('span', { class: 'muted', style: { fontSize: '11px' }, text: taskWorkload(a.id).open + ' open' }))),
+          el('span', { class: 'muted', style: { fontSize: '11px' }, text: taskWorkload(a.id).open + ' open' })),
+        a.runner ? el('div', { class: 'runner-line' },
+          el('span', { class: 'runner-dot ' + runnerDotClass(a.runner) }),
+          el('span', { class: 'runner-meta', text: runnerStatusLine(a.runner) }),
+          el('button', { class: 'btn small', text: 'Start', onclick: function(){ startRunner(a.id); } }),
+          el('button', { class: 'btn small', text: 'Stop', onclick: function(){ stopRunner(a.id); } })
+        ) : null),
       pickBtn);
     row.appendChild(picker);
     return row;
@@ -2810,14 +2972,14 @@ function iso(ms){ return new Date(ms).toISOString(); }
 function demoState(){
   var now = Date.now(), m = 60000, h = 3600000;
   var agents = [
-    { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-75*1000) },
+    { id:'manager', ide:'claude-code', role:'MANAGER', specialization:'Coordinator', lastSeen:iso(now-75*1000), nudge:'Resume manager: check attention panel' },
     { id:'agent-a', ide:'codex', role:'WORKER', specialization:'Backend, data and CI', lastSeen:iso(now-31*1000),
-      launch:{ label:'Codex', mode:'open-app', running:false } },
+      launch:{ label:'Codex', mode:'open-app', running:false }, nudge:'Hey agent-a, please resume TASK-H42T3, you were silent for 12 min', runner:{running:true,pid:1234,startedAt:iso(now-15*m),lastExit:null,startsLastHour:2} },
     { id:'agent-b', ide:'antigravity', role:'WORKER', specialization:'Frontend features', lastSeen:iso(now-11*m),
-      waitingUntil:iso(now+150*1000), launch:{ label:'Antigravity', mode:'command', running:false } },
-    { id:'agent-busy', ide:'codex', role:'WORKER', specialization:'Busy worker', lastSeen:iso(now-20*1000), launch:{ label:'Busy', mode:'command', running:false } },
-    { id:'agent-idle', ide:'codex', role:'WORKER', specialization:'Idle worker', lastSeen:iso(now-30*1000), waitingUntil:iso(now+300*1000), launch:{ label:'Idle', mode:'command', running:false } },
-    { id:'chatgpt-web', ide:'ChatGPT', role:'WORKER', manual:true, specialization:'Copy and UX review', lastSeen:iso(now-9*m) }
+      waitingUntil:iso(now+150*1000), launch:{ label:'Antigravity', mode:'command', running:false }, nudge:'agent-b, your task TASK-Q7K2M needs answer', runner:{running:false,pid:null,startedAt:null,lastExit:{code:1,at:iso(now-5*m)},startsLastHour:5} },
+    { id:'agent-busy', ide:'codex', role:'WORKER', specialization:'Busy worker', lastSeen:iso(now-20*1000), launch:{ label:'Busy', mode:'command', running:false }, nudge:'agent-busy, you hold TASK-HAND1 too long' },
+    { id:'agent-idle', ide:'codex', role:'WORKER', specialization:'Idle worker', lastSeen:iso(now-30*1000), waitingUntil:iso(now+300*1000), launch:{ label:'Idle', mode:'command', running:false }, nudge:'agent-idle, pick up TASK-HAND1' },
+    { id:'chatgpt-web', ide:'ChatGPT', role:'WORKER', manual:true, specialization:'Copy and UX review', lastSeen:iso(now-9*m), nudge:'chatgpt-web, please continue' }
   ];
   var launchers = [
     { id:'agent-c', label:'Codex CLI', mode:'command', running:false },
@@ -2826,7 +2988,7 @@ function demoState(){
   function task(o){
     T.push(Object.assign({ id:'', featureTitle:'', title:'', description:'', brief:'', assignee:null, assignedIDE:null,
       targetRole:'WORKER', status:'backlog', allowedFiles:[], forbiddenFiles:[], acceptance:[], workspacePath:ws, tokensSpent:0,
-      filesModified:[], violations:[], progressLog:[], updatedAt:iso(now-10*m), type:'feature', priority:'normal', labels:[], parentId:null, dependsOn:[], order:0, progress:null, mode:null }, o));
+      filesModified:[], violations:[], progressLog:[], updatedAt:iso(now-10*m), type:'feature', priority:'normal', labels:[], parentId:null, dependsOn:[], order:0, progress:null, mode:null, silent:false, silentMinutes:0 }, o));
   }
   task({ id:'TASK-H42T1', featureTitle:'Board sync', title:'Board sync: stop re-uploading the whole board on every page load',
     description:'Only send dirtied tasks to the daemon instead of the full cache.',
@@ -2947,6 +3109,11 @@ function demoState(){
   // V2 demo: one task unmet dependency in Backlog
   task({ id:'TASK-DEP1', featureTitle:'Dep demo', title:'Build reporting page (depends on API)', brief:'Needs API done first', status:'backlog', type:'feature', priority:'normal', labels:['reporting'], dependsOn:['TASK-S002-B'], updatedAt:iso(now-15*m) });
 
+
+  // Round2 demo: two silent tasks
+  task({ id:'TASK-SILENT1', featureTitle:'Silent demo', title:'Silent task - agent not reporting', brief:'Agent silent', assignee:'agent-a', assignedIDE:'agent-a', status:'in_progress', claimedAt:iso(now-20*m), type:'bug', priority:'high', labels:['silent'], silent:true, silentMinutes:12, filesModified:['src/silent.ts'], updatedAt:iso(now-12*m) });
+  task({ id:'TASK-SILENT2', featureTitle:'Silent demo', title:'Another silent task', brief:'Silent too', assignee:'agent-busy', assignedIDE:'agent-busy', status:'claimed', claimedAt:iso(now-35*m), type:'feature', priority:'urgent', labels:['silent'], silent:true, silentMinutes:25, updatedAt:iso(now-25*m) });
+
   var locks = [
     { filePath:'tests/unit/tasks/sync-route.test.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-7*m) },
     { filePath:'lib/board/store.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-22*m) },
@@ -2976,8 +3143,14 @@ function demoState(){
     { taskId:'TASK-HAND1', from:'agent-busy', candidates:['agent-idle','agent-b'] },
     { taskId:'TASK-HAND2', from:'agent-busy', candidates:['agent-idle'] }
   ];
+  var attention = [
+    { id:'att1', kind:'question', taskId:'TASK-Q7K2M', agentId:'agent-b', message:'TASK-Q7K2M needs answer', since:iso(now-10*m), action:'Answer the question' },
+    { id:'att2', kind:'silent', taskId:'TASK-SILENT1', agentId:'agent-a', message:'TASK-SILENT1 silent 12 min', since:iso(now-12*m), action:'Nudge the agent' },
+    { id:'att3', kind:'offline_owner', taskId:'TASK-DEP1', agentId:'agent-busy', message:'Owner offline for TASK-DEP1', since:iso(now-20*m), action:'Reassign or nudge' },
+    { id:'att4', kind:'review', taskId:'TASK-R9D3N', agentId:'agent-a', message:'TASK-R9D3N ready for review', since:iso(now-5*m), action:'Review the changes' }
+  ];
   return { tasks:T, locks:locks, events:events, agents:agents, launchers:launchers, workspacePath:ws,
-    agentState: agentState, handoverHints: handoverHints,
+    agentState: agentState, handoverHints: handoverHints, attention: attention,
     demoAvatars: { 'agent-a':{ emoji:'🦊', color:'#3b5bdb' }, 'agent-b':{ emoji:'🐺', color:'#0ca678' },
       'agent-busy':{ emoji:'🔥', color:'#d9480f' }, 'agent-idle':{ emoji:'🌿', color:'#2b8a3e' },
       'chatgpt-web':{ emoji:'🤖', color:'#7048e8' }, 'agent-c':{ emoji:'🚀', color:'#e8590c' }, 'agent-d':{ emoji:'🧠', color:'#1098ad' },
@@ -3195,6 +3368,25 @@ function demoApi(path, body, method){
     S.handoverHints = (S.handoverHints||[]).filter(function(h){ return h.taskId!==t.id; });
     return done({}, 'manager', 'handover', 'Handed over '+t.id+' to '+(to||'any worker')+'.', 'info');
   }
+  if (parts[2] === 'agent' && verb === 'runner' && parts[5]==='start'){
+    var ag = agentById(id);
+    if (!ag) return fail('Unknown agent '+id);
+    ag.runner = ag.runner || {};
+    ag.runner.running = true;
+    ag.runner.pid = Math.floor(Math.random()*10000)+1000;
+    ag.runner.startedAt = new Date().toISOString();
+    ag.runner.lastExit = null;
+    return done({}, 'manager', 'runner', 'Runner started for '+id, 'success');
+  }
+  if (parts[2] === 'agent' && verb === 'runner' && parts[5]==='stop'){
+    var ag = agentById(id);
+    if (!ag) return fail('Unknown agent '+id);
+    ag.runner = ag.runner || {};
+    ag.runner.running = false;
+    ag.runner.pid = null;
+    ag.runner.lastExit = {code:0,at:new Date().toISOString()};
+    return done({}, 'manager', 'runner', 'Runner stopped for '+id, 'info');
+  }
   if (parts[2] === 'release-lock'){
     S.locks = S.locks.filter(function (l) { return l.filePath !== body.filePath; });
     return done({}, 'manager', 'lock', 'Released the lock on ' + body.filePath + '.', 'info');
@@ -3290,6 +3482,12 @@ function demoApi(path, body, method){
     $('#activityClose').addEventListener('click', function () { UI.activity = false; saveUI(); renderActivity(); });
     var ab = $('#activityBackdrop');
     if (ab) ab.addEventListener('click', function(){ UI.activity=false; saveUI(); renderActivity(); });
+    var attBtn = $('#attentionBtn');
+    if (attBtn) attBtn.addEventListener('click', function(){ UI.attention = !UI.attention; saveUI(); renderAttention(); });
+    var attClose = $('#attentionClose');
+    if (attClose) attClose.addEventListener('click', function(){ UI.attention=false; saveUI(); renderAttention(); });
+    var attBack = $('#attentionBackdrop');
+    if (attBack) attBack.addEventListener('click', function(){ UI.attention=false; saveUI(); renderAttention(); });
     document.addEventListener('visibilitychange', refreshTimes);
     // apply initial rail state
     document.body.classList.toggle('rail-collapsed', !!UI.railCollapsed);
