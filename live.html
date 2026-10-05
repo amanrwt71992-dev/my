@@ -10,21 +10,21 @@
 :root{--bg:#f5f6f8;--panel:#fff;--panel-2:#eef0f4;--text:#171a21;--muted:#6b7280;--border:#e2e5ea;--border-strong:#ccd2db;
  --accent:#3b5bdb;--accent-soft:#eaefff;--accent-fg:#fff;--ok:#2f9e44;--ok-soft:#e9f7ec;--warn:#c2570c;--warn-soft:#fff3e6;
  --danger:#d6336c;--danger-soft:#ffeaf1;--purple:#7048e8;--purple-soft:#f0ecff;--grey-dot:#adb5bd;
- --acc-wait:#64748b;--acc-work:#2563eb;--acc-ask:#d97706;--acc-review:#7c3aed;--acc-done:#16a34a;--acc-cancel:#94a3b8;
+ --acc-wait:#64748b;--acc-work:#2563eb;--acc-ask:#d97706;--acc-review:#7c3aed;--acc-pending:#0e7490;--acc-done:#16a34a;--acc-cancel:#94a3b8;
  --dots:rgba(15,23,42,.055);--glow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent);
  --radius:10px;--radius-sm:7px;--shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.10);--t:150ms}
 [data-theme="dark"]{--bg:#0e1014;--panel:#161a20;--panel-2:#1b2027;--text:#e8eaee;--muted:#98a2b3;--border:#262c36;
  --border-strong:#3a424f;--accent:#5c7cfa;--accent-soft:#1c2540;--accent-fg:#fff;--ok:#51cf66;--ok-soft:#16281b;
  --warn:#ffa94d;--warn-soft:#2f2318;--danger:#ff6b81;--danger-soft:#331b24;--purple:#9775fa;--purple-soft:#241f3d;
  --grey-dot:#5c6672;--shadow:0 1px 2px rgba(0,0,0,.5),0 14px 34px rgba(0,0,0,.45);
- --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-done:#4ade80;--acc-cancel:#64748b;
+ --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-pending:#22d3ee;--acc-done:#4ade80;--acc-cancel:#64748b;
  --dots:rgba(255,255,255,.045)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#0e1014;--panel:#161a20;
  --panel-2:#1b2027;--text:#e8eaee;--muted:#98a2b3;--border:#262c36;--border-strong:#3a424f;--accent:#5c7cfa;
  --accent-soft:#1c2540;--accent-fg:#fff;--ok:#51cf66;--ok-soft:#16281b;--warn:#ffa94d;--warn-soft:#2f2318;
  --danger:#ff6b81;--danger-soft:#331b24;--purple:#9775fa;--purple-soft:#241f3d;--grey-dot:#5c6672;
  --shadow:0 1px 2px rgba(0,0,0,.5),0 14px 34px rgba(0,0,0,.45);
- --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-done:#4ade80;--acc-cancel:#64748b;
+ --acc-wait:#94a3b8;--acc-work:#60a5fa;--acc-ask:#fbbf24;--acc-review:#a78bfa;--acc-pending:#22d3ee;--acc-done:#4ade80;--acc-cancel:#64748b;
  --dots:rgba(255,255,255,.045)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 html,body{height:100%}
@@ -61,8 +61,23 @@ textarea{resize:vertical;min-height:64px;width:100%}
 .seg button[aria-pressed=true]{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .check{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;cursor:pointer}
 /* layout */
-main{display:grid;grid-template-columns:252px minmax(0,1fr) 312px;min-height:0;height:100%}
-.rail{border-right:1px solid var(--border);background:var(--panel);overflow:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+:root{--rail-w:56px;--rail-expanded-w:252px}
+body.rail-expanded{--rail-w:252px}
+body.rail-collapsed{--rail-w:56px}
+main{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr);min-height:0;height:100%}
+.rail{border-right:1px solid var(--border);background:var(--panel);overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px;transition:width var(--t),transform var(--t)}
+.rail.slim{width:var(--rail-w);align-items:center;padding:8px 4px}
+.rail.expanded{width:var(--rail-w)}
+.rail-header{display:flex;align-items:center;justify-content:space-between;width:100%;gap:6px}
+.rail.slim .rail-header{justify-content:center;flex-direction:column}
+.rail-avatar-list{display:flex;flex-direction:column;gap:8px;align-items:center;width:100%}
+.rail-avatar-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+.rail-avatar-btn{position:relative;background:transparent;border:1px solid transparent;border-radius:10px;padding:3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+.rail-avatar-btn:hover{background:var(--panel-2);border-color:var(--border)}
+.rail-avatar-btn .status-dot{position:absolute;bottom:2px;right:6px;width:10px;height:10px;border:2px solid var(--panel);border-radius:50%}
+.rail-count{font-size:10px;color:var(--muted);background:var(--panel-2);border:1px solid var(--border);border-radius:999px;padding:0 4px;min-width:18px;text-align:center;line-height:1.4}
+.rail-toggle{width:100%}
+.rail .section{width:100%}
 .rail h2{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:2px 0;font-weight:600}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:8px 9px;display:flex;flex-direction:column;gap:6px}
 .card.clickable{cursor:pointer;transition:border-color var(--t),box-shadow var(--t)}
@@ -100,7 +115,7 @@ main{display:grid;grid-template-columns:252px minmax(0,1fr) 312px;min-height:0;h
 .wload i{display:block;height:100%}
 .wload i.s-backlog{background:var(--acc-wait)}.wload i.s-claimed,.wload i.s-in_progress{background:var(--acc-work)}
 .wload i.s-blocked{background:var(--acc-ask)}.wload i.s-review{background:var(--acc-review)}
-.wload i.s-done{background:var(--acc-done)}.wload i.s-cancelled{background:var(--acc-cancel)}
+.wload i.s-pending_deploy{background:var(--acc-pending)}.wload i.s-done{background:var(--acc-done)}.wload i.s-cancelled{background:var(--acc-cancel)}
 .rail-filter{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .chip-avatar{background:transparent;border:2px solid transparent;border-radius:50%;padding:1px;line-height:0}
 .chip-avatar[aria-pressed=true]{border-color:var(--accent)}
@@ -112,7 +127,7 @@ main{display:grid;grid-template-columns:252px minmax(0,1fr) 312px;min-height:0;h
 .tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,var(--border))}
 .tile[data-status=backlog]{--acc:var(--acc-wait)}.tile[data-status=claimed],.tile[data-status=in_progress]{--acc:var(--acc-work)}
 .tile[data-status=blocked]{--acc:var(--acc-ask)}.tile[data-status=review]{--acc:var(--acc-review)}
-.tile[data-status=done]{--acc:var(--acc-done)}.tile[data-status=cancelled]{--acc:var(--acc-cancel)}
+.tile[data-status=pending_deploy]{--acc:var(--acc-pending)}.tile[data-status=done]{--acc:var(--acc-done)}.tile[data-status=cancelled]{--acc:var(--acc-cancel)}
 .tile.mine{border-left-color:var(--accent)}
 @keyframes tileIn{from{opacity:0;transform:translateY(-7px) scale(.98)}}
 @keyframes tileFlash{0%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 10px transparent}}
@@ -127,7 +142,7 @@ body.compact .agent-card .actions .btn{padding:1px 5px;font-size:10.5px}
 body.compact .toolbar,body.compact .col-head{padding-top:4px;padding-bottom:4px}
 .status-dot{width:8px;height:8px;border-radius:50%;background:var(--grey-dot);flex:0 0 auto}
 .st-backlog{background:var(--acc-wait)}.st-claimed,.st-in_progress{background:var(--acc-work)}.st-blocked{background:var(--acc-ask)}
-.st-review{background:var(--acc-review)}.st-done{background:var(--acc-done)}.st-cancelled{background:var(--acc-cancel);opacity:.6}
+.st-review{background:var(--acc-review)}.st-pending_deploy{background:var(--acc-pending)}.st-done{background:var(--acc-done)}.st-cancelled{background:var(--acc-cancel);opacity:.6}
 .status-dot{width:9px;height:9px}
 .beat{animation:beat 2.1s ease-in-out infinite}
 @keyframes beat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.45);opacity:.6}}
@@ -149,7 +164,7 @@ body.compact .toolbar,body.compact .col-head{padding-top:4px;padding-bottom:4px}
 .col{flex:0 0 272px;width:272px;display:flex;flex-direction:column;min-height:0;max-height:100%;background:var(--panel-2);border:1px solid var(--border);border-top:3px solid var(--col-accent,var(--border));border-radius:var(--radius);transition:box-shadow var(--t),outline-color var(--t)}
 .col[data-colkey=backlog]{--col-accent:var(--acc-wait)}.col[data-colkey=working]{--col-accent:var(--acc-work)}
 .col[data-colkey=blocked]{--col-accent:var(--acc-ask)}.col[data-colkey=review]{--col-accent:var(--acc-review)}
-.col[data-colkey=done]{--col-accent:var(--acc-done)}.col[data-colkey=cancelled]{--col-accent:var(--acc-cancel)}
+.col[data-colkey=pending_deploy]{--col-accent:var(--acc-pending)}.col[data-colkey=done]{--col-accent:var(--acc-done)}.col[data-colkey=cancelled]{--col-accent:var(--acc-cancel)}
 .col-head{border-bottom:1px solid var(--border)}
 .col.narrow{flex:0 0 216px;width:216px}
 .col-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)}
@@ -190,16 +205,22 @@ body.is-dragging .cancel-strip{display:block;animation:pop 160ms ease-out}
 .status-pill{font-weight:600}
 .status-pill.st-backlog{color:var(--acc-wait)}.status-pill.st-claimed,.status-pill.st-in_progress{color:var(--acc-work)}
 .status-pill.st-blocked{color:var(--acc-ask)}.status-pill.st-review{color:var(--acc-review)}
-.status-pill.st-done{color:var(--acc-done)}.status-pill.st-cancelled{color:var(--acc-cancel)}
+.status-pill.st-pending_deploy{color:var(--acc-pending)}.status-pill.st-done{color:var(--acc-done)}.status-pill.st-cancelled{color:var(--acc-cancel)}
 .tile.mine{border-style:solid;background:linear-gradient(var(--panel),var(--panel)) padding-box,var(--accent-soft)}
 .drop-valid{outline:2px dashed var(--accent);outline-offset:-3px;background:var(--accent-soft);box-shadow:var(--glow)}
 .drop-invalid{cursor:not-allowed;opacity:.55}
 .tile.shake{animation:shake 220ms ease-in-out}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 /* activity */
-.activity{border-left:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.activity{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:70;transform:translateX(101%);transition:transform var(--t);box-shadow:var(--shadow);border-left:1px solid var(--border);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.activity.open{transform:translateX(0)}
 .activity-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border)}
 .activity-feed{overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:10px}
+.activity-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:69;display:none}
+.activity-backdrop.open{display:block}
+.btn.has-dot{position:relative}
+.btn .dot-new{position:absolute;top:1px;right:1px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--panel);display:inline-block}
+#locksBtn{font-variant-numeric:tabular-nums}
 .event{display:flex;flex-direction:column;gap:2px;font-size:12px}
 .event .meta{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px}
 .event .msg{color:var(--text);overflow-wrap:anywhere}
@@ -253,22 +274,34 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 .toast{animation:pop 160ms ease-out;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:9px;box-shadow:var(--shadow);padding:8px 11px;font-size:12px;opacity:1;transition:opacity var(--t),transform var(--t)}
 .toast.out{opacity:0;transform:translateY(4px)}
 .toast.error{border-left-color:var(--danger)}.toast.success{border-left-color:var(--ok)}.toast.warn{border-left-color:var(--warn)}
-/* responsive */@media (max-width:1200px){main{grid-template-columns:228px minmax(0,1fr)}
- .activity{position:fixed;top:0;right:0;bottom:0;width:min(340px,92vw);z-index:70;transform:translateX(101%);transition:transform var(--t);box-shadow:var(--shadow)}
- .activity.open{transform:none}}
-@media (min-width:1201px){#activityToggle{display:none}}
-@media (max-width:900px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
- .rail{border-right:0;border-bottom:1px solid var(--border);flex-direction:row;overflow-x:auto;padding:8px}
- .rail>*{min-width:236px;flex:0 0 auto}
- .board{scroll-snap-type:x proximity}
- .col{flex:0 0 84vw;width:84vw;scroll-snap-align:start}
- .lane-cols .col{flex:0 0 78vw;width:78vw}}
+/* responsive */
+@media (max-width:800px){
+  :root{--rail-w:0px}
+  main{grid-template-columns:minmax(0,1fr)}
+  .rail{position:fixed;top:0;left:0;bottom:0;width:min(280px,86vw);z-index:65;transform:translateX(-101%);box-shadow:var(--shadow);border-right:1px solid var(--border)}
+  .rail.open{transform:none}
+  .rail.slim{width:min(280px,86vw);align-items:flex-start}
+  .rail.slim .rail-avatar-list{flex-direction:column;align-items:stretch}
+  .rail.slim .rail-avatar-item{flex-direction:row;justify-content:flex-start}
+  .rail.slim .rail-avatar-btn{flex-direction:row;justify-content:flex-start;padding:6px 8px}
+  #railToggle{display:inline-flex!important}
+  .board{scroll-snap-type:x proximity}
+  .col{flex:0 0 84vw;width:84vw;scroll-snap-align:start}
+  .lane-cols .col{flex:0 0 78vw;width:78vw}
+}
+@media (min-width:801px){
+  #railToggle{display:none}
+}
+@media (max-width:1200px){
+  /* activity already drawer, keep */
+}
 @media (max-width:620px){.form-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header class="topbar">
   <div class="brand">
+    <button id="railToggle" class="btn icon" aria-label="Toggle team rail" title="Team (T)">☰</button>
     <span class="logo" aria-hidden="true">◆</span><span>AgentMesh</span>
     <span id="conn" class="conn"><span class="dot" aria-hidden="true"></span><span id="connText">connecting…</span></span>
     <span id="demoBadge" class="badge badge-demo hidden">DEMO — not connected</span>
@@ -279,6 +312,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   </div>
   <div class="topbar-right">
     <span id="counts" class="counts"></span>
+    <button id="locksBtn" class="btn small hidden" aria-label="File locks" title="File locks">🔒 0</button>
     <button id="newTaskBtn" class="btn primary" title="New task (N)">+ New task</button>
     <button id="themeBtn" class="btn icon" aria-label="Theme: auto" title="Theme">◐</button>
     <div class="seg" role="group" aria-label="Group by">
@@ -286,9 +320,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       <button id="groupAgent" data-group="agent" aria-pressed="false">Agent</button>
     </div>
     <button id="settingsBtn" class="btn icon" aria-label="Settings: team, avatars and appearance" title="Settings">⚙</button>
-    <button id="activityToggle" class="btn icon" aria-label="Toggle activity feed" title="Activity">☰</button>
+    <button id="activityToggle" class="btn icon has-dot" aria-label="Toggle activity feed" title="Activity (A)"><span>☰</span><span id="activityDot" class="dot-new hidden"></span></button>
   </div>
 </header>
+<div id="activityBackdrop" class="activity-backdrop"></div>
 <main>
   <aside class="rail" id="rail" aria-label="Team and file locks"></aside>
   <section class="center">
@@ -505,7 +540,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 
   /* 2. state + persisted view options */
   var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '' };
-  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, compact: false };
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0 };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
   function loadUI() {
@@ -520,6 +555,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       UI.activity = !!o.activity;
       UI.search = typeof o.search === 'string' ? o.search : '';
       UI.filterAgent = typeof o.filterAgent === 'string' ? o.filterAgent : '';
+      if (typeof o.railCollapsed === 'boolean') UI.railCollapsed = o.railCollapsed;
+      if (typeof o.activitySeen === 'number') UI.activitySeen = o.activitySeen;
     } catch (e) { /* storage unavailable — fine */ }
   }
   function loadPrefs() {
@@ -546,7 +583,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     try {
       window.localStorage.setItem(LS_KEY, JSON.stringify({
         groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
-        activity: UI.activity, search: UI.search, filterAgent: UI.filterAgent
+        activity: UI.activity, search: UI.search, filterAgent: UI.filterAgent,
+        railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0
       }));
     } catch (e) { /* ignore */ }
   }
@@ -580,7 +618,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var live = t.status !== 'done' && t.status !== 'cancelled';
     var stale = opts.staleAt || 0;
     var node = el('span', {
-      class: 'timer ' + (opts.class || ''), title: 'in ' + STATUS_LABEL[t.status] + ' for ' + durationText(Date.now() - since),
+      class: 'timer ' + (opts.class || ''), title: 'in ' + (STATUS_LABEL[t.status]||t.status) + ' for ' + durationText(Date.now() - since),
       dataset: { since: String(since), staleAt: String(stale) }, text: '⏱ ' + durationText(Date.now() - since)
     });
     return live ? node : agoNode(t.updatedAt, opts.class || '');
@@ -594,9 +632,9 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     return { counts: counts, total: list.length, open: list.filter(function (t) { return t.status !== 'done'; }).length };
   }
   function workloadBar(agentId) {
-    var w = taskWorkload(agentId), order = ['in_progress', 'claimed', 'blocked', 'review', 'backlog', 'done'];
+    var w = taskWorkload(agentId), order = ['in_progress', 'claimed', 'blocked', 'review', 'pending_deploy', 'backlog', 'done'];
     var bar = el('div', { class: 'wload', title: order.filter(function (k) { return w.counts[k]; })
-      .map(function (k) { return w.counts[k] + ' ' + STATUS_LABEL[k]; }).join(' · ') || 'no tasks' }, []);
+      .map(function (k) { return w.counts[k] + ' ' + (STATUS_LABEL[k]||k); }).join(' · ') || 'no tasks' }, []);
     order.forEach(function (k) {
       if (!w.counts[k]) return;
       bar.appendChild(el('i', { class: 's-' + k, style: { flex: String(w.counts[k]) } }));
@@ -642,6 +680,29 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       xhr.onload = function () { resolve(readResponse(xhr.status, xhr.responseText)); };
       xhr.onerror = function () { toast('Network error — the request did not go through', 'error'); resolve(null); };
       try { xhr.send(payload); } catch (e) { toast('Network error — ' + e.message, 'error'); resolve(null); }
+    });
+  }
+  function apiGet(path) {
+    if (DEMO) return demoApi(path, null, 'GET');
+    if (typeof fetch === 'function') {
+      return fetch(path, { method: 'GET', credentials: 'same-origin' }).then(function(res){
+        return res.text().then(function(text){
+          try { var data = JSON.parse(text); } catch(e){ data=null; }
+          if (res.status <200 || res.status>=300) { toast('Request failed ('+res.status+')','error'); return null; }
+          return data;
+        });
+      }).catch(function(err){ toast('Network error — '+err.message,'error'); return null; });
+    }
+    return new Promise(function(resolve){
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', path, true);
+      xhr.onload = function(){
+        try { var data = JSON.parse(xhr.responseText); } catch(e){ data=null; }
+        if (xhr.status <200 || xhr.status>=300) { toast('Request failed ('+xhr.status+')','error'); resolve(null); return; }
+        resolve(data);
+      };
+      xhr.onerror = function(){ toast('Network error','error'); resolve(null); };
+      try { xhr.send(); } catch(e){ toast('Network error — '+e.message,'error'); resolve(null); }
     });
   }
   var ws = null, backoff = 1000, reconnectTimer = null;
@@ -693,13 +754,14 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 
   /* 4. filtering */
   var COLS = [
-    { key: 'backlog', label: 'Waiting', statuses: ['backlog'] },
-    { key: 'working', label: 'Working', statuses: ['claimed', 'in_progress'] },
-    { key: 'blocked', label: 'Needs answer', statuses: ['blocked'] },
-    { key: 'review', label: 'In review', statuses: ['review'] },
-    { key: 'done', label: 'Done', statuses: ['done'] }
+    { key: 'backlog', label: 'Waiting', statuses: ['backlog'], emptyText: 'No tasks' },
+    { key: 'working', label: 'Working', statuses: ['claimed', 'in_progress'], emptyText: 'No tasks' },
+    { key: 'blocked', label: 'Needs answer', statuses: ['blocked'], emptyText: 'No tasks' },
+    { key: 'review', label: 'In review', statuses: ['review'], emptyText: 'No tasks' },
+    { key: 'pending_deploy', label: '🚀 Pending deployment', statuses: ['pending_deploy'], emptyText: 'Nothing waiting to be deployed' },
+    { key: 'done', label: 'Done', statuses: ['done'], emptyText: 'No tasks' }
   ];
-  var STATUS_LABEL = { backlog: 'waiting', claimed: 'claimed', in_progress: 'working', blocked: 'blocked', review: 'in review', done: 'done', cancelled: 'cancelled' };
+  var STATUS_LABEL = { backlog: 'waiting', claimed: 'claimed', in_progress: 'working', blocked: 'blocked', review: 'in review', pending_deploy: 'pending deploy', done: 'done', cancelled: 'cancelled' };
   function matchesFilter(t) {
     if (UI.filterAgent && (t.assignee || t.assignedIDE || '') !== UI.filterAgent) return false;
     var q = UI.search.trim().toLowerCase();
@@ -728,9 +790,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var working = t.filter(function (x) { return x.status === 'claimed' || x.status === 'in_progress'; }).length;
     var blocked = t.filter(function (x) { return x.status === 'blocked'; }).length;
     var review = t.filter(function (x) { return x.status === 'review'; }).length;
+    var pending = t.filter(function (x) { return x.status === 'pending_deploy'; }).length;
     var done = t.filter(function (x) { return x.status === 'done'; }).length;
     var stale = t.filter(function (x) {
-      return (x.status === 'claimed' || x.status === 'in_progress' || x.status === 'review') &&
+      return (x.status === 'claimed' || x.status === 'in_progress' || x.status === 'review' || x.status === 'pending_deploy') &&
         (Date.now() - (statusSince(x) || Date.now())) > 30 * 60000;
     }).length;
     replace($('#counts'),
@@ -738,8 +801,19 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       el('span', {}, el('b', { text: String(working) }), ' working'),
       el('span', { class: blocked ? 'warn' : '' }, el('b', { text: String(blocked) }), ' need answer'),
       el('span', { class: review ? 'purple' : '' }, el('b', { text: String(review) }), ' in review'),
+      el('span', { class: pending ? 'ok' : '' }, el('b', { text: String(pending) }), ' pending deploy'),
       el('span', { class: stale ? 'warn' : '' }, el('b', { text: String(stale) }), ' idle > 30m'),
       el('span', {}, el('b', { text: String(done) }), ' done'));
+    // locks button
+    var lb = $('#locksBtn');
+    if (lb) {
+      if (S.locks && S.locks.length) {
+        lb.classList.remove('hidden');
+        setText(lb, '\uD83D\uDD12 ' + S.locks.length);
+      } else {
+        lb.classList.add('hidden');
+      }
+    }
   }
   function needsItems() {
     var out = [];
@@ -783,86 +857,95 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
   function renderRail() {
     var rail = $('#rail'), keep = captureScroll(rail);
-    var team = el('div', { class: 'section' }, el('h2', { text: 'Team' }),
-      el('div', { class: 'rail-filter', role: 'group', 'aria-label': 'Filter the board by agent' },
-        el('button', {
-          class: 'btn small' + (UI.filterAgent ? '' : ' primary'), text: 'All',
-          'aria-pressed': UI.filterAgent ? 'false' : 'true',
-          onclick: function () { UI.filterAgent = ''; saveUI(); render(); }
-        }),
-        workers().map(function (a) {
-          var on = UI.filterAgent === a.id;
-          return el('button', {
-            class: 'chip-avatar', 'aria-pressed': on ? 'true' : 'false',
-            title: 'Only ' + agentName(a.id) + "'s tasks",
-            'aria-label': 'Show only the tasks of ' + agentName(a.id),
-            onclick: function () { UI.filterAgent = on ? '' : a.id; saveUI(); render(); }
-          }, avatarNode(a.id, 'sm'));
-        })));
-    workers().forEach(function (a) { team.appendChild(agentCard(a)); });
-    if (!workers().length) team.appendChild(el('div', { class: 'empty', text: 'No worker agents yet.' }));
-    var addAgent = el('div', { class: 'card' },
-      el('div', { class: 'muted', text: 'Add an agent' }),
-      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Pick an id, then paste the prompt into that IDE\'s chat.' }),
-      el('div', { class: 'row', style: { display: 'flex', gap: '6px' } },
-        (function () {
-          var inp = el('input', { type: 'text', placeholder: 'e.g. agent-c', 'aria-label': 'New agent id', style: { flex: '1 1 auto', minWidth: '0' } });
-          addAgentInput = inp; return inp;
-        })(),
-        el('button', {
-          class: 'btn small', text: 'Copy prompt', onclick: function () {
-            var id = (addAgentInput && addAgentInput.value || '').trim();
-            if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
-            copyText(startPromptFor(id), 'Start prompt');
-          }
-        })));
-    var addManual = el('div', { class: 'card' },
-      el('div', { class: 'muted', text: 'Add a manual agent' }),
-      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'For a chatbot with no access to your code (ChatGPT, Gemini…). You copy its request and paste its answer back.' }),
-      (function () {
-        var idIn = el('input', { type: 'text', placeholder: 'e.g. chatgpt-web', 'aria-label': 'Manual agent id' });
-        var lblIn = el('input', { type: 'text', placeholder: 'Label (optional)', 'aria-label': 'Manual agent label' });
-        manualInputs = { id: idIn, label: lblIn };
-        return el('div', { class: 'section' }, idIn, lblIn, el('button', {
-          class: 'btn small primary', text: 'Add', onclick: function () {
-            var id = idIn.value.trim();
-            if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
-            api('/api/mesh/agent', { id: id, label: lblIn.value.trim() || id }).then(function (r) { if (r) { idIn.value = ''; lblIn.value = ''; if (DEMO) push(); } });
-          }
-        }));
-      })());
-    var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
-    var launcherBlock = pending.length ? el('div', { class: 'section' }, el('h2', { text: 'Can be started' }),
-      pending.map(function (l) {
-        return el('div', { class: 'card launcher', dataset: { zone: 'launcher', agent: l.id } },
-          el('div', { class: 'row' }, el('span', { class: 'badge', text: l.mode === 'command' ? 'command' : 'app' }),
-            el('span', { class: 'name trunc', text: l.label || l.id })),
-          el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Not joined yet — start it and it appears in the team.' }),
-          launchButton(l.id, l.label, !!(l.running)));
-      })) : null;
-    var mgrs = managers();
-    var mgrBlock = mgrs.length ? el('div', { class: 'card' },
-      el('div', { class: 'muted', text: 'Managers' }),
-      mgrs.map(function (a) {
-        return el('div', { class: 'sub muted' }, avatarNode(a.id), el('span', { text: agentName(a.id) }), el('span', { class: 'badge', text: a.ide || 'agent' }));
-      })) : null;
-    var locks = el('div', { class: 'section' }, el('h2', { text: 'File locks' }));
-    var lockCard = el('div', { class: 'card' });
-    if (!S.locks.length) lockCard.appendChild(el('div', { class: 'muted', text: 'None held.' }));
-    S.locks.forEach(function (l) {
-      lockCard.appendChild(el('div', { class: 'lock' },
-        el('span', { class: 'path', title: l.filePath, text: l.filePath }),
-        el('span', { class: 'muted', text: agentName(l.lockedByIDE) }),
-        el('button', {
-          class: 'btn small ghost', 'aria-label': 'Release lock on ' + l.filePath, text: '✕', onclick: function () {
-            api('/api/mesh/release-lock', { filePath: l.filePath }).then(function (r) { if (r && DEMO) push(); });
-          }
-        })));
-    });
-    locks.appendChild(lockCard);
-    replace(rail, team, launcherBlock, addAgent, addManual, mgrBlock, locks);
+    var isMobile = window.innerWidth <= 800;
+    // apply classes
+    rail.classList.toggle('slim', !!UI.railCollapsed);
+    rail.classList.toggle('expanded', !UI.railCollapsed);
+    if (isMobile) {
+      rail.classList.toggle('open', !!UI.railMobileOpen);
+    } else {
+      rail.classList.remove('open');
+    }
+    document.body.classList.toggle('rail-collapsed', !!UI.railCollapsed);
+    document.body.classList.toggle('rail-expanded', !UI.railCollapsed);
+
+    var toggleLabel = UI.railCollapsed ? '»' : '«';
+    var header = el('div', { class: 'rail-header' },
+      el('span', { class: 'muted', style: { fontSize:'11px', fontWeight:'700', letterSpacing:'.06em', textTransform:'uppercase' }, text: UI.railCollapsed ? '' : 'Team' }),
+      el('button', {
+        class: 'btn small ghost rail-toggle', 'aria-label': UI.railCollapsed ? 'Expand team rail' : 'Collapse team rail',
+        title: UI.railCollapsed ? 'Expand (T)' : 'Collapse (T)', text: toggleLabel,
+        onclick: function(){ toggleRail(); }
+      })
+    );
+
+    if (UI.railCollapsed) {
+      // slim strip
+      var list = el('div', { class: 'rail-avatar-list' });
+      workers().forEach(function(a){
+        var w = taskWorkload(a.id);
+        var cur = currentTaskOf(a);
+        var live = liveness(a);
+        var dotClass = isWaiting(a) ? 'st-done' : cur ? 'st-in_progress' : (live==='active' ? 'st-in_progress' : 'st-backlog');
+        var item = el('div', { class: 'rail-avatar-item' });
+        var btn = el('button', {
+          class: 'rail-avatar-btn', title: agentName(a.id) + ' · ' + w.open + ' open' + (cur ? ' · working on ' + cur.id : '') + ' · ' + live,
+          'aria-label': 'Open ' + agentName(a.id),
+          onclick: function(){ openAgent(a.id); }
+        });
+        var avWrap = el('span', { style:{position:'relative', display:'inline-block'} }, avatarNode(a.id), el('span', { class:'status-dot '+dotClass }));
+        btn.appendChild(avWrap);
+        if (w.open) btn.appendChild(el('span', { class:'rail-count', text: String(w.open) }));
+        item.appendChild(btn);
+        list.appendChild(item);
+      });
+      if (!workers().length) list.appendChild(el('div', { class:'empty', text:'No workers' }));
+      replace(rail, header, list);
+    } else {
+      // expanded full cards (without addAgent, launchers, locks - those moved to settings)
+      var team = el('div', { class: 'section' }, el('h2', { text: 'Team' }),
+        el('div', { class: 'rail-filter', role: 'group', 'aria-label': 'Filter the board by agent' },
+          el('button', {
+            class: 'btn small' + (UI.filterAgent ? '' : ' primary'), text: 'All',
+            'aria-pressed': UI.filterAgent ? 'false' : 'true',
+            onclick: function () { UI.filterAgent = ''; saveUI(); render(); }
+          }),
+          workers().map(function (a) {
+            var on = UI.filterAgent === a.id;
+            return el('button', {
+              class: 'chip-avatar', 'aria-pressed': on ? 'true' : 'false',
+              title: 'Only ' + agentName(a.id) + "'s tasks",
+              'aria-label': 'Show only the tasks of ' + agentName(a.id),
+              onclick: function () { UI.filterAgent = on ? '' : a.id; saveUI(); render(); }
+            }, avatarNode(a.id, 'sm'));
+          })));
+      workers().forEach(function (a) { team.appendChild(agentCard(a)); });
+      if (!workers().length) team.appendChild(el('div', { class: 'empty', text: 'No worker agents yet.' }));
+      var mgrs = managers();
+      var mgrBlock = mgrs.length ? el('div', { class: 'card' },
+        el('div', { class: 'muted', text: 'Managers' }),
+        mgrs.map(function (a) {
+          return el('div', { class: 'sub muted' }, avatarNode(a.id), el('span', { text: agentName(a.id) }), el('span', { class: 'badge', text: a.ide || 'agent' }));
+        })) : null;
+      replace(rail, header, team, mgrBlock);
+    }
     restoreScroll(rail, keep);
   }
+  function toggleRail(){
+    if (window.innerWidth <= 800) {
+      UI.railMobileOpen = !UI.railMobileOpen;
+      var rail = $('#rail');
+      rail.classList.toggle('open', !!UI.railMobileOpen);
+    } else {
+      UI.railCollapsed = !UI.railCollapsed;
+      saveUI();
+      renderRail();
+      // update main grid via body class
+      document.body.classList.toggle('rail-collapsed', !!UI.railCollapsed);
+      document.body.classList.toggle('rail-expanded', !UI.railCollapsed);
+    }
+  }
+
   var addAgentInput = null, manualInputs = null;
   function agentCard(a) {
     var card = el('div', {
@@ -985,9 +1068,37 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var tasks = visibleTasks();
     var nodes = [];
     board.classList.toggle('lanes', UI.groupBy === 'agent');
+    // detect unknown statuses
+    var knownStatuses = {};
+    COLS.forEach(function(c){ c.statuses.forEach(function(s){ knownStatuses[s]=1; }); });
+    knownStatuses['cancelled']=1;
+    var unknownMap = {};
+    tasks.forEach(function(t){
+      if (!knownStatuses[t.status]) {
+        if (!unknownMap[t.status]) unknownMap[t.status]=[];
+        unknownMap[t.status].push(t);
+      }
+    });
+    var unknownCols = Object.keys(unknownMap).map(function(s){ return { key:s, label:s, statuses:[s], emptyText:'No tasks', unknown:true }; });
+    function allCols(){
+      var base = COLS.slice();
+      // insert unknown cols before Done
+      var doneIdx = -1;
+      for (var i=0;i<base.length;i++) if (base[i].key==='done'){ doneIdx=i; break; }
+      if (unknownCols.length && doneIdx>=0){
+        var before = base.slice(0,doneIdx);
+        var after = base.slice(doneIdx);
+        return before.concat(unknownCols).concat(after);
+      }
+      return base.concat(unknownCols);
+    }
+    var colsToRender = allCols();
     if (UI.groupBy === 'status') {
       var row = el('div', { class: 'board-row' });
-      COLS.forEach(function (col) { row.appendChild(columnEl(col.label, col.key, colTasks(tasks, col), { zone: 'col:' + col.key, sk: col.key })); });
+      colsToRender.forEach(function (col) {
+        var colTasksList = col.unknown ? unknownMap[col.key] : colTasks(tasks, col);
+        row.appendChild(columnEl(col.label, col.key, colTasksList, { zone: 'col:' + col.key, sk: col.key, emptyText: col.emptyText }));
+      });
       if (UI.showCancelled) row.appendChild(columnEl('Cancelled', 'cancelled', tasks.filter(function (t) { return t.status === 'cancelled'; }), { zone: 'cancel', sk: 'cancelled', narrow: true }));
       nodes.push(row);
     } else {
@@ -1013,7 +1124,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         var mine = tasks.filter(function (t) { return laneKey(t) === key; });
         head.appendChild(el('span', { class: 'col-count', text: String(mine.length) }));
         var cols = el('div', { class: 'lane-cols' });
-        COLS.forEach(function (col) { cols.appendChild(columnEl(col.label, col.key, colTasks(mine, col), { zone: 'col:' + col.key, sk: 'lane:' + key + ':' + col.key })); });
+        colsToRender.forEach(function (col) {
+          var colTasksList = col.unknown ? (mine.filter(function(x){return x.status===col.key;})) : colTasks(mine, col);
+          cols.appendChild(columnEl(col.label, col.key, colTasksList, { zone: 'col:' + col.key, sk: 'lane:' + key + ':' + col.key, emptyText: col.emptyText }));
+        });
         if (UI.showCancelled) cols.appendChild(columnEl('Cancelled', 'cancelled', mine.filter(function (t) { return t.status === 'cancelled'; }), { zone: 'cancel', sk: 'lane:' + key + ':cancelled', narrow: true }));
         lane.appendChild(head);
         lane.appendChild(cols);
@@ -1031,7 +1145,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     opts = opts || {};
     var count = el('span', { class: 'col-count', text: String(tasks.length) });
     var body = el('div', { class: 'col-body', dataset: { scrollkey: opts.sk || key } });
-    if (!tasks.length) body.appendChild(el('div', { class: 'empty', text: 'No tasks' }));
+    var emptyTxt = (opts.emptyText || (COLS.filter(function(c){return c.key===key;})[0] && COLS.filter(function(c){return c.key===key;})[0].emptyText) || 'No tasks');
+    if (!tasks.length) body.appendChild(el('div', { class: 'empty', text: emptyTxt }));
     tasks.forEach(function (t) { body.appendChild(tile(t)); });
     var col = el('div', { class: 'col' + (opts.narrow ? ' narrow' : ''), dataset: { zone: opts.zone || ('col:' + key), colkey: key } },
       el('div', { class: 'col-head' }, el('span', { class: 'col-title', text: label }), count), body);
@@ -1040,21 +1155,24 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   function statusBadgeText(t) {
     var extra = '';
     if (t.status === 'blocked') extra = '❓ question';
+    else if (t.status === 'pending_deploy') extra = '🚀 waiting to deploy';
     else if (t.violations && t.violations.length) extra = '⚠ outside boundary';
     else if (isManual(t.assignee || t.assignedIDE)) extra = '✍ manual';
     else if (t.filesModified && t.filesModified.length) extra = '📎 ' + t.filesModified.length + ' files';
     return extra;
   }
+  function isDeployTask(t){ return t && t.kind === 'deploy'; }
   function tileDraggable(t) {
     // a live tile always drags: the drop rules decide what is allowed and explain the rest
     return t.status !== 'done' && t.status !== 'cancelled';
   }
   function tile(t) {
     var owner = t.assignee || t.assignedIDE, manual = isManual(owner);
+    var label = STATUS_LABEL[t.status] || t.status;
     var node = el('div', {
       class: 'tile' + (manual ? ' mine' : ''), draggable: tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
       dataset: { id: t.id, status: t.status },
-      'aria-label': t.id + ' — ' + t.title + ' (' + STATUS_LABEL[t.status] + (owner ? ', ' + agentName(owner) : '') + ')',
+      'aria-label': t.id + ' — ' + t.title + ' (' + label + (owner ? ', ' + agentName(owner) : '') + ')',
       onclick: function (e) { if (e.target.closest('.tile-menu-btn')) return; openTask(t.id); },
       onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); openTask(t.id); } },
       ondragstart: function (e) { startDrag(e, t); },
@@ -1068,15 +1186,17 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     });
     var working = t.status === 'claimed' || t.status === 'in_progress';
     node.appendChild(el('div', { class: 'tile-top' },
-      el('span', { class: 'status-dot st-' + t.status + (working ? ' beat' : ''), title: STATUS_LABEL[t.status] }),
+      el('span', { class: 'status-dot st-' + (STATUS_LABEL[t.status] ? t.status : 'backlog') + (working ? ' beat' : ''), title: label }),
       el('span', { class: 'tile-id', text: t.id }),
       timerNode(t, { staleAt: 30 * 60000, class: 'tile-time' }),
       menuBtn));
     node.appendChild(el('div', { class: 'tile-title', text: t.title }));
     var badges = el('div', { class: 'badges' });
     var txt = statusBadgeText(t);
-    if (txt) badges.appendChild(el('span', { class: 'badge ' + (t.violations && t.violations.length ? 'danger' : t.status === 'blocked' ? 'warn' : ''), text: txt }));
-    badges.appendChild(el('span', { class: 'badge status-pill st-' + t.status, text: STATUS_LABEL[t.status] }));
+    if (txt) badges.appendChild(el('span', { class: 'badge ' + (t.violations && t.violations.length ? 'danger' : t.status === 'blocked' ? 'warn' : t.status === 'pending_deploy' ? 'ok' : ''), text: txt }));
+    if (t.status === 'backlog' && t.reviewFeedback) badges.appendChild(el('span', { class: 'badge warn', text: 'Changes requested' }));
+    if (isDeployTask(t)) badges.appendChild(el('span', { class: 'badge purple', text: 'Deploy' }));
+    badges.appendChild(el('span', { class: 'badge status-pill st-' + (STATUS_LABEL[t.status] ? t.status : 'backlog'), text: label }));
     node.appendChild(el('div', { class: 'tile-foot' },
       owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
       el('span', { class: 'trunc', text: owner ? agentName(owner) : 'unassigned' }),
@@ -1103,8 +1223,23 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     seen.events = evIds;
     setText($('#activityCount'), '(' + S.events.length + ')');
     feed.scrollTop = keep;
-    $('.activity-head strong', $('#activity')).textContent = 'Activity';
-    $('#activity').classList.toggle('open', !!UI.activity);
+    var act = $('#activity');
+    if (act) {
+      act.classList.toggle('open', !!UI.activity);
+      var bd = $('#activityBackdrop');
+      if (bd) bd.classList.toggle('open', !!UI.activity);
+    }
+    // new events dot
+    var dot = $('#activityDot');
+    if (dot) {
+      var unseen = S.events.length - (UI.activitySeen || 0);
+      if (unseen > 0 && !UI.activity) dot.classList.remove('hidden');
+      else dot.classList.add('hidden');
+    }
+    if (UI.activity) {
+      UI.activitySeen = S.events.length;
+      saveUI();
+    }
   }
 
   /* 6. task modal */
@@ -1171,8 +1306,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       el('div', { class: 'dialog-sub' },
         el('span', { class: 'chip mono', text: t.id }),
         el('span', { class: 'badge ' + statusBadgeClass(t.status) },
-          el('span', { class: 'status-dot st-' + t.status, style: { display: 'inline-block', marginRight: '5px' } }),
-          STATUS_LABEL[t.status]),
+          el('span', { class: 'status-dot st-' + (STATUS_LABEL[t.status]?t.status:'backlog'), style: { display: 'inline-block', marginRight: '5px' } }),
+          (STATUS_LABEL[t.status]||t.status)),
         el('span', { text: '·' }),
         avatarNode(t.assignee || t.assignedIDE || ''),
         el('span', { text: (t.assignee || t.assignedIDE) ? agentName(t.assignee || t.assignedIDE) : 'unassigned' }),
@@ -1209,13 +1344,14 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   }
   function overviewPanel(t) {
     var agent = t.assignee || t.assignedIDE;
+    var label = STATUS_LABEL[t.status] || t.status;
     return [
       el('div', { class: 'meta-grid' },
         meta('Project folder', t.workspacePath || S.workspacePath || '—'),
         meta('Reserved for', t.assignee ? agentName(t.assignee) : (agent && t.assignedIDE ? agentName(t.assignedIDE) + ' (holder)' : 'any waiting worker')),
         meta('Held by', t.assignedIDE ? agentName(t.assignedIDE) : '—'),
         meta('Target role', t.targetRole || '—'),
-        el('div', { class: 'meta' }, el('b', { text: 'In ' + STATUS_LABEL[t.status] + ' for' }),
+        el('div', { class: 'meta' }, el('b', { text: 'In ' + label + ' for' }),
           (function () {
             var since = statusSince(t);
             if (!since) return el('span', { text: '—' });
@@ -1224,10 +1360,17 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
               t.claimedAt ? el('span', { class: 'muted', text: '  ·  claimed ' + agoText(t.claimedAt) }) : null);
           })()),
         meta('Last update', agoText(t.updatedAt) + (t.updatedAt ? ' (' + clockText(t.updatedAt) + ')' : '')),
-        meta('Tokens spent', String(t.tokensSpent || 0))),
+        meta('Tokens spent', String(t.tokensSpent || 0)),
+        isDeployTask(t) ? meta('Kind', 'deploy') : null,
+        t.noDeploy ? meta('Deployment', 'No deployment needed') : null),
       el('div', { class: 'section' }, el('h3', { text: 'Brief — the agent sees only this' }),
         el('pre', { class: 'pre', text: t.brief || '(empty)' })),
       t.description ? el('div', { class: 'section' }, el('h3', { text: 'One-line description' }), el('div', { text: t.description })) : null,
+      isDeployTask(t) && t.covers && t.covers.length ? el('div', { class: 'section' }, el('h3', { text: 'Covers' }),
+        el('div', { style:{display:'flex',gap:'6px',flexWrap:'wrap'} }, t.covers.map(function(cid){
+          var ct = taskById(cid);
+          return el('button', { class:'need', text: cid + (ct ? ' — ' + ct.title : ''), onclick:function(){ if (ct) openTask(cid); else toast('Unknown task '+cid,'warn'); } });
+        }))) : null,
       el('div', { class: 'section' }, el('h3', { text: 'Files it may change' }), listOrNone(t.allowedFiles)),
       el('div', { class: 'section' }, el('h3', { text: 'Files it must never touch' }), listOrNone(t.forbiddenFiles)),
       el('div', { class: 'section' }, el('h3', { text: 'Done when' }), listOrNone(t.acceptance)),
@@ -1345,6 +1488,20 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         el('button', { class: 'btn danger', text: 'Cancel task', onclick: function () { doCancel(t); } })
       ];
     }
+    if (t.status === 'pending_deploy') {
+      out.push(el('button', {
+        class: 'btn primary', text: 'Mark deployed → Done', onclick: function(){
+          uiConfirm({ title:'Mark '+t.id+' deployed?', message:'Confirm the deployment succeeded.', confirmLabel:'Mark deployed' }).then(function(ok){
+            if (!ok) return;
+            T.forceNext = true;
+            api('/api/mesh/task/'+encodeURIComponent(t.id)+'/deployed', {}).then(function(r){ if(r && DEMO) push(); });
+          });
+        }
+      }));
+      out.push(el('button', { class: 'btn danger', text: 'Cancel task', onclick: function(){ doCancel(t); } }));
+      if (isManual(t.assignee || t.assignedIDE)) out.push(moveMenuButton(t, 'Move to…'));
+      return out;
+    }
     if (t.status === 'review') {
       if (T.sendBack) {
         var fb = el('textarea', { rows: '3', placeholder: 'What must change?', 'aria-label': 'Feedback for sending the task back', style: { width: '100%' } });
@@ -1362,15 +1519,29 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         return out;
       }
       out.push(el('button', {
-        class: 'btn primary', text: 'Approve → Done', onclick: function () {
+        class: 'btn primary', text: 'Approve → Pending', onclick: function () {
           uiConfirm({
             title: 'Approve ' + t.id + '?',
             message: 'Check the real changes in the project first.',
-            detail: 'The board only knows what the agent reported. Verify the diff, run the tests, then approve.',
+            detail: 'The board only knows what the agent reported. Verify the diff, run the tests, then approve. This will move it to Pending deployment.',
             confirmLabel: 'Approve'
           }).then(function (ok) {
             if (!ok) return;
+            T.forceNext = true;
             api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
+          });
+        }
+      }));
+      out.push(el('button', {
+        class: 'btn', text: 'Approve without deploying', onclick: function(){
+          uiConfirm({
+            title: 'Approve without deploying ' + t.id + '?',
+            message: 'This will move the task directly to Done, skipping deployment.',
+            confirmLabel: 'Approve without deploying'
+          }).then(function(ok){
+            if (!ok) return;
+            T.forceNext = true;
+            api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r && DEMO) push(); });
           });
         }
       }));
@@ -1419,6 +1590,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       else if (!t.assignee) out.push(runAgentMenuButton(t));
     }
     if (!hasFinal) {
+      if (canRelease(t)) out.push(el('button', { class: 'btn', text: 'Release to Waiting', title: 'Take it back from the agent; it stays reserved for the same agent', onclick: function () { doRelease(t); } }));
       out.push(el('button', { class: 'btn', text: 'Edit', onclick: function () { setTaskTab('edit'); } }));
       if (t.status !== 'review') {
         out.push(el('button', {
@@ -1450,6 +1622,21 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       }
     });
     return btn;
+  }
+  function canRelease(t) {
+    return !isManual(t.assignee || t.assignedIDE) && (t.status === 'claimed' || t.status === 'in_progress' || t.status === 'blocked');
+  }
+  function doRelease(t) {
+    var who = agentName(t.assignedIDE || t.assignee);
+    uiConfirm({
+      title: 'Release ' + t.id + '?',
+      message: 'It goes back to Waiting, still reserved for ' + who + '. Use this when the agent is stuck or holding it while other work waits.',
+      confirmLabel: 'Release to Waiting'
+    }).then(function (ok) {
+      if (!ok) return;
+      T.forceNext = true;
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/release', {}).then(function (r) { if (r && DEMO) push(); });
+    });
   }
   function doCancel(t) {
     uiConfirm({
@@ -1488,6 +1675,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var forbiddenIn = el('textarea', { rows: '4', name: 'forbiddenFiles' });
     var acceptIn = el('textarea', { rows: '4', name: 'acceptance' });
     var wsIn = el('input', { type: 'text', name: 'workspacePath', value: defaultWs });
+    var deployCheck = el('input', { type: 'checkbox', id: 'newTaskDeploy' });
+    var noDeployCheck = el('input', { type: 'checkbox', id: 'newTaskNoDeploy' });
+    deployCheck.addEventListener('change', function(){ if (deployCheck.checked) noDeployCheck.checked = false; });
+    noDeployCheck.addEventListener('change', function(){ if (noDeployCheck.checked) deployCheck.checked = false; });
     var err = el('div', { class: 'field err hidden' });
     [titleIn, assigneeIn, wsIn].forEach(function (n) {
       n.addEventListener('keydown', function (e) { if (e.key === 'Enter') e.preventDefault(); });
@@ -1497,11 +1688,14 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       var title = titleIn.value.trim(), brief = briefIn.value;
       if (!title) { err.textContent = 'A title is required.'; err.classList.remove('hidden'); titleIn.focus(); return; }
       if (!brief.trim()) { err.textContent = 'The instructions are required — the agent sees only this.'; err.classList.remove('hidden'); briefIn.focus(); return; }
-      api('/api/mesh/task', {
+      var payload = {
         title: title, brief: brief, assignee: assigneeIn.value.trim() || undefined,
         allowedFiles: allowedIn.value, forbiddenFiles: forbiddenIn.value,
         acceptance: acceptIn.value, workspacePath: wsIn.value.trim()
-      }).then(function (r) {
+      };
+      if (deployCheck.checked) payload.kind = 'deploy';
+      if (noDeployCheck.checked) payload.noDeploy = true;
+      api('/api/mesh/task', payload).then(function (r) {
         if (!r) return;
         ov.close();
         if (DEMO) push();
@@ -1519,7 +1713,11 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           field('workspacePath', 'Project folder', 'defaults to the newest task’s folder', wsIn),
           field('allowedFiles', 'Files it may change', 'one per line', allowedIn),
           field('forbiddenFiles', 'Files it must never touch', 'one per line', forbiddenIn),
-          el('div', { class: 'full' }, field('acceptance', 'Done when', 'one per line', acceptIn)))
+          el('div', { class: 'full' }, field('acceptance', 'Done when', 'one per line', acceptIn)),
+          el('div', { class: 'full' }, el('div', { style:{display:'flex',gap:'12px',flexWrap:'wrap'} },
+            el('label', { class:'check' }, deployCheck, el('span', { text:'Deployment task' })),
+            el('label', { class:'check' }, noDeployCheck, el('span', { text:'No deployment needed' }))))
+        )
       ],
       foot: [
         el('button', { class: 'btn', text: 'Cancel', onclick: function () { ov.close(); } }),
@@ -1591,12 +1789,12 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     function myTasksView(agentId) {
       var mine = S.tasks.filter(function (t) { return (t.assignee || t.assignedIDE) === agentId; });
       if (!mine.length) return el('div', { class: 'muted', text: 'No tasks assigned.' });
-      var order = ['blocked', 'review', 'in_progress', 'claimed', 'backlog', 'done', 'cancelled'];
+      var order = ['blocked', 'review', 'pending_deploy', 'in_progress', 'claimed', 'backlog', 'done', 'cancelled'];
       var groups = {};
       mine.forEach(function (t) { (groups[t.status] = groups[t.status] || []).push(t); });
       return el('div', { class: 'section' }, order.filter(function (s) { return groups[s]; }).map(function (s) {
         return el('div', { class: 'section' },
-          el('h3', { text: STATUS_LABEL[s] + ' (' + groups[s].length + ')' }),
+          el('h3', { text: (STATUS_LABEL[s]||s) + ' (' + groups[s].length + ')' }),
           groups[s].map(function (t) {
             return el('button', {
               class: 'need', style: { maxWidth: '100%' }, text: t.id + ' — ' + t.title,
@@ -1614,7 +1812,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     if (t.status === 'done' || t.status === 'cancelled') return out;
     var manual = isManual(t.assignee || t.assignedIDE);
     if (manual) {   // a manual agent's task is mine to move by hand
-      var opts = [['backlog', 'Waiting'], ['in_progress', 'Working'], ['review', 'In review'], ['done', 'Done'], ['cancelled', 'Cancelled']];
+      var opts = [['backlog', 'Waiting'], ['in_progress', 'Working'], ['review', 'In review'], ['pending_deploy', 'Pending deployment'], ['done', 'Done'], ['cancelled', 'Cancelled']];
       opts.forEach(function (o) {
         if (o[0] === t.status) return;
         out.push({ label: 'Move to ' + o[1], run: function () { moveTask(t, o[0]); } });
@@ -1622,8 +1820,12 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       return out;
     }
     if (t.status === 'review') {
-      out.push({ label: 'Approve → Done', run: function () { approveTask(t); } });
-      out.push({ label: 'Send back → Working', run: function () { openTask(t.id, { sendBack: true }); } });
+      out.push({ label: 'Approve → Pending', run: function () { approveTask(t); } });
+      out.push({ label: 'Approve without deploying → Done', run: function () { approveWithoutDeploy(t); } });
+      out.push({ label: 'Send back → Waiting', run: function () { openTask(t.id, { sendBack: true }); } });
+    }
+    if (t.status === 'pending_deploy') {
+      out.push({ label: 'Mark deployed → Done', run: function(){ markDeployed(t); } });
     }
     if (t.status === 'backlog') {
       workers().forEach(function (a) {
@@ -1634,6 +1836,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         out.push({ label: '▶ Run ' + (a.launch ? a.launch.label : a.id) + ' now', run: function () { runAgent(a.id); } });
       });
     }
+    if (canRelease(t)) out.push({ label: 'Release to Waiting', run: function () { doRelease(t); } });
     out.push({ label: 'Cancel task', run: function () { doCancel(t); } });
     return out;
   }
@@ -1683,14 +1886,35 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     uiConfirm({
       title: 'Approve ' + t.id + '?',
       message: 'Check the real changes in the project first.',
+      detail: 'This will move it to Pending deployment.',
       confirmLabel: 'Approve'
     }).then(function (ok) {
       if (!ok) return;
       api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true }).then(function (r) { if (r && DEMO) push(); });
     });
   }
+  function approveWithoutDeploy(t){
+    uiConfirm({
+      title: 'Approve without deploying ' + t.id + '?',
+      message: 'This will move the task directly to Done, skipping deployment.',
+      confirmLabel: 'Approve without deploying'
+    }).then(function(ok){
+      if (!ok) return;
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/review', { approved: true, deploy: false }).then(function(r){ if(r && DEMO) push(); });
+    });
+  }
+  function markDeployed(t){
+    uiConfirm({
+      title: 'Mark '+t.id+' deployed?',
+      message: 'Confirm the deployment succeeded.',
+      confirmLabel: 'Mark deployed'
+    }).then(function(ok){
+      if (!ok) return;
+      api('/api/mesh/task/' + encodeURIComponent(t.id) + '/deployed', {}).then(function(r){ if(r && DEMO) push(); });
+    });
+  }
   function moveTask(t, to) {
-    var labels = { backlog: 'Waiting', in_progress: 'Working', review: 'In review', done: 'Done', cancelled: 'Cancelled' };
+    var labels = { backlog: 'Waiting', in_progress: 'Working', review: 'In review', pending_deploy: 'Pending deployment', done: 'Done', cancelled: 'Cancelled' };
     if (to === 'done' || to === 'cancelled') {
       uiConfirm({
         title: to === 'done' ? 'Move ' + t.id + ' to Done?' : 'Cancel ' + t.id + '?',
@@ -1729,7 +1953,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       tabs: refs.tabs, body: [refs.body]
     });
     function paint() {
-      var tabs = [['team', 'Team & avatars'], ['appearance', 'Appearance'], ['about', 'About & storage']];
+      var tabs = [['team', 'Team & avatars'], ['locks', 'File locks'], ['history', 'Activity history'], ['appearance', 'Appearance'], ['about', 'About & storage']];
       replace(refs.tabs, tabs.map(function (x) {
         return el('button', {
           class: 'btn small', role: 'tab', 'aria-pressed': T.settingsTab === x[0] ? 'true' : 'false', text: x[1],
@@ -1737,11 +1961,128 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         });
       }));
       if (T.settingsTab === 'team') replace(refs.body, teamSettings(paint));
+      else if (T.settingsTab === 'locks') replace(refs.body, fileLocksSettings(paint));
+      else if (T.settingsTab === 'history') replace(refs.body, activityHistorySettings(paint));
       else if (T.settingsTab === 'appearance') replace(refs.body, appearanceSettings(paint));
       else replace(refs.body, aboutSettings());
     }
     paint();
     return ov;
+  }
+  function fileLocksSettings(repaint){
+    var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
+    var launcherBlock = pending.length ? el('div', { class: 'section' }, el('h2', { text: 'Can be started' }),
+      pending.map(function (l) {
+        return el('div', { class: 'card launcher', dataset: { zone: 'launcher', agent: l.id } },
+          el('div', { class: 'row' }, el('span', { class: 'badge', text: l.mode === 'command' ? 'command' : 'app' }),
+            el('span', { class: 'name trunc', text: l.label || l.id })),
+          el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Not joined yet — start it and it appears in the team.' }),
+          launchButton(l.id, l.label, !!(l.running)));
+      })) : el('div', { class:'empty', text:'No launchers waiting.' });
+    var locks = el('div', { class: 'section' }, el('h2', { text: 'File locks ('+S.locks.length+')' }));
+    var lockCard = el('div', { class: 'card' });
+    if (!S.locks.length) lockCard.appendChild(el('div', { class: 'muted', text: 'None held.' }));
+    S.locks.forEach(function (l) {
+      lockCard.appendChild(el('div', { class: 'lock' },
+        el('span', { class: 'path', title: l.filePath, text: l.filePath }),
+        el('span', { class: 'muted', text: agentName(l.lockedByIDE) }),
+        el('button', {
+          class: 'btn small ghost', 'aria-label': 'Release lock on ' + l.filePath, text: '✕', onclick: function () {
+            api('/api/mesh/release-lock', { filePath: l.filePath }).then(function (r) { if (r && DEMO) { push(); repaint(); } else if(r){ repaint(); } });
+          }
+        })));
+    });
+    locks.appendChild(lockCard);
+    // add agent forms also moved here? Task says move add agent, add manual, launcher cards and file locks into Settings (new tab File locks). So we include add forms in this tab as well, plus launchers already.
+    // We'll include add forms from teamSettings in this tab for convenience.
+    var addAgentCard = el('div', { class: 'card' },
+      el('div', { class: 'muted', text: 'Add an agent' }),
+      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Pick an id, then paste the prompt into that IDE\'s chat.' }),
+      el('div', { class: 'row', style: { display: 'flex', gap: '6px' } },
+        (function () {
+          var inp = el('input', { type: 'text', placeholder: 'e.g. agent-c', 'aria-label': 'New agent id', style: { flex: '1 1 auto', minWidth: '0' } });
+          return el('div', { style:{display:'flex',gap:'6px',flex:'1 1 auto'} }, inp,
+            el('button', {
+              class: 'btn small', text: 'Copy prompt', onclick: function () {
+                var id = (inp.value || '').trim();
+                if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
+                copyText(startPromptFor(id), 'Start prompt');
+              }
+            }));
+        })()
+      ));
+    var addManualCard = el('div', { class: 'card' },
+      el('div', { class: 'muted', text: 'Add a manual agent' }),
+      el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'For a chatbot with no access to your code (ChatGPT, Gemini…). You copy its request and paste its answer back.' }),
+      (function () {
+        var idIn = el('input', { type: 'text', placeholder: 'e.g. chatgpt-web', 'aria-label': 'Manual agent id' });
+        var lblIn = el('input', { type: 'text', placeholder: 'Label (optional)', 'aria-label': 'Manual agent label' });
+        return el('div', { class: 'section' }, idIn, lblIn, el('button', {
+          class: 'btn small primary', text: 'Add', onclick: function () {
+            var id = idIn.value.trim();
+            if (!/^[A-Za-z0-9_-]+$/.test(id)) { toast('Agent id: letters, digits, "-" and "_" only', 'error'); return; }
+            api('/api/mesh/agent', { id: id, label: lblIn.value.trim() || id, kind: 'manual' }).then(function (r) { if (r) { idIn.value = ''; lblIn.value = ''; if (DEMO) push(); repaint(); } });
+          }
+        }));
+      })());
+    return [launcherBlock, addAgentCard, addManualCard, locks];
+  }
+  function activityHistorySettings(repaint){
+    var container = el('div', { class:'section' });
+    var qIn = el('input', { type:'search', placeholder:'Search events…', 'aria-label':'Search history' });
+    var agentSel = el('select', { 'aria-label':'Filter by agent' }, el('option', { value:'', text:'All agents' }));
+    workers().forEach(function(a){ agentSel.appendChild(el('option', { value:a.id, text:agentName(a.id) })); });
+    var list = el('div', { class:'activity-feed', style:{maxHeight:'420px',overflow:'auto',border:'1px solid var(--border)',borderRadius:'8px',padding:'8px'} });
+    var moreBtn = el('button', { class:'btn small', text:'Load more' });
+    var totalEl = el('div', { class:'muted', style:{fontSize:'11px'} });
+    var state = { offset:0, limit:50, total:0, events:[], q:'', agent:'' };
+    function renderList(){
+      clear(list);
+      if (!state.events.length) list.appendChild(el('div', { class:'empty', text:'No events match.' }));
+      else {
+        state.events.forEach(function(ev){
+          list.appendChild(el('div', { class:'event' },
+            el('div', { class:'meta' },
+              el('span', { class:'badge-type bt-'+(ev.badgeType||'info'), 'aria-hidden':'true' }),
+              el('span', { text: ev.timestamp || '' }),
+              el('span', { text: ev.ideName || '' }),
+              el('span', { text: ev.action || '' })),
+            el('div', { class:'msg', text: ev.message || '' })));
+        });
+      }
+      setText(totalEl, 'Showing '+state.events.length+' of '+state.total);
+      moreBtn.classList.toggle('hidden', state.events.length >= state.total);
+    }
+    function fetchHistory(reset){
+      if (reset){ state.offset=0; state.events=[]; }
+      var qs = '?limit='+state.limit+'&offset='+state.offset+'&agent='+encodeURIComponent(state.agent)+'&q='+encodeURIComponent(state.q);
+      apiGet('/api/mesh/history'+qs).then(function(data){
+        if (!data) return;
+        state.total = data.total || 0;
+        var evs = data.events || [];
+        if (reset) state.events = evs;
+        else state.events = state.events.concat(evs);
+        state.offset = state.events.length;
+        renderList();
+      });
+    }
+    qIn.addEventListener('input', function(){
+      state.q = qIn.value;
+      fetchHistory(true);
+    });
+    agentSel.addEventListener('change', function(){
+      state.agent = agentSel.value;
+      fetchHistory(true);
+    });
+    moreBtn.addEventListener('click', function(){ fetchHistory(false); });
+    // initial fetch
+    fetchHistory(true);
+    return [
+      el('div', { class:'section' }, el('h3', { text:'Activity history' }), el('div', { class:'muted', text:'GET /api/mesh/history?limit=200&offset=0&agent=&q= returns {total, events}. Search and filter below.' })),
+      el('div', { class:'section', style:{display:'flex',gap:'8px',flexWrap:'wrap'} }, qIn, agentSel, totalEl),
+      list,
+      moreBtn
+    ];
   }
   function teamSettings(repaint) {
     // --- bulk add: several agents at once, one id per line ---
@@ -1765,9 +2106,9 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         var manual = roleIn.value === 'manual', done = 0, failed = [];
         ids.reduce(function (chain, id) {
           return chain.then(function () {
-            return api('/api/mesh/agent', { id: id, label: id }).then(function (r) {
+            return api('/api/mesh/agent', { id: id, label: id, kind: roleIn.value }).then(function (r) {
               if (r) {
-                if (manual) { var cfg = AV[id] || (AV[id] = {}); cfg.flag = 'manual'; }   // only a hint for the avatar strip
+                if (manual) { var cfg = AV[id] || (AV[id] = {}); cfg.flag = 'manual'; }
                 done++;
               } else failed.push(id);
             });
@@ -1787,6 +2128,16 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var agents = workers().slice().sort(function (a, b) { return agentName(a.id).localeCompare(agentName(b.id)); });
     var rows = agents.map(function (a) { return agentRow(a, repaint); });
 
+    var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
+    var launcherBlock = pending.length ? el('div', { class: 'section' }, el('h2', { text: 'Can be started' }),
+      pending.map(function (l) {
+        return el('div', { class: 'card launcher', dataset: { zone: 'launcher', agent: l.id } },
+          el('div', { class: 'row' }, el('span', { class: 'badge', text: l.mode === 'command' ? 'command' : 'app' }),
+            el('span', { class: 'name trunc', text: l.label || l.id })),
+          el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Not joined yet — start it and it appears in the team.' }),
+          launchButton(l.id, l.label, !!(l.running)));
+      })) : null;
+
     return [
       el('div', { class: 'section' },
         el('h3', { text: 'Add agents' }),
@@ -1794,6 +2145,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
           el('span', { class: 'hint', text: 'Each line becomes a POST /api/mesh/agent. Manual agents are relays you paste into by hand; workers are IDEs that run tasks themselves.' })),
         el('div', { style: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' } }, roleIn, addBtn),
         addMsg),
+      launcherBlock,
       el('div', { class: 'section' },
         el('h3', { text: 'Team (' + agents.length + ')' }),
         agents.length ? rows : el('div', { class: 'empty', text: 'No worker agents yet.' }),
@@ -1904,7 +2256,10 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var rows = [
       ['Live state', 'ws(s)://location.host — {type:"MESH_INIT"|"MESH_UPDATE", data:{tasks, locks, events, agents, launchers, workspacePath}}'],
       ['Create / edit task', 'POST /api/mesh/task \u00b7 POST /api/mesh/task/:id/edit'],
-      ['Review', 'POST /api/mesh/task/:id/review {approved} (feedback when sending back)'],
+      ['Review', 'POST /api/mesh/task/:id/review {approved, deploy} (feedback when sending back, deploy:false to skip pending)'],
+      ['Mark deployed', 'POST /api/mesh/task/:id/deployed {}'],
+      ['History', 'GET /api/mesh/history?limit=&offset=&agent=&q='],
+      ['Release', 'POST /api/mesh/task/:id/release'],
       ['Cancel / answer', 'POST /api/mesh/task/:id/cancel \u00b7 POST /api/mesh/answer {taskId, answer}'],
       ['Manual relay', 'POST /api/mesh/task/:id/request \u00b7 POST /api/mesh/task/:id/response {text}'],
       ['Manual move', 'POST /api/mesh/task/:id/move {to:"backlog|in_progress|review|done|cancelled"}'],
@@ -1950,18 +2305,30 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       if ((t.assignee || '') === agentId) return { ok: false, why: 'Already assigned to ' + agentName(agentId) };
       return { ok: true, kind: 'assign', agentId: agentId };
     }
-    if (manual) {   // Waiting / Working / In review / Done belong to me for manual agents
+    if (manual) {   // Waiting / Working / In review / Pending / Done belong to me for manual agents
       if (zone === 'blocked') return { ok: false, why: 'Only an agent can ask a question — a manual task never goes here' };
       if (zone === 'backlog') return s === 'backlog' ? { ok: false, why: 'Already waiting' } : { ok: true, kind: 'move', to: 'backlog' };
       if (zone === 'working') return s === 'in_progress' ? { ok: false, why: 'Already in Working' } : { ok: true, kind: 'move', to: 'in_progress' };
       if (zone === 'review') return s === 'review' ? { ok: false, why: 'Already in review' } : { ok: true, kind: 'move', to: 'review' };
+      if (zone === 'pending_deploy') return s === 'pending_deploy' ? { ok: false, why: 'Already pending deployment' } : { ok: true, kind: 'move', to: 'pending_deploy' };
       if (zone === 'done') return { ok: true, kind: 'move', to: 'done' };
+      if (zone === 'cancelled') return { ok: true, kind: 'move', to: 'cancelled' };
       return { ok: false, why: 'That column is not part of the manual flow' };
     }
+    // real agent tasks
+    if (s === 'pending_deploy') {
+      if (zone === 'done') return { ok: true, kind: 'deployed' };
+      return { ok: false, why: 'Pending deployment tasks can only be marked deployed (drag to Done) or cancelled' };
+    }
+    if (s === 'review') {
+      if (zone === 'pending_deploy') return { ok: true, kind: 'approve' };
+      if (zone === 'done') return { ok: true, kind: 'approve_no_deploy' };
+    }
     if (zone === 'done') return s === 'review' ? { ok: true, kind: 'approve' } : { ok: false, why: 'Only review tasks can be approved — the agent has to finish the work first' };
+    if (zone === 'pending_deploy') return s === 'review' ? { ok: true, kind: 'approve' } : { ok: false, why: 'Only review tasks can go to pending deployment' };
     if (zone === 'working') return s === 'review' ? { ok: true, kind: 'sendback' } : { ok: false, why: 'Only the agent can start work — assign it instead' };
     if (zone === 'backlog') return { ok: false, why: 'Waiting is where new tasks start — assign it to an agent instead' };
-    if (zone === 'review') return { ok: false, why: 'The agent finishes the work — drag to Done to approve it' };
+    if (zone === 'review') return { ok: false, why: 'The agent finishes the work — drag to Pending or Done to approve it' };
     if (zone === 'blocked') return { ok: false, why: 'The agent marks itself blocked when it has a question' };
     return { ok: false, why: 'The board columns follow the agent’s progress, not your drags' };
   }
@@ -2025,6 +2392,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     endDrag();
     if (!a.ok) { if (a.why) toast(a.why, 'warn'); return; }
     if (a.kind === 'approve') approveTask(t);
+    else if (a.kind === 'approve_no_deploy') approveWithoutDeploy(t);
+    else if (a.kind === 'deployed') markDeployed(t);
     else if (a.kind === 'sendback') openTask(t.id, { sendBack: true });
     else if (a.kind === 'assign') reassign(t, a.agentId);
     else if (a.kind === 'cancel') doCancel(t);
@@ -2035,6 +2404,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       if (closeMenus()) { e.preventDefault(); return; }
+      if (UI.activity) { UI.activity=false; saveUI(); renderActivity(); e.preventDefault(); return; }
+      if (UI.railMobileOpen) { UI.railMobileOpen=false; var rail=$('#rail'); if(rail) rail.classList.remove('open'); e.preventDefault(); return; }
       if (closeTopOverlay()) e.preventDefault();
       return;
     }
@@ -2043,6 +2414,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     if (inField || overlays.length) return;
     if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openNewTask(); }
     else if (e.key === 'g' || e.key === 'G') { e.preventDefault(); openSettings('team'); }
+    else if (e.key === 't' || e.key === 'T') { e.preventDefault(); toggleRail(); }
+    else if (e.key === 'a' || e.key === 'A') { e.preventDefault(); UI.activity=!UI.activity; saveUI(); renderActivity(); }
     else if (e.key === '/') { e.preventDefault(); $('#search').focus(); }
     else if (e.key === '?') { e.preventDefault(); showShortcuts(); }
   });
@@ -2052,6 +2425,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       body: [el('ul', { class: 'plain' },
         el('li', { text: 'N — new task' }),
         el('li', { text: 'G — settings (team, avatars, appearance)' }),
+        el('li', { text: 'T — toggle team rail' }),
+        el('li', { text: 'A — toggle activity drawer' }),
         el('li', { text: '/ — focus search' }),
         el('li', { text: '? — this help' }),
         el('li', { text: 'Esc — close menu or dialog' }),
@@ -2158,9 +2533,37 @@ function demoState(){
     brief:'Write a script that pushes tasks to the first idle agent every 30 seconds.',
     assignee:'agent-b', status:'cancelled',
     changesSummary:'Cancelled: never auto-dispatch; the manager assigns work explicitly.', updatedAt:iso(now-2*86400000) });
+  task({ id:'TASK-P1D2Q', featureTitle:'Release', title:'Deploy rate limiter to staging',
+    description:'Staging deploy after review.',
+    brief:'Deploy the rate limiter approved in review to staging and verify 429s.',
+    assignee:'agent-a', assignedIDE:'agent-a', status:'pending_deploy', claimedAt:iso(now-2*h),
+    allowedFiles:['middleware/ratelimit.ts'], acceptance:['Deployed to staging','429 verified'],
+    filesModified:['middleware/ratelimit.ts'], changesSummary:'Ready for deploy.',
+    progressLog:[{ at:iso(now-40*m), status:'review', summary:'Approved.' },{ at:iso(now-30*m), status:'pending_deploy', summary:'Waiting for deploy.' }],
+    tokensSpent:1200, updatedAt:iso(now-30*m) });
+  task({ id:'TASK-D3P7Y', featureTitle:'Release', title:'🚀 Release v2.3: rate limit + board sync',
+    description:'Deploy task covering multiple features.',
+    brief:'Deploy v2.3 including rate limiter and board sync fixes. Verify in prod.',
+    assignee:'agent-b', assignedIDE:'agent-b', status:'pending_deploy', claimedAt:iso(now-5*h),
+    kind:'deploy', covers:['TASK-R9D3N','TASK-H42T1'],
+    allowedFiles:['deploy/**'], acceptance:['Deployed','Smoke tests green'],
+    filesModified:['deploy/release-v2.3.md'], changesSummary:'Deploy bundle ready.',
+    progressLog:[{ at:iso(now-5*h), status:'in_progress', summary:'Bundling release.' },{ at:iso(now-1*h), status:'pending_deploy', summary:'Bundle ready, waiting to deploy.' }],
+    tokensSpent:54000, updatedAt:iso(now-1*h) });
+  task({ id:'TASK-D4Q8Z', featureTitle:'Release', title:'Deploy onboarding copy',
+    description:'Copy deploy.',
+    brief:'Deploy new empty-state copy to prod.',
+    assignee:'chatgpt-web', status:'backlog', kind:'deploy', covers:['TASK-M5X1Q'],
+    allowedFiles:['copy/**'], acceptance:['Copy live'], updatedAt:iso(now-15*m) });
+  task({ id:'TASK-X9Y1Z', featureTitle:'Edge', title:'Task with unknown status for testing',
+    description:'Should appear before Done.',
+    brief:'This task has an unknown status and must not be hidden.',
+    assignee:'agent-a', status:'custom_status', claimedAt:iso(now-2*h),
+    allowedFiles:['edge/**'], acceptance:['Visible'], updatedAt:iso(now-2*h) });
   var locks = [
     { filePath:'tests/unit/tasks/sync-route.test.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-7*m) },
-    { filePath:'lib/board/store.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-22*m) } ];
+    { filePath:'lib/board/store.ts', lockedByIDE:'agent-a', taskId:'TASK-H42T3', acquiredAt:iso(now-22*m) },
+    { filePath:'deploy/release-v2.3.md', lockedByIDE:'agent-b', taskId:'TASK-D3P7Y', acquiredAt:iso(now-45*m) } ];
   function ev(id, offset, ide, action, message, badge){ var t = new Date(now+offset);
     return { id:id, timestamp:t.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }), ideName:ide, action:action, message:message, badgeType:badge }; }
   var events = [
@@ -2184,9 +2587,32 @@ function addDemoEvent(ideName, action, message, badgeType){
     ideName:ideName, action:action, message:message, badgeType:badgeType || 'info' });
   S.events = S.events.slice(0, 60);
 }
+function demoHistoryEvents(){
+  if (S._demoHistory) return S._demoHistory;
+  var base = [];
+  var now = Date.now();
+  var agents = ['agent-a','agent-b','chatgpt-web','manager'];
+  var actions = ['claim','progress','review','approve','deployed','move','blocked','answer','created'];
+  var msgs = [
+    'Fixed the sync cache','Deployed to staging','Reviewed PR','Answered blocked question',
+    'Created task','Moved to pending','Marked deployed','Rate limiter approved',
+    'Board sync completed','Onboarding copy updated','Release bundle ready'
+  ];
+  for (var i=0;i<150;i++){
+    var ag = agents[i % agents.length];
+    var act = actions[i % actions.length];
+    var msg = msgs[i % msgs.length] + ' #' + (150-i);
+    var ts = new Date(now - i*60000*7).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    base.push({ id:'h'+i, timestamp: ts, ideName: ag, action: act, message: msg, badgeType: (act==='approve'||act==='deployed'?'success': act==='blocked'?'warning':'info') });
+  }
+  // prepend real events
+  base = S.events.concat(base);
+  S._demoHistory = base;
+  return base;
+}
 function demoId(){ return 'TASK-' + Math.random().toString(36).slice(2,7).toUpperCase(); }
 function splitLines(s){ return String(s || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
-function demoApi(path, body){
+function demoApi(path, body, method){
   body = body || {};
   var parts = path.split('/').filter(Boolean);          // api / mesh / …
   var id = parts[3], verb = parts[4], t = id ? taskById(id) : null;
@@ -2200,9 +2626,10 @@ function demoApi(path, body){
       assignee:body.assignee || null, assignedIDE:null, targetRole:'WORKER', status:'backlog',
       allowedFiles:splitLines(body.allowedFiles), forbiddenFiles:splitLines(body.forbiddenFiles),
       acceptance:splitLines(body.acceptance), workspacePath:body.workspacePath || S.workspacePath,
-      tokensSpent:0, filesModified:[], violations:[], progressLog:[], updatedAt:new Date().toISOString() };
+      tokensSpent:0, filesModified:[], violations:[], progressLog:[], updatedAt:new Date().toISOString(),
+      kind: body.kind || undefined, noDeploy: !!body.noDeploy, covers: body.covers || [] };
     S.tasks.unshift(nt);
-    return done({}, 'manager', 'created', 'Created ' + nt.id + ': “' + nt.title + '”' + (nt.assignee ? ' for ' + agentName(nt.assignee) : '') + '.', 'success');
+    return done({}, 'manager', 'created', 'Created ' + nt.id + ': “' + nt.title + '”' + (nt.assignee ? ' for ' + agentName(nt.assignee) : '') + (nt.kind ? ' kind:'+nt.kind : '') + '.', 'success');
   }
   if (!t && parts[2] === 'task') return fail('Unknown task ' + id);
   if (parts[2] === 'task' && verb === 'edit'){
@@ -2221,14 +2648,35 @@ function demoApi(path, body){
   if (parts[2] === 'task' && verb === 'review'){
     if (t.status !== 'review') return fail('Only a task in review can be approved or sent back');
     if (body.approved){
-      t.status = 'done'; t.updatedAt = new Date().toISOString();
-      t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Approved by the manager.' });
-      return done({}, 'manager', 'approve', 'Approved ' + t.id + '.', 'success');
+      var goPending = !(body.deploy === false) && !t.noDeploy;
+      if (goPending) {
+        t.status = 'pending_deploy'; t.updatedAt = new Date().toISOString();
+        t.progressLog.push({ at:t.updatedAt, status:'pending_deploy', summary:'Approved, waiting to deploy.' });
+        return done({}, 'manager', 'approve', 'Approved ' + t.id + ' → pending deployment.', 'success');
+      } else {
+        t.status = 'done'; t.updatedAt = new Date().toISOString();
+        t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Approved by the manager without deployment.' });
+        return done({}, 'manager', 'approve', 'Approved ' + t.id + ' without deploying.', 'success');
+      }
     }
     if (!body.feedback) return fail('Feedback is required to send a task back');
-    t.status = 'in_progress'; t.reviewFeedback = body.feedback; t.updatedAt = new Date().toISOString();
-    t.progressLog.push({ at:t.updatedAt, status:'in_progress', summary:'Sent back: ' + body.feedback });
+    t.assignee = t.assignedIDE || t.assignee || null; t.assignedIDE = null;
+    t.status = 'backlog'; t.reviewFeedback = body.feedback; t.updatedAt = new Date().toISOString();
+    t.progressLog.push({ at:t.updatedAt, status:'backlog', summary:'Sent back: ' + body.feedback });
     return done({}, 'manager', 'review', 'Sent ' + t.id + ' back: ' + body.feedback, 'warning');
+  }
+  if (parts[2] === 'task' && verb === 'release'){
+    if (['claimed','in_progress','blocked'].indexOf(t.status) < 0) return fail('Only a task an agent is holding can be released');
+    t.assignee = t.assignedIDE || t.assignee || null; t.assignedIDE = null;
+    t.status = 'backlog'; t.updatedAt = new Date().toISOString();
+    t.progressLog.push({ at:t.updatedAt, status:'backlog', summary:'Released; waiting for ' + (t.assignee || 'any worker') + '.' });
+    return done({}, 'manager', 'release', 'Released ' + t.id + ' back to Waiting.', 'info');
+  }
+  if (parts[2] === 'task' && verb === 'deployed'){
+    if (t.status !== 'pending_deploy') return fail('Only pending deployment tasks can be marked deployed');
+    t.status = 'done'; t.updatedAt = new Date().toISOString();
+    t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Marked deployed.' });
+    return done({}, 'manager', 'deployed', 'Marked ' + t.id + ' as deployed.', 'success');
   }
   if (parts[2] === 'task' && verb === 'cancel'){
     if (t.status === 'done' || t.status === 'cancelled') return fail('This task cannot be cancelled');
@@ -2261,9 +2709,10 @@ function demoApi(path, body){
   if (parts[2] === 'agent' && parts.length === 3){
     if (!/^[A-Za-z0-9_-]+$/.test(body.id || '')) return fail('Agent id: letters, digits, "-" and "_" only');
     if (agentById(body.id)) return fail('An agent with that id already exists');
-    S.agents.push({ id:body.id, displayName:(body.label && body.label !== body.id) ? body.label : undefined, ide:'manual',
-      role:'WORKER', manual:true, specialization:'Manual relay', lastSeen:new Date().toISOString() });
-    return done({}, 'manager', 'agent', 'Added manual agent ' + body.id + '.', 'info');
+    var asWorker = body.kind === 'worker';
+    S.agents.push({ id:body.id, displayName:(body.label && body.label !== body.id) ? body.label : undefined, ide:asWorker ? 'ide' : 'manual',
+      role:'WORKER', manual:!asWorker, pending:asWorker || undefined, specialization:asWorker ? 'general' : 'Manual relay', lastSeen:new Date().toISOString() });
+    return done({}, 'manager', 'agent', asWorker ? 'Added worker ' + body.id + '; waiting for its IDE to join.' : 'Added manual agent ' + body.id + '.', 'info');
   }
   if (parts[2] === 'agent' && verb === 'launch'){
     var ag = agentById(id), wasJoined = !!ag;
@@ -2297,19 +2746,54 @@ function demoApi(path, body){
   }
   if (parts[2] === 'task' && verb === 'move'){
     if (!isManual(t.assignee || t.assignedIDE)) return fail('Only a manual agent’s task can be moved by hand — this one belongs to a real agent');
-    if (['backlog', 'in_progress', 'review', 'done', 'cancelled'].indexOf(body.to) < 0) return fail('Unknown column');
+    if (['backlog', 'in_progress', 'review', 'pending_deploy', 'done', 'cancelled'].indexOf(body.to) < 0) return fail('Unknown column');
     if (t.status === body.to) return fail('Already there');
     t.status = body.to; t.updatedAt = new Date().toISOString();
     if (body.to === 'backlog') { t.deliverable = ''; t.progressLog.push({ at:t.updatedAt, status:'backlog', summary:'Moved back to Waiting by the manager.' }); }
     if (body.to === 'done') t.progressLog.push({ at:t.updatedAt, status:'done', summary:'Moved to Done by the manager.' });
     if (body.to === 'in_progress') t.progressLog.push({ at:t.updatedAt, status:'in_progress', summary:'Moved to Working by the manager.' });
     if (body.to === 'review') t.progressLog.push({ at:t.updatedAt, status:'review', summary:'Moved to review by the manager.' });
+    if (body.to === 'pending_deploy') t.progressLog.push({ at:t.updatedAt, status:'pending_deploy', summary:'Moved to Pending deployment by the manager.' });
     if (body.to === 'cancelled') t.changesSummary = 'Cancelled by the manager.';
     return done({}, 'manager', 'move', t.id + ' → ' + body.to + ' (manual task).', 'info');
   }
   if (parts[2] === 'release-lock'){
     S.locks = S.locks.filter(function (l) { return l.filePath !== body.filePath; });
     return done({}, 'manager', 'lock', 'Released the lock on ' + body.filePath + '.', 'info');
+  }
+  if (path.indexOf('/api/mesh/history')===0 || (parts[1]==='mesh' && parts[2] && parts[2].indexOf('history')===0)){
+    // GET /api/mesh/history?limit=200&offset=0&agent=&q=
+    var q = '';
+    var limit = 200, offset = 0, agent = '';
+    try {
+      var url = new URL('http://x'+path);
+      limit = parseInt(url.searchParams.get('limit')||'200',10);
+      offset = parseInt(url.searchParams.get('offset')||'0',10);
+      agent = url.searchParams.get('agent')||'';
+      q = (url.searchParams.get('q')||'').toLowerCase();
+    } catch(e){
+      // fallback parse
+      var m = path.match(/limit=(\d+)/); if (m) limit = parseInt(m[1],10);
+      m = path.match(/offset=(\d+)/); if (m) offset = parseInt(m[1],10);
+      m = path.match(/agent=([^&]*)/); if (m) agent = decodeURIComponent(m[1]);
+      m = path.match(/q=([^&]*)/); if (m) q = decodeURIComponent(m[1]).toLowerCase();
+    }
+    var all = demoHistoryEvents();
+    var filtered = all.filter(function(ev){
+      if (agent && ev.ideName !== agent && ev.ideName !== agentName(agent) && ev.ideName !== agent) {
+        // allow filter by agent id or display name
+        var ag = agentById(agent);
+        if (!ag) return false;
+        if (ev.ideName !== ag.id && ev.ideName !== (ag.displayName||'')) return false;
+      }
+      if (q) {
+        var hay = (ev.message+' '+ev.action+' '+ev.ideName).toLowerCase();
+        if (hay.indexOf(q)<0) return false;
+      }
+      return true;
+    });
+    var slice = filtered.slice(offset, offset+limit);
+    return Promise.resolve({ total: filtered.length, events: slice });
   }
   return fail('Unsupported request in demo mode');
 }
@@ -2352,15 +2836,24 @@ function demoApi(path, body){
     $('#showCancelled').addEventListener('change', function (e) { UI.showCancelled = e.target.checked; saveUI(); render(); });
     $('#newTaskBtn').addEventListener('click', openNewTask);
     $('#settingsBtn').addEventListener('click', function () { openSettings('team'); });
+    var locksBtn = $('#locksBtn');
+    if (locksBtn) locksBtn.addEventListener('click', function(){ openSettings('locks'); });
+    var railToggle = $('#railToggle');
+    if (railToggle) railToggle.addEventListener('click', function(){ toggleRail(); });
     $('#themeBtn').addEventListener('click', function () {
       UI.theme = UI.theme === 'auto' ? 'light' : UI.theme === 'light' ? 'dark' : 'auto';
       saveUI(); applyTheme();
     });
     $('#groupStatus').addEventListener('click', function () { UI.groupBy = 'status'; saveUI(); applyGroup(); render(); });
     $('#groupAgent').addEventListener('click', function () { UI.groupBy = 'agent'; saveUI(); applyGroup(); render(); });
-    $('#activityToggle').addEventListener('click', function () { UI.activity = !UI.activity; saveUI(); $('#activity').classList.toggle('open', UI.activity); });
-    $('#activityClose').addEventListener('click', function () { UI.activity = false; saveUI(); $('#activity').classList.remove('open'); });
+    $('#activityToggle').addEventListener('click', function () { UI.activity = !UI.activity; saveUI(); renderActivity(); });
+    $('#activityClose').addEventListener('click', function () { UI.activity = false; saveUI(); renderActivity(); });
+    var ab = $('#activityBackdrop');
+    if (ab) ab.addEventListener('click', function(){ UI.activity=false; saveUI(); renderActivity(); });
     document.addEventListener('visibilitychange', refreshTimes);
+    // apply initial rail state
+    document.body.classList.toggle('rail-collapsed', !!UI.railCollapsed);
+    document.body.classList.toggle('rail-expanded', !UI.railCollapsed);
   }
   loadUI();
   loadPrefs();
