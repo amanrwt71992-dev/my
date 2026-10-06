@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Sprout Board v5 — Design Reference</title>
+<style>
+/* ========== tokens ========== */
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-backlog:#ece7f3;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-blocked:#ffe0c8;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-backlog:#8a7ab8;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-blocked:#d87a2a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --fs-12:12px;
+  --fs-13:13px;
+  --fs-14:14px;
+  --fs-16:16px;
+  --fs-20:20px;
+  --fw-500:500;
+  --fw-600:600;
+  --fw-700:700;
+  --space-4:4px;
+  --space-8:8px;
+  --space-12:12px;
+  --space-16:16px;
+  --radius-sm:10px;
+  --radius-md:12px;
+  --radius-lg:18px;
+  --radius-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+  --empty-bg:rgba(255,255,255,.6);
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --grey:#6b6b6b;
+  --col-backlog:#2a2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-blocked:#3d2a1e;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-backlog:#a99ad6;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-blocked:#e6a15a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+  --empty-bg:rgba(0,0,0,.2);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 ui-rounded,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+
+/* ========== page frame ========== */
+.page{max-width:1440px;margin:0 auto;padding:0 0 40px}
+.note{font-size:11px;color:var(--muted);padding:6px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.demo-bar{display:flex;gap:8px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700;box-shadow:var(--shadow-sm)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn.icon{width:32px;height:32px;padding:0;display:grid;place-items:center;border-radius:50%}
+.btn.small{padding:4px 10px;font-size:11px}
+
+/* ========== header 56px ========== */
+.header{
+  height:56px;min-height:56px;
+  display:flex;align-items:center;gap:12px;
+  padding:0 16px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+}
+.header-left{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.header-left .logo{color:var(--accent);font-weight:800}
+.brand{font-weight:700;font-size:14px;letter-spacing:-0.01em}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 10px;background:var(--card)}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.header-center{flex:1 1 400px;max-width:480px;margin:0 auto;display:flex;align-items:center}
+.search{width:100%;border:1px solid var(--border);background:var(--card);border-radius:var(--radius-pill);padding:8px 14px 8px 32px;font-size:13px}
+.search-wrap{position:relative;flex:1}
+.search-wrap .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px}
+.header-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex:0 0 auto}
+.bell{position:relative}
+.badge-count{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:var(--radius-pill);background:var(--danger);color:var(--card);font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--panel)}
+
+/* ========== second row tabs 44px + controls ========== */
+.second-row{
+  height:44px;min-height:44px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 16px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+}
+.tabs{display:flex;gap:2px;height:100%;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  background:transparent;border:0;
+  border-bottom:2px solid transparent;
+  padding:0 14px;height:44px;
+  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap
+}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--text);font-weight:700}
+.board-controls{display:flex;align-items:center;gap:8px;margin-left:auto}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px;background:var(--card);gap:2px}
+.seg button{border:0;background:transparent;padding:5px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--text);color:var(--panel)}
+.check{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);font-weight:500}
+
+/* ========== stat chips ========== */
+.stat-chips{display:flex;gap:8px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.stat-chips::-webkit-scrollbar{display:none}
+.stat-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--radius-pill);background:var(--card);border:1px solid var(--border);font-size:12px;font-weight:600;box-shadow:var(--shadow-sm);white-space:nowrap}
+.stat-chip .dot{width:8px;height:8px;border-radius:50%}
+
+/* ========== needs strip ========== */
+.needs-strip{display:flex;gap:8px;padding:8px 16px;background:var(--accent-soft);border-bottom:1px solid var(--border);overflow-x:auto;align-items:center;min-height:40px}
+.needs-label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-fg);flex:0 0 auto}
+.need-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:var(--radius-pill);background:var(--card);border:1px solid var(--border);font-size:12px;font-weight:600;white-space:nowrap;box-shadow:var(--shadow-sm);max-width:300px;overflow:hidden;text-overflow:ellipsis}
+.need-chip.warning{background:var(--warn-soft);border-color:var(--warn)}
+
+/* ========== columns ========== */
+.board{padding:12px;display:flex;gap:12px;overflow:auto;align-items:flex-start;scroll-snap-type:x proximity;scrollbar-width:thin;background:var(--bg)}
+.board::-webkit-scrollbar{height:8px}
+.board::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+.board-frame{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--panel);margin:12px 16px}
+.board-frame .board{padding:12px}
+.board-frame.narrow{max-width:1024px}
+.board-frame.narrow .col{flex:0 0 240px;width:240px}
+.fade{position:relative}
+.fade::after{content:'';position:absolute;right:0;top:0;bottom:0;width:40px;background:linear-gradient(to right, transparent, var(--bg));pointer-events:none}
+.col{
+  flex:1 1 0;min-width:190px;
+  background:var(--col-bg, var(--panel));
+  border:1px solid rgba(0,0,0,.04);
+  border-radius:12px;
+  display:flex;flex-direction:column;
+  min-height:200px;
+  scroll-snap-align:start;
+}
+.col[data-key=backlog]{--col-bg:var(--col-backlog);--col-dot:var(--dot-backlog)}
+.col[data-key=todo]{--col-bg:var(--col-todo);--col-dot:var(--dot-todo)}
+.col[data-key=working]{--col-bg:var(--col-working);--col-dot:var(--dot-working)}
+.col[data-key=blocked]{--col-bg:var(--col-blocked);--col-dot:var(--dot-blocked)}
+.col[data-key=review]{--col-bg:var(--col-review);--col-dot:var(--dot-review)}
+.col[data-key=pending]{--col-bg:var(--col-pending);--col-dot:var(--dot-pending)}
+.col[data-key=done]{--col-bg:var(--col-done);--col-dot:var(--dot-done)}
+.col-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.06);background:var(--col-bg);border-radius:12px 12px 0 0}
+.col-title{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:flex;align-items:center;gap:6px;flex:1}
+.col-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--col-dot)}
+.col-count{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-pill);padding:1px 7px;font-weight:700;box-shadow:var(--shadow-sm)}
+.col-chevron{width:22px;height:22px;border-radius:50%;border:1px solid transparent;background:transparent;display:grid;place-items:center;color:var(--muted)}
+.col-chevron:hover{background:var(--card);border-color:var(--border)}
+.col-body{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto;min-height:60px}
+.col.collapsed{flex:0 0 44px !important;min-width:44px !important;width:44px !important}
+.col.collapsed .col-body,.col.collapsed .col-count{display:none}
+.col.collapsed .col-vertical{display:flex}
+.col-vertical{display:none;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;cursor:pointer}
+.col-vertical .v-title{writing-mode:vertical-rl;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+
+/* ========== tiles ========== */
+.tile{
+  background:var(--card);
+  border:1px solid rgba(0,0,0,.04);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  box-shadow:var(--shadow-sm);
+  transition:transform var(--t), box-shadow var(--t);
+}
+.tile:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.tile-top{display:flex;align-items:center;gap:8px}
+.type-icon{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:0 0 22px;border:1px solid var(--border);background:var(--panel);color:var(--muted)}
+.type-icon svg{width:14px;height:14px}
+.type-icon.t-feature{background:var(--col-review);color:var(--dot-review);border-color:transparent}
+.type-icon.t-bug{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.type-icon.t-docs{background:var(--col-todo);color:var(--dot-todo);border-color:transparent}
+.type-icon.t-test{background:var(--col-pending);color:var(--dot-pending);border-color:transparent}
+.type-icon.t-refactor{background:var(--col-working);color:var(--dot-working);border-color:transparent}
+.type-icon.t-research{background:var(--col-backlog);color:var(--dot-backlog);border-color:transparent}
+.type-icon.t-deploy{background:var(--col-done);color:var(--dot-done);border-color:transparent}
+.type-icon.t-story{background:var(--col-review);color:var(--dot-review);border-color:transparent}
+.tile-id{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-title{font-size:13px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 8px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.story{background:var(--purple-soft);color:var(--purple);border-color:transparent}
+.chip.wait{background:var(--panel)}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.silent{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.high{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:700}
+.chip.plus{border-style:dashed}
+.tile-labels{display:flex;gap:6px;flex-wrap:wrap}
+.lbl{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);background:var(--panel);border:1px solid var(--border);color:var(--text);font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px}
+.owner{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);flex:1;min-width:0}
+.owner .name{font-weight:600;color:var(--text);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owner .name.open{font-style:italic;color:var(--muted)}
+.avatar{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--border);color:var(--card);font-size:9px;font-weight:700;flex:0 0 20px;position:relative}
+.dot-state{width:8px;height:8px;border-radius:50%;border:2px solid var(--card);flex:0 0 8px}
+.dot-state.busy{background:var(--dot-todo)}
+.dot-state.idle{background:var(--dot-done)}
+.dot-state.offline{background:var(--grey)}
+.time{font-size:11px;color:var(--muted);margin-left:4px}
+.tile.waiting{border-left:3px solid var(--dot-blocked)}
+.tile.story{border-left:3px solid var(--purple);background:linear-gradient(to right, var(--purple-soft), var(--card) 28px)}
+.progress{height:4px;background:var(--panel);border-radius:var(--radius-pill);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--purple)}
+.managed{font-size:11px;color:var(--muted);font-weight:600}
+
+/* ========== rail ========== */
+.rail-demo{display:flex;gap:16px;padding:12px 16px;align-items:flex-start}
+.rail{border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:8px}
+.rail.collapsed-rail{width:60px;align-items:center}
+.rail.expanded-rail{width:220px}
+.rail-header{display:flex;align-items:center;justify-content:space-between;width:100%}
+.rail-list{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%}
+.rail-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:100%}
+.rail-btn{position:relative;border:1px solid transparent;background:transparent;border-radius:10px;padding:4px;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.rail-btn:hover{background:var(--card);border-color:var(--border);box-shadow:var(--shadow-sm)}
+.rail-btn .avatar{width:32px;height:32px;font-size:11px}
+.rail-btn.busy .avatar{box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--dot-todo)}
+.rail-btn.idle .avatar{box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--dot-done)}
+.rail-btn.offline .avatar{box-shadow:0 0 0 2px var(--panel), 0 0 0 4px var(--grey)}
+.rail-count{position:absolute;top:0;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:var(--radius-pill);background:var(--card);border:1px solid var(--border);font-size:10px;font-weight:700;display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+.rail-card{border:1px solid var(--border);background:var(--card);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm);width:100%}
+.rail-card .row{display:flex;align-items:center;gap:8px}
+
+/* ========== empty ========== */
+.empty{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:20px 12px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  background:var(--empty-bg);
+  text-align:center;color:var(--muted);font-size:12px
+}
+.empty svg{width:32px;height:32px;opacity:.8}
+.empty-title{font-weight:600;color:var(--text);font-size:13px}
+.empty-text{max-width:220px;line-height:1.4}
+
+/* ========== drawer ========== */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:40;display:none}
+.backdrop.open{display:block}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;
+  width:360px;max-width:92vw;
+  background:var(--panel);
+  border-left:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  z-index:50;
+  transform:translateX(100%);
+  transition:transform var(--t);
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700}
+.drawer-body{overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.att-item{border:1px solid var(--border);background:var(--card);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm)}
+.att-item .meta{font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.att-item .msg{font-size:12px;line-height:1.4}
+
+/* ========== layout helpers ========== */
+.section{margin:16px 0 0;border-top:1px solid var(--border);padding-top:12px}
+.section h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 16px 8px;font-weight:700}
+.tiles-grid{display:flex;flex-wrap:wrap;gap:12px;padding:0 16px}
+.tiles-grid .tile{width:300px}
+[data-compact=true] .tile{padding:8px 10px;gap:5px}
+[data-compact=true] .tile-title{-webkit-line-clamp:2}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-size:11px;font-weight:700;color:var(--muted)">Demo toggles:</span>
+  <button class="btn small" id="themeBtn">◐ Theme</button>
+  <button class="btn small" id="compactBtn">Compact</button>
+  <button class="btn small" id="drawerBtn">🔔 Drawer (5)</button>
+  <span style="font-size:11px;color:var(--muted)">File under 60KB, no external resources</span>
+</div>
+
+<div class="page">
+<!-- ========== header ========== -->
+<div class="note">HEADER 56px — brand + live dot, centred search, Add New Task mint pill with sparkle, bell with count, theme and menu</div>
+<div class="header">
+  <div class="header-left">
+    <span class="logo">◆</span>
+    <span class="brand">AgentMesh</span>
+    <span class="live"><span class="dot"></span> live</span>
+  </div>
+  <div class="header-center">
+    <div class="search-wrap">
+      <span class="icon">⌕</span>
+      <input class="search" type="search" placeholder="Search tasks… ( / )" aria-label="Search tasks">
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn primary" aria-label="Add New Task">✦ Add New Task</button>
+    <button class="btn icon ghost bell" aria-label="Notifications"><span>🔔</span><span class="badge-count">5</span></button>
+    <button class="btn icon ghost" aria-label="Theme">◐</button>
+    <button class="btn icon ghost" aria-label="Menu">⚙</button>
+  </div>
+</div>
+
+<!-- ========== second row tabs + controls ========== -->
+<div class="note">SECOND ROW 44px — tabs underline left, board controls right same row</div>
+<div class="second-row">
+  <div class="tabs" role="tablist" aria-label="Main tabs">
+    <button role="tab" aria-selected="true">Board</button>
+    <button role="tab" aria-selected="false">Stories</button>
+    <button role="tab" aria-selected="false">Team</button>
+    <button role="tab" aria-selected="false">Archive</button>
+  </div>
+  <div class="board-controls">
+    <div class="seg" role="group" aria-label="Group by">
+      <button aria-pressed="true">Status</button>
+      <button aria-pressed="false">Agent</button>
+      <button aria-pressed="false">Story</button>
+    </div>
+    <label class="check"><input type="checkbox"> Compact</label>
+    <label class="check"><input type="checkbox"> Show cancelled</label>
+  </div>
+</div>
+
+<!-- ========== stat chips ========== -->
+<div class="note">STAT CHIPS — dot + number + word, clickable</div>
+<div class="stat-chips">
+  <span class="stat-chip"><span class="dot" style="background:var(--dot-working)"></span><span style="font-weight:700">2</span> Working</span>
+  <span class="stat-chip"><span class="dot" style="background:var(--dot-blocked)"></span><span style="font-weight:700">0</span> Need answer</span>
+  <span class="stat-chip"><span class="dot" style="background:var(--dot-review)"></span><span style="font-weight:700">2</span> In review</span>
+  <span class="stat-chip"><span class="dot" style="background:var(--dot-pending)"></span><span style="font-weight:700">6</span> Pending deploy</span>
+  <span class="stat-chip"><span class="dot" style="background:var(--dot-done)"></span><span style="font-weight:700">37</span> Done</span>
+</div>
+
+<!-- ========== needs strip ========== -->
+<div class="note">NEEDS YOU — question first, then review, nudge, deploy failed, horizontally scrollable</div>
+<div class="needs-strip">
+  <span class="needs-label">Needs you</span>
+  <button class="need-chip warning"><span>❓</span> TASK-124 is blocked — answer Codex</button>
+  <button class="need-chip"><span>👀</span> TASK-118 ready for review</button>
+  <button class="need-chip"><span>✍</span> TASK-121 needs pasted response from Arena</button>
+  <button class="need-chip warning"><span>🚀</span> TASK-115 deploy failed — retry</button>
+</div>
+
+<!-- ========== columns 1440px ========== -->
+<div class="note">SEVEN COLUMNS — 1440px fits without scroll (min 190px). Sticky header dot+title+count+chevron, one collapsed</div>
+<div class="board-frame">
+  <div class="board">
+    <div class="col" data-key="backlog">
+      <div class="col-head"><span class="col-title">Backlog</span><span class="col-count">3</span><button class="col-chevron" aria-label="Collapse">‹</button></div>
+      <div class="col-body">
+        <div class="tile">
+          <div class="tile-top"><span class="type-icon t-feature"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9.9 4.9 11.5l.6-3.5L3 5.5l3.5-.5L8 2z" fill="currentColor"/></svg></span><span class="tile-id">TASK-124</span><span class="time">⏱ 2h</span></div>
+          <div class="tile-title">AI: use the constraints extractor in every turn</div>
+          <div class="tile-chips"><span class="chip">+ tag Research</span><span class="chip">+1 comment</span></div>
+          <div class="tile-labels"><span class="lbl">constraints</span><span class="lbl">ai</span></div>
+          <div class="tile-foot"><div class="owner"><span class="avatar">CX</span><span class="name">Codex</span><span class="dot-state busy"></span></div><span class="time">2h</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" data-key="todo">
+      <div class="col-head"><span class="col-title">To do</span><span class="col-count">2</span><button class="col-chevron">‹</button></div>
+      <div class="col-body">
+        <div class="tile">
+          <div class="tile-top"><span class="type-icon t-bug"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1a1 1 0 0 1 1 1v1.2a3 3 0 0 1 1.8 1l.8-.8a1 1 0 1 1 1.4 1.4l-.8.8a3 3 0 0 1 .8 1.6v1a3 3 0 0 1-.8 1.6l.8.8a1 1 0 1 1-1.4 1.4l-.8-.8a3 3 0 0 1-1.8 1V14a1 1 0 1 1-2 0v-1.2a3 3 0 0 1-1.8-1l-.8.8a1 1 0 1 1-1.4-1.4l.8-.8A3 3 0 0 1 4 9V8a3 3 0 0 1 .8-1.6l-.8-.8A1 1 0 1 1 5.4 4.2l.8.8A3 3 0 0 1 8 4V2a1 1 0 0 1 1-1zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="currentColor"/></svg></span><span class="tile-id">TASK-121</span><span class="time">⏱ 5m</span></div>
+          <div class="tile-title">Fix board collapse to 24px regression</div>
+          <div class="tile-chips"><span class="chip warn">Changes requested</span></div>
+          <div class="tile-foot"><div class="owner"><span class="avatar">AR</span><span class="name">Arena</span><span class="dot-state idle"></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" data-key="working">
+      <div class="col-head"><span class="col-title">In progress</span><span class="col-count">2</span><button class="col-chevron">‹</button></div>
+      <div class="col-body">
+        <div class="tile waiting">
+          <div class="tile-top"><span class="type-icon t-feature"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9.9 4.9 11.5l.6-3.5L3 5.5l3.5-.5L8 2z" fill="currentColor"/></svg></span><span class="tile-id">TASK-118</span><span class="time">⏱ 32m</span></div>
+          <div class="tile-title">AI: wire Codex to read board every turn</div>
+          <div class="tile-chips"><span class="chip">+ tag AI</span></div>
+          <div class="tile-foot"><div class="owner"><span class="avatar">CX</span><span class="name">Codex</span><span class="dot-state busy"></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" data-key="blocked">
+      <div class="col-head"><span class="col-title">Needs answer</span><span class="col-count">0</span><button class="col-chevron">‹</button></div>
+      <div class="col-body">
+        <div class="empty"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/><path d="M10 13c1-1 2.5-1.5 6-1.5s5 .5 6 1.5M11 19a2 2 0 0 0 2 2M19 19a2 2 0 0 1 2 2M12 24c1.5 1 2.5 1.5 4 1.5s2.5-.5 4-1.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".5"/></svg><div class="empty-title">No questions</div><div class="empty-text">No questions waiting for you — you are all caught up</div></div>
+      </div>
+    </div>
+    <div class="col" data-key="review">
+      <div class="col-head"><span class="col-title">Code review</span><span class="col-count">2</span><button class="col-chevron">‹</button></div>
+      <div class="col-body">
+        <div class="tile">
+          <div class="tile-top"><span class="type-icon t-refactor"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 6l3-3 1.4 1.4L4.8 6H10a2 2 0 0 1 2 2v1H11V8a1 1 0 0 0-1-1H4.8l1.6 1.6L5 10 2 7zm12 4l-3 3-1.4-1.4L11.2 10H6a2 2 0 0 1-2-2V7h1v1a1 1 0 0 0 1 1h5.2l-1.6-1.6L11 6l3 3z" fill="currentColor"/></svg></span><span class="tile-id">TASK-115</span><span class="time">⏱ 1h</span></div>
+          <div class="tile-title">Refactor board to use design tokens</div>
+          <div class="tile-foot"><div class="owner"><span class="avatar">OM</span><span class="name">Omni</span><span class="dot-state busy"></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" data-key="pending">
+      <div class="col-head"><span class="col-title">Pending deployment</span><span class="col-count">6</span><button class="col-chevron">‹</button></div>
+      <div class="col-body">
+        <div class="tile"><div class="tile-top"><span class="type-icon t-deploy"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 1c2.5 0 5 2.5 5 5 0 2-1 3.5-2.5 5L8 14l-2.5-3C4 9.5 3 8 3 6c0-2.5 2.5-5 5-5zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="currentColor"/></svg></span><span class="tile-id">TASK-110</span></div><div class="tile-title">Deploy board v4 to staging</div></div>
+      </div>
+    </div>
+    <div class="col collapsed" data-key="done">
+      <div class="col-head"><span class="col-title">Done</span><span class="col-count">37</span><button class="col-chevron">›</button></div>
+      <div class="col-body"></div>
+      <div class="col-vertical"><span class="v-title">Done</span><span class="col-count">37</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="note">1024px behaviour — scroll snap + edge fade (resize window or check narrow frame)</div>
+<div class="board-frame narrow fade">
+  <div class="board">
+    <div class="col" data-key="backlog"><div class="col-head"><span class="col-title">Backlog</span><span class="col-count">3</span></div><div class="col-body"><div class="tile"><div class="tile-title">Backlog task</div></div></div></div>
+    <div class="col" data-key="todo"><div class="col-head"><span class="col-title">To do</span><span class="col-count">2</span></div><div class="col-body"><div class="tile"><div class="tile-title">To do task</div></div></div></div>
+    <div class="col" data-key="working"><div class="col-head"><span class="col-title">In progress</span><span class="col-count">2</span></div><div class="col-body"><div class="tile"><div class="tile-title">Working task</div></div></div></div>
+    <div class="col" data-key="blocked"><div class="col-head"><span class="col-title">Needs answer</span><span class="col-count">1</span></div><div class="col-body"><div class="tile"><div class="tile-title">Blocked</div></div></div></div>
+    <div class="col" data-key="review"><div class="col-head"><span class="col-title">Code review</span><span class="col-count">2</span></div><div class="col-body"><div class="tile"><div class="tile-title">Review</div></div></div></div>
+    <div class="col" data-key="pending"><div class="col-head"><span class="col-title">Pending</span><span class="col-count">6</span></div><div class="col-body"><div class="tile"><div class="tile-title">Pending</div></div></div></div>
+    <div class="col" data-key="done"><div class="col-head"><span class="col-title">Done</span><span class="col-count">37</span></div><div class="col-body"><div class="tile"><div class="tile-title">Done</div></div></div></div>
+  </div>
+</div>
+
+<!-- ========== tiles ========== -->
+<div class="section">
+<h2>Tiles — variants (copy size)</h2>
+<div class="tiles-grid">
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-feature"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9.9 4.9 11.5l.6-3.5L3 5.5l3.5-.5L8 2z" fill="currentColor"/></svg></span><span class="tile-id">TASK-201</span><span class="time">⏱ 12m</span></div>
+  <div class="tile-title">AI: use the constraints extractor in every turn</div>
+  <div class="tile-chips"><span class="chip">+ tag AI</span><span class="chip">+1 comment</span><span class="chip">+ tag Research</span></div>
+  <div class="tile-labels"><span class="lbl">constraints</span><span class="lbl">extractor</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">CX</span><span class="name">Codex</span><span class="dot-state busy"></span></div><span class="time">12m</span></div>
+</div>
+
+<div class="tile waiting">
+  <div class="tile-top"><span class="type-icon t-bug"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 1a1 1 0 0 1 1 1v1.2a3 3 0 0 1 1.8 1l.8-.8a1 1 0 1 1 1.4 1.4l-.8.8a3 3 0 0 1 .8 1.6v1a3 3 0 0 1-.8 1.6l.8.8a1 1 0 1 1-1.4 1.4l-.8-.8a3 3 0 0 1-1.8 1V14a1 1 0 1 1-2 0v-1.2a3 3 0 0 1-1.8-1l-.8.8a1 1 0 1 1-1.4-1.4l.8-.8A3 3 0 0 1 4 9V8a3 3 0 0 1 .8-1.6l-.8-.8A1 1 0 1 1 5.4 4.2l.8.8A3 3 0 0 1 8 4V2a1 1 0 0 1 1-1zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="currentColor"/></svg></span><span class="tile-id">TASK-202</span><span class="time">⏱ 45m</span></div>
+  <div class="tile-title">Fix notification panel CSS lost on rewrite</div>
+  <div class="tile-chips"><span class="chip warn">Waiting for you</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">AG</span><span class="name">Antigravity IDE</span><span class="dot-state busy"></span></div></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-docs"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 1h5l3 3v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm5 1.5V5h2.5L9 2.5zM5 7h6v1H5V7zm0 3h6v1H5v-1z" fill="currentColor"/></svg></span><span class="tile-id">TASK-203</span></div>
+  <div class="tile-title">Write design tokens doc for board v5</div>
+  <div class="tile-chips"><span class="chip wait">Waiting on 2</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">OM</span><span class="name">Omni</span><span class="dot-state idle"></span></div></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-test"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M5 1h6v2h1a1 1 0 0 1 1 1v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1h1V1zm1 2v1H5v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V4h-1V3H6z" fill="currentColor"/></svg></span><span class="tile-id">TASK-204</span></div>
+  <div class="tile-title">Add high priority lane for urgent bugs</div>
+  <div class="tile-chips"><span class="chip high">HIGH</span><span class="chip">+ tag Bug</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">AR</span><span class="name">Arena</span><span class="dot-state busy"></span></div></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-refactor"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 6l3-3 1.4 1.4L4.8 6H10a2 2 0 0 1 2 2v1H11V8a1 1 0 0 0-1-1H4.8l1.6 1.6L5 10 2 7zm12 4l-3 3-1.4-1.4L11.2 10H6a2 2 0 0 1-2-2V7h1v1a1 1 0 0 0 1 1h5.2l-1.6-1.6L11 6l3 3z" fill="currentColor"/></svg></span><span class="tile-id">TASK-205</span></div>
+  <div class="tile-title">Silent worker — check heartbeat for Codex</div>
+  <div class="tile-chips"><span class="chip silent">silent 12 min</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">CX</span><span class="name">Codex</span><span class="dot-state offline"></span></div></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-research"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M6.5 1A5.5 5.5 0 0 1 12 6.5a5.4 5.4 0 0 1-1.2 3.4l3.4 3.4-1.3 1.3-3.4-3.4A5.5 5.5 0 1 1 6.5 1zm0 2A3.5 3.5 0 1 0 6.5 10 3.5 3.5 0 0 0 6.5 3z" fill="currentColor"/></svg></span><span class="tile-id">TASK-206</span></div>
+  <div class="tile-title">Changes requested on board tokens PR</div>
+  <div class="tile-chips"><span class="chip warn">Changes requested</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">OM</span><span class="name">Omni</span><span class="dot-state idle"></span></div></div>
+</div>
+
+<div class="tile story">
+  <div class="tile-top"><span class="type-icon t-story"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2a1 1 0 0 1 1-1h5a2 2 0 0 1 2 2v10a2 2 0 0 0-2-2H4a1 1 0 0 0-1 1V2zm6 0v11a1 1 0 0 1 1 1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H9z" fill="currentColor"/></svg></span><span class="tile-id">STORY-12</span></div>
+  <div class="tile-title">Sprout board polish — header, tabs, columns</div>
+  <div class="managed">Managed automatically · 4 of 13 done</div>
+  <div class="progress"><i style="width:30%"></i></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-deploy"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 1c2.5 0 5 2.5 5 5 0 2-1 3.5-2.5 5L8 14l-2.5-3C4 9.5 3 8 3 6c0-2.5 2.5-5 5-5zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="currentColor"/></svg></span><span class="tile-id">TASK-207</span></div>
+  <div class="tile-title">Open task for any agent to pick up</div>
+  <div class="tile-foot"><div class="owner"><span class="avatar" style="background:var(--grey)">?</span><span class="name open">Open to any agent</span></div></div>
+</div>
+
+<div class="tile">
+  <div class="tile-top"><span class="type-icon t-feature"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9.9 4.9 11.5l.6-3.5L3 5.5l3.5-.5L8 2z" fill="currentColor"/></svg></span><span class="tile-id">TASK-208</span></div>
+  <div class="tile-title">Done: add design tokens documentation</div>
+  <div class="tile-chips"><span class="chip">Done</span></div>
+  <div class="tile-foot"><div class="owner"><span class="avatar">AR</span><span class="name">Arena</span><span class="dot-state offline"></span></div><span class="time">✓ 2d ago</span></div>
+</div>
+
+</div>
+</div>
+
+<!-- ========== type icons ========== -->
+<div class="section">
+<h2>Type icons — 8 inline SVG</h2>
+<div style="display:flex;gap:12px;padding:0 16px;flex-wrap:wrap">
+  <span class="type-icon t-feature" title="feature"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9.9 4.9 11.5l.6-3.5L3 5.5l3.5-.5L8 2z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-bug" title="bug"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 1a1 1 0 0 1 1 1v1.2a3 3 0 0 1 1.8 1l.8-.8a1 1 0 1 1 1.4 1.4l-.8.8a3 3 0 0 1 .8 1.6v1a3 3 0 0 1-.8 1.6l.8.8a1 1 0 1 1-1.4 1.4l-.8-.8a3 3 0 0 1-1.8 1V14a1 1 0 1 1-2 0v-1.2a3 3 0 0 1-1.8-1l-.8.8a1 1 0 1 1-1.4-1.4l.8-.8A3 3 0 0 1 4 9V8a3 3 0 0 1 .8-1.6l-.8-.8A1 1 0 1 1 5.4 4.2l.8.8A3 3 0 0 1 8 4V2a1 1 0 0 1 1-1zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-docs" title="docs"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M4 1h5l3 3v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zm5 1.5V5h2.5L9 2.5zM5 7h6v1H5V7zm0 3h6v1H5v-1z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-test" title="test"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M5 1h6v2h1a1 1 0 0 1 1 1v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1h1V1zm1 2v1H5v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V4h-1V3H6z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-refactor" title="refactor"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M2 6l3-3 1.4 1.4L4.8 6H10a2 2 0 0 1 2 2v1H11V8a1 1 0 0 0-1-1H4.8l1.6 1.6L5 10 2 7zm12 4l-3 3-1.4-1.4L11.2 10H6a2 2 0 0 1-2-2V7h1v1a1 1 0 0 0 1 1h5.2l-1.6-1.6L11 6l3 3z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-research" title="research"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M6.5 1A5.5 5.5 0 0 1 12 6.5a5.4 5.4 0 0 1-1.2 3.4l3.4 3.4-1.3 1.3-3.4-3.4A5.5 5.5 0 1 1 6.5 1zm0 2A3.5 3.5 0 1 0 6.5 10 3.5 3.5 0 0 0 6.5 3z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-deploy" title="deploy"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 1c2.5 0 5 2.5 5 5 0 2-1 3.5-2.5 5L8 14l-2.5-3C4 9.5 3 8 3 6c0-2.5 2.5-5 5-5zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="currentColor"/></svg></span>
+  <span class="type-icon t-story" title="story"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M3 2a1 1 0 0 1 1-1h5a2 2 0 0 1 2 2v10a2 2 0 0 0-2-2H4a1 1 0 0 0-1 1V2zm6 0v11a1 1 0 0 1 1 1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H9z" fill="currentColor"/></svg></span>
+</div>
+</div>
+
+<!-- ========== rail ========== -->
+<div class="section">
+<h2>Left rail — collapsed + expanded</h2>
+<div class="rail-demo">
+  <div class="rail collapsed-rail">
+    <div class="rail-header"><button class="btn small ghost" aria-label="Expand">»</button></div>
+    <div class="rail-list">
+      <div class="rail-item"><button class="rail-btn busy" title="Codex — busy, 3 open"><span class="avatar" style="background:#5a9ad5">CX</span><span class="rail-count">3</span></button></div>
+      <div class="rail-item"><button class="rail-btn idle" title="Antigravity IDE — idle, 1 open"><span class="avatar" style="background:#8a7ab8">AG</span><span class="rail-count">1</span></button></div>
+      <div class="rail-item"><button class="rail-btn offline" title="Omni — offline, 0 open"><span class="avatar" style="background:#a09a8e">OM</span></button></div>
+      <div class="rail-item"><button class="rail-btn busy" title="Arena — busy, 2 open"><span class="avatar" style="background:#4fb5a6">AR</span><span class="rail-count">2</span></button></div>
+    </div>
+  </div>
+  <div class="rail expanded-rail">
+    <div class="rail-header"><span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Team</span><button class="btn small ghost">«</button></div>
+    <div class="rail-card"><div class="row"><span class="avatar" style="background:#5a9ad5">CX</span><span style="font-weight:600;font-size:13px">Codex</span><span class="dot-state busy"></span></div><div style="font-size:11px;color:var(--muted)">working on TASK-201 · 3 open · busy</div></div>
+    <div class="rail-card"><div class="row"><span class="avatar" style="background:#8a7ab8">AG</span><span style="font-weight:600;font-size:13px">Antigravity IDE</span><span class="dot-state idle"></span></div><div style="font-size:11px;color:var(--muted)">idle · 1 open</div></div>
+    <div class="rail-card"><div class="row"><span class="avatar" style="background:#4fb5a6">AR</span><span style="font-weight:600;font-size:13px">Arena</span><span class="dot-state busy"></span></div><div style="font-size:11px;color:var(--muted)">working on TASK-121 · 2 open · busy</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ========== empty states ========== -->
+<div class="section">
+<h2>Empty states</h2>
+<div style="display:flex;gap:12px;padding:0 16px;flex-wrap:wrap">
+  <div class="empty" style="width:240px"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/><path d="M10 13c1-1 2.5-1.5 6-1.5s5 .5 6 1.5M11 19a2 2 0 0 0 2 2M19 19a2 2 0 0 1 2 2M12 24c1.5 1 2.5 1.5 4 1.5s2.5-.5 4-1.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".5"/></svg><div class="empty-title">Backlog empty</div><div class="empty-text">No ideas in Backlog — add a task to get started</div></div>
+  <div class="empty" style="width:300px"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/><path d="M16 10v8M16 22v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg><div class="empty-title">No stories yet</div><div class="empty-text">Create a story to group related tasks — stories help you track progress.</div></div>
+</div>
+</div>
+
+<!-- ========== notification drawer ========== -->
+<div class="section">
+<h2>Notification panel — right drawer 360px fixed, backdrop, never takes flow space</h2>
+<p style="font-size:11px;color:var(--muted);margin:0 16px">Click bell to open drawer. Drawer is position:fixed, width 360px, over board with backdrop.</p>
+</div>
+
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="drawer" id="drawer" role="dialog" aria-label="Notifications" aria-modal="true">
+  <div class="drawer-head"><strong>Attention</strong><span style="font-size:11px;color:var(--muted);margin-left:6px">5 items — question first</span><button class="btn small ghost" id="closeDrawer" style="margin-left:auto" aria-label="Close">✕</button></div>
+  <div class="drawer-body">
+    <div class="att-item"><div class="meta"><span>❓</span> Question · TASK-124</div><div class="msg">TASK-124 is blocked — needs answer from Codex about constraints extractor</div><button class="btn small">Open task</button></div>
+    <div class="att-item"><div class="meta"><span>👀</span> Review · TASK-118</div><div class="msg">TASK-118 ready for review — AI: wire Codex to read board every turn</div><button class="btn small">Open task</button></div>
+    <div class="att-item"><div class="meta"><span>✍</span> Nudge · TASK-121</div><div class="msg">TASK-121 needs pasted response from Arena — board collapse regression</div><button class="btn small">Copy nudge</button></div>
+    <div class="att-item"><div class="meta"><span>⚠</span> Violation · TASK-115</div><div class="msg">TASK-115 changed 2 files outside boundary — check refactor</div><button class="btn small">Open task</button></div>
+    <div class="att-item"><div class="meta"><span>🚀</span> Deploy failed · TASK-110</div><div class="msg">TASK-110 deploy failed — retry pending deployment</div><button class="btn small">Retry</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  var compactBtn = document.getElementById('compactBtn');
+  var drawerBtn = document.getElementById('drawerBtn');
+  var drawer = document.getElementById('drawer');
+  var backdrop = document.getElementById('backdrop');
+  var closeDrawer = document.getElementById('closeDrawer');
+  function getTheme(){
+    return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.board-v5.theme', next); }catch(e){}
+  }
+  try{
+    var saved = window.localStorage.getItem('sprout.board-v5.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      setTheme(getTheme()==='dark' ? 'light' : 'dark');
+    });
+  }
+  if(compactBtn){
+    compactBtn.addEventListener('click', function(){
+      var isCompact = root.getAttribute('data-compact') === 'true';
+      if(isCompact) root.removeAttribute('data-compact');
+      else root.setAttribute('data-compact','true');
+    });
+  }
+  function openDrawer(){
+    drawer.classList.add('open');
+    backdrop.classList.add('open');
+  }
+  function shutDrawer(){
+    drawer.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+  if(drawerBtn) drawerBtn.addEventListener('click', openDrawer);
+  if(closeDrawer) closeDrawer.addEventListener('click', shutDrawer);
+  if(backdrop) backdrop.addEventListener('click', shutDrawer);
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape') shutDrawer();
+  });
+  // collapse toggle for columns
+  var cols = document.querySelectorAll('.col .col-chevron');
+  for(var i=0;i<cols.length;i++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var col = btn.closest('.col');
+        if(!col) return;
+        col.classList.toggle('collapsed');
+      });
+    })(cols[i]);
+  }
+  // vertical title also toggles
+  var vTitles = document.querySelectorAll('.col-vertical');
+  for(var j=0;j<vTitles.length;j++){
+    (function(v){
+      v.addEventListener('click', function(){
+        var col = v.closest('.col');
+        if(col) col.classList.toggle('collapsed');
+      });
+    })(vTitles[j]);
+  }
+})();
+</script>
+</body>
+</html>
