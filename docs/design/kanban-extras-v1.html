@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Kanban Extras v1 — Filter, WIP, Swimlanes</title>
+<style>
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-needs:#ffe9d0;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-needs:#d87a2a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-needs:#3d2a1e;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-needs:#e6a15a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1440px;margin:0 auto;padding:0 12px 40px}
+.demo-bar{display:flex;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:40}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+
+/* filter bar */
+.filter-bar{display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:12px;margin:12px 0;box-shadow:var(--shadow-sm)}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-row input{border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--card);color:var(--text);min-width:180px;flex:1 1 200px}
+.filter-chip{font-size:11px;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.filter-chip.on{background:var(--text);color:var(--panel);border-color:var(--text)}
+.active-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:28px}
+.active-filters .af{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent-fg);border:1px solid var(--accent);display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.active-filters .af button{border:0;background:transparent;font-weight:700;padding:0 2px}
+.saved{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.saved .view{padding:2px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:600;cursor:pointer}
+.saved .view.on{background:var(--purple-soft);color:var(--purple);border-color:var(--purple)}
+
+/* board */
+.board{display:flex;gap:12px;overflow:auto;padding:8px 0 16px;align-items:flex-start}
+.col{flex:0 0 220px;min-width:220px;background:var(--panel);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:80vh}
+.col-head{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;position:relative}
+.col-head .count{margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--r-pill);padding:1px 7px;font-size:11px}
+.col-head.over{background:var(--warn-soft);border-bottom-color:var(--warn)}
+.col-head.over .count{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.col-head .dot{width:8px;height:8px;border-radius:50%}
+.col-body{padding:8px;display:flex;flex-direction:column;gap:8px;overflow:auto;flex:1}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm);position:relative;transition:all var(--t)}
+.tile:hover{border-color:var(--border-strong);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.tile-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600}
+.tile-title{font-size:12px;font-weight:600;line-height:1.35}
+.tile-foot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.chip{font-size:10px;padding:2px 6px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);font-weight:600}
+.quick{position:absolute;top:6px;right:6px;display:flex;gap:4px;opacity:0;transition:opacity var(--t)}
+.tile:hover .quick{opacity:1}
+.quick button{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:var(--card);display:grid;place-items:center;font-size:10px}
+.tile.highlight{outline:2px solid var(--accent);border-color:var(--accent)}
+.tile.wait-on{outline:2px dashed var(--purple);border-color:var(--purple)}
+.tile.waited-by{outline:2px dashed var(--dot-working);border-color:var(--dot-working)}
+
+/* WIP popover */
+.wip-pop{position:absolute;top:100%;right:0;margin-top:6px;width:200px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);padding:10px;z-index:20;display:none;flex-direction:column;gap:8px}
+.wip-pop.open{display:flex}
+.wip-pop label{font-size:11px;font-weight:600}
+.wip-pop input{border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--panel);color:var(--text);width:100%}
+
+/* swimlanes */
+.lanes{display:flex;flex-direction:column;gap:16px;margin-top:12px}
+.lane{border:1px solid var(--border);border-radius:12px;background:var(--panel);overflow:hidden}
+.lane-head{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:700}
+.lane-head .count{margin-left:auto;font-size:11px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-pill);padding:1px 8px}
+.lane-body{display:flex;gap:12px;overflow:auto;padding:10px}
+.lane.collapsed .lane-body{display:none}
+
+/* phone */
+.phone-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;height:820px}
+.phone-frame .board{flex-direction:column;overflow:auto}
+.phone-frame .col{flex:0 0 auto;min-width:0;width:100%;max-height:none}
+@media(max-width:600px){.col{flex:0 0 200px;min-width:200px}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-weight:700;font-size:12px">Kanban Extras v1</span>
+  <button class="btn small" data-state="default" aria-pressed="true">Default 1440</button>
+  <button class="btn small" data-state="filter">Filter active</button>
+  <button class="btn small" data-state="wip">WIP over limit</button>
+  <button class="btn small" data-state="swim-project">Swimlanes: Project</button>
+  <button class="btn small" data-state="swim-agent">Swimlanes: Agent</button>
+  <button class="btn small" data-state="deps">Deps highlight</button>
+  <button class="btn small" data-state="phone">Phone 390px</button>
+  <span style="margin-left:auto"><button class="btn small" id="themeBtn">◐ Theme</button></span>
+</div>
+
+<div class="page">
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-row">
+      <input id="searchInput" placeholder="Search tasks, id, title…">
+      <button class="filter-chip" data-filter="project">Project ▾</button>
+      <button class="filter-chip" data-filter="agent">Agent ▾</button>
+      <button class="filter-chip" data-filter="priority">Priority ▾</button>
+      <button class="filter-chip" data-filter="capability">Capability ▾</button>
+      <button class="filter-chip" data-filter="status">Status ▾</button>
+      <button class="btn small ghost" id="clearFilters">Clear</button>
+    </div>
+    <div class="active-filters" id="activeFilters"></div>
+    <div class="saved"><span>Saved views:</span><span class="view" data-view="my">My tasks</span><span class="view" data-view="high">High priority</span><span class="view" data-view="review">Needs review</span></div>
+  </div>
+
+  <div id="boardSection">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div id="lanesSection" class="hidden">
+    <div class="lanes" id="lanes"></div>
+  </div>
+
+  <div id="phoneSection" class="hidden" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div class="phone-frame">
+      <div style="padding:8px;border-bottom:1px solid var(--border);background:var(--panel)"><input placeholder="Search…" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--card)"></div>
+      <div style="padding:8px;display:flex;gap:6px;overflow:auto"><span class="chip">Project: Sprout</span><span class="chip">Agent: Codex</span></div>
+      <div class="board" id="phoneBoard" style="flex:1"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.kanban.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.kanban.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+
+  var columns = [
+    {key:'todo', name:'To do', dot:'var(--dot-todo)', limit:6},
+    {key:'working', name:'In progress', dot:'var(--dot-working)', limit:4},
+    {key:'needs', name:'Needs answer', dot:'var(--dot-needs)', limit:3},
+    {key:'review', name:'Code review', dot:'var(--dot-review)', limit:3},
+    {key:'pending', name:'Pending deployment', dot:'var(--dot-pending)', limit:2},
+    {key:'done', name:'Done', dot:'var(--dot-done)', limit:20}
+  ];
+
+  var tasks = [
+    {id:'TASK-201', title:'Use constraints extractor every turn', col:'todo', project:'Sprout', agent:'Codex', priority:'High', caps:['constraints'], deps:[], waitedBy:['TASK-203']},
+    {id:'TASK-202', title:'Guard off-boundary writes', col:'todo', project:'Sprout', agent:'Antigravity', priority:'Medium', caps:['guard'], deps:[], waitedBy:[]},
+    {id:'TASK-203', title:'Board collapse 24px regression', col:'working', project:'Board', agent:'Codex', priority:'High', caps:['board'], deps:['TASK-201'], waitedBy:[]},
+    {id:'TASK-204', title:'Wire Codex to read board', col:'working', project:'Sprout', agent:'Omni', priority:'High', caps:['board','constraints'], deps:[], waitedBy:['TASK-205']},
+    {id:'TASK-205', title:'Fix notification panel CSS', col:'working', project:'Board', agent:'Codex', priority:'Low', caps:['render'], deps:['TASK-204'], waitedBy:[]},
+    {id:'TASK-206', title:'Design tokens doc', col:'needs', project:'Docs', agent:'Arena', priority:'Medium', caps:['docs'], deps:[], waitedBy:[]},
+    {id:'TASK-207', title:'Review screen with merge', col:'review', project:'Sprout', agent:'Codex', priority:'High', caps:['review'], deps:[], waitedBy:[]},
+    {id:'TASK-208', title:'Deploy board v5', col:'pending', project:'Board', agent:'Omni', priority:'High', caps:['deploy'], deps:['TASK-207'], waitedBy:[]},
+    {id:'TASK-209', title:'Task completed', col:'done', project:'Sprout', agent:'Arena', priority:'Low', caps:[], deps:[], waitedBy:[]}
+  ];
+
+  var activeFilters = [];
+
+  var boardEl = document.getElementById('board');
+  var lanesEl = document.getElementById('lanes');
+  var phoneBoardEl = document.getElementById('phoneBoard');
+  var activeFiltersEl = document.getElementById('activeFilters');
+  var searchInput = document.getElementById('searchInput');
+  var clearBtn = document.getElementById('clearFilters');
+  var boardSection = document.getElementById('boardSection');
+  var lanesSection = document.getElementById('lanesSection');
+  var phoneSection = document.getElementById('phoneSection');
+
+  function filteredTasks(){
+    var q = searchInput ? searchInput.value.toLowerCase() : '';
+    return tasks.filter(function(t){
+      if(q && (t.id.toLowerCase().indexOf(q)===-1 && t.title.toLowerCase().indexOf(q)===-1)) return false;
+      for(var i=0;i<activeFilters.length;i++){
+        var f = activeFilters[i];
+        if(f.type==='project' && t.project!==f.value) return false;
+        if(f.type==='agent' && t.agent!==f.value) return false;
+        if(f.type==='priority' && t.priority!==f.value) return false;
+        if(f.type==='capability' && t.caps.indexOf(f.value)===-1) return false;
+        if(f.type==='status' && t.col!==f.value) return false;
+      }
+      return true;
+    });
+  }
+
+  function makeTile(t){
+    var tile = document.createElement('div');
+    tile.className='tile';
+    tile.setAttribute('data-id', t.id);
+    tile.setAttribute('data-deps', t.deps.join(','));
+    tile.setAttribute('data-waited', t.waitedBy.join(','));
+    var id = document.createElement('div');
+    id.className='tile-id';
+    id.textContent = t.id;
+    tile.appendChild(id);
+    var title = document.createElement('div');
+    title.className='tile-title';
+    title.textContent = t.title;
+    tile.appendChild(title);
+    var foot = document.createElement('div');
+    foot.className='tile-foot';
+    var proj = document.createElement('span');
+    proj.className='chip';
+    proj.textContent = t.project;
+    foot.appendChild(proj);
+    var ag = document.createElement('span');
+    ag.textContent = t.agent;
+    foot.appendChild(ag);
+    tile.appendChild(foot);
+    var quick = document.createElement('div');
+    quick.className='quick';
+    var b1 = document.createElement('button');
+    b1.textContent='↗';
+    b1.title='Move';
+    quick.appendChild(b1);
+    var b2 = document.createElement('button');
+    b2.textContent='👤';
+    b2.title='Assign';
+    quick.appendChild(b2);
+    tile.appendChild(quick);
+    tile.addEventListener('mouseenter', function(){
+      var deps = t.deps;
+      var waited = t.waitedBy;
+      var all = document.querySelectorAll('.tile');
+      for(var i=0;i<all.length;i++){
+        var el = all[i];
+        var idd = el.getAttribute('data-id');
+        if(idd===t.id) el.classList.add('highlight');
+        else if(deps.indexOf(idd)!==-1) el.classList.add('wait-on');
+        else if(waited.indexOf(idd)!==-1) el.classList.add('waited-by');
+      }
+    });
+    tile.addEventListener('mouseleave', function(){
+      var all = document.querySelectorAll('.tile');
+      for(var i=0;i<all.length;i++){
+        all[i].classList.remove('highlight');
+        all[i].classList.remove('wait-on');
+        all[i].classList.remove('waited-by');
+      }
+    });
+    return tile;
+  }
+
+  function renderBoard(target, list){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    var ft = list || filteredTasks();
+    for(var c=0;c<columns.length;c++){
+      var col = columns[c];
+      var colTasks = ft.filter(function(t){ return t.col===col.key; });
+      var colEl = document.createElement('div');
+      colEl.className='col';
+      var head = document.createElement('div');
+      head.className='col-head';
+      if(colTasks.length > col.limit) head.className+=' over';
+      var dot = document.createElement('span');
+      dot.className='dot';
+      dot.style.background = col.dot;
+      head.appendChild(dot);
+      var name = document.createElement('span');
+      name.textContent = col.name;
+      head.appendChild(name);
+      var count = document.createElement('span');
+      count.className='count';
+      count.textContent = colTasks.length + '/' + col.limit;
+      head.appendChild(count);
+      var setBtn = document.createElement('button');
+      setBtn.className='btn small ghost';
+      setBtn.textContent='⚙';
+      setBtn.style.marginLeft='4px';
+      (function(h, cl){
+        setBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var pop = h.querySelector('.wip-pop');
+          if(pop) pop.classList.toggle('open');
+        });
+      })(head, col);
+      head.appendChild(setBtn);
+      var pop = document.createElement('div');
+      pop.className='wip-pop';
+      var lab = document.createElement('label');
+      lab.textContent = 'WIP limit for ' + col.name;
+      pop.appendChild(lab);
+      var inp = document.createElement('input');
+      inp.type='number';
+      inp.value = col.limit;
+      inp.min='1';
+      (function(cl, input){
+        input.addEventListener('change', function(){
+          cl.limit = parseInt(input.value,10)||1;
+          renderBoard(boardEl);
+          renderBoard(phoneBoardEl);
+        });
+      })(col, inp);
+      pop.appendChild(inp);
+      var note = document.createElement('div');
+      note.style.fontSize='11px';
+      note.style.color='var(--muted)';
+      note.textContent='Calm warning when over limit — never blocks, never red alarm.';
+      pop.appendChild(note);
+      head.appendChild(pop);
+      colEl.appendChild(head);
+      var body = document.createElement('div');
+      body.className='col-body';
+      for(var i=0;i<colTasks.length;i++){
+        body.appendChild(makeTile(colTasks[i]));
+      }
+      colEl.appendChild(body);
+      target.appendChild(colEl);
+    }
+  }
+
+  function renderLanes(groupBy){
+    if(!lanesEl) return;
+    while(lanesEl.firstChild) lanesEl.removeChild(lanesEl.firstChild);
+    var ft = filteredTasks();
+    var groups = {};
+    for(var i=0;i<ft.length;i++){
+      var key = groupBy==='project' ? ft[i].project : ft[i].agent;
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(ft[i]);
+    }
+    for(var g in groups){
+      var lane = document.createElement('div');
+      lane.className='lane';
+      var head = document.createElement('div');
+      head.className='lane-head';
+      var title = document.createElement('span');
+      title.textContent = (groupBy==='project' ? 'Project ' : 'Agent ') + g;
+      head.appendChild(title);
+      var cnt = document.createElement('span');
+      cnt.className='count';
+      cnt.textContent = groups[g].length;
+      head.appendChild(cnt);
+      (function(l){ head.addEventListener('click', function(){ l.classList.toggle('collapsed'); }); })(lane);
+      lane.appendChild(head);
+      var body = document.createElement('div');
+      body.className='lane-body';
+      for(var c=0;c<columns.length;c++){
+        var col = columns[c];
+        var colTasks = groups[g].filter(function(t){ return t.col===col.key; });
+        var colEl = document.createElement('div');
+        colEl.className='col';
+        colEl.style.minWidth='180px';
+        var h = document.createElement('div');
+        h.className='col-head';
+        var d = document.createElement('span');
+        d.className='dot';
+        d.style.background = col.dot;
+        h.appendChild(d);
+        var nm = document.createElement('span');
+        nm.textContent = col.name;
+        h.appendChild(nm);
+        var ct = document.createElement('span');
+        ct.className='count';
+        ct.textContent = colTasks.length;
+        h.appendChild(ct);
+        colEl.appendChild(h);
+        var bd = document.createElement('div');
+        bd.className='col-body';
+        for(var j=0;j<colTasks.length;j++) bd.appendChild(makeTile(colTasks[j]));
+        colEl.appendChild(bd);
+        body.appendChild(colEl);
+      }
+      lane.appendChild(body);
+      lanesEl.appendChild(lane);
+    }
+  }
+
+  function renderActiveFilters(){
+    if(!activeFiltersEl) return;
+    while(activeFiltersEl.firstChild) activeFiltersEl.removeChild(activeFiltersEl.firstChild);
+    for(var i=0;i<activeFilters.length;i++){
+      var f = activeFilters[i];
+      var af = document.createElement('span');
+      af.className='af';
+      var txt = document.createElement('span');
+      txt.textContent = f.type + ': ' + f.value;
+      af.appendChild(txt);
+      var btn = document.createElement('button');
+      btn.textContent='×';
+      (function(idx){ btn.addEventListener('click', function(){ activeFilters.splice(idx,1); renderActiveFilters(); renderBoard(boardEl); renderBoard(phoneBoardEl); renderLanes('project'); }); })(i);
+      af.appendChild(btn);
+      activeFiltersEl.appendChild(af);
+    }
+  }
+
+  var filterChips = document.querySelectorAll('[data-filter]');
+  for(var f=0;f<filterChips.length;f++){
+    (function(chip){
+      chip.addEventListener('click', function(){
+        var type = chip.getAttribute('data-filter');
+        var val = '';
+        if(type==='project') val='Sprout';
+        if(type==='agent') val='Codex';
+        if(type==='priority') val='High';
+        if(type==='capability') val='board';
+        if(type==='status') val='working';
+        var exists = false;
+        for(var i=0;i<activeFilters.length;i++) if(activeFilters[i].type===type && activeFilters[i].value===val) exists=true;
+        if(!exists) activeFilters.push({type:type, value:val});
+        renderActiveFilters();
+        renderBoard(boardEl);
+        renderBoard(phoneBoardEl);
+      });
+    })(filterChips[f]);
+  }
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(){
+      activeFilters = [];
+      if(searchInput) searchInput.value='';
+      renderActiveFilters();
+      renderBoard(boardEl);
+      renderBoard(phoneBoardEl);
+    });
+  }
+  if(searchInput){
+    searchInput.addEventListener('input', function(){
+      renderBoard(boardEl);
+      renderBoard(phoneBoardEl);
+      renderLanes('project');
+    });
+  }
+
+  var viewBtns = document.querySelectorAll('[data-view]');
+  for(var v=0;v<viewBtns.length;v++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        for(var i=0;i<viewBtns.length;i++) viewBtns[i].classList.remove('on');
+        btn.classList.add('on');
+        activeFilters = [];
+        var view = btn.getAttribute('data-view');
+        if(view==='my') activeFilters.push({type:'agent', value:'Codex'});
+        if(view==='high') activeFilters.push({type:'priority', value:'High'});
+        if(view==='review') activeFilters.push({type:'status', value:'review'});
+        renderActiveFilters();
+        renderBoard(boardEl);
+      });
+    })(viewBtns[v]);
+  }
+
+  var stateBtns = document.querySelectorAll('[data-state]');
+  function applyState(state){
+    for(var s=0;s<stateBtns.length;s++){
+      var b = stateBtns[s];
+      if(b.getAttribute('data-state')===state) b.setAttribute('aria-pressed','true');
+      else b.setAttribute('aria-pressed','false');
+    }
+    if(boardSection) boardSection.classList.add('hidden');
+    if(lanesSection) lanesSection.classList.add('hidden');
+    if(phoneSection) phoneSection.classList.add('hidden');
+
+    if(state==='default' || state==='filter' || state==='wip' || state==='deps'){
+      if(boardSection) boardSection.classList.remove('hidden');
+      renderBoard(boardEl);
+      renderBoard(phoneBoardEl);
+      if(state==='filter'){
+        activeFilters = [{type:'project', value:'Sprout'}, {type:'agent', value:'Codex'}];
+        renderActiveFilters();
+        renderBoard(boardEl);
+      }
+      if(state==='wip'){
+        columns[1].limit = 2;
+        renderBoard(boardEl);
+      } else {
+        columns[1].limit = 4;
+      }
+    } else if(state==='swim-project'){
+      if(lanesSection) lanesSection.classList.remove('hidden');
+      renderLanes('project');
+    } else if(state==='swim-agent'){
+      if(lanesSection) lanesSection.classList.remove('hidden');
+      renderLanes('agent');
+    } else if(state==='phone'){
+      if(phoneSection) phoneSection.classList.remove('hidden');
+      renderBoard(phoneBoardEl);
+    }
+  }
+
+  for(var k=0;k<stateBtns.length;k++){
+    (function(btn){ btn.addEventListener('click', function(){ applyState(btn.getAttribute('data-state')); }); })(stateBtns[k]);
+  }
+
+  renderBoard(boardEl);
+  renderBoard(phoneBoardEl);
+  renderActiveFilters();
+  applyState('default');
+})();
+</script>
+</body>
+</html>
