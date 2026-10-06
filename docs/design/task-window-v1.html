@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Task Window v1 — Design Reference</title>
+<style>
+/* ===== tokens ===== */
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --dot-blocked:#d87a2a;
+  --fs-12:12px;
+  --fs-13:13px;
+  --fs-14:14px;
+  --fs-16:16px;
+  --fs-20:20px;
+  --fw-500:500;
+  --fw-600:600;
+  --fw-700:700;
+  --sp-4:4px;
+  --sp-8:8px;
+  --sp-12:12px;
+  --sp-16:16px;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --grey:#6b6b6b;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+  --dot-blocked:#e6a15a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.page{max-width:1200px;margin:0 auto;padding:0 16px 40px}
+.demo-bar{display:flex;gap:8px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700;box-shadow:var(--shadow-sm)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn.icon{width:32px;height:32px;padding:0;display:grid;place-items:center;border-radius:50%}
+
+/* ===== task window ===== */
+.shell{display:flex;justify-content:center;padding:20px 0}
+.task-window{
+  width:min(720px,100%);
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:20px;
+  box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;
+  max-height:min(90vh,900px);
+  overflow:hidden;
+}
+.task-head{
+  padding:14px 16px 0;
+  display:flex;flex-direction:column;gap:10px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+}
+.head-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.task-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600}
+.status-pill{font-size:11px;padding:3px 10px;border-radius:var(--r-pill);font-weight:700;border:1px solid transparent}
+.status-pill.review{background:var(--col-review);color:var(--dot-review);border-color:var(--dot-review)}
+.status-pill.working{background:var(--col-working);color:var(--dot-working);border-color:var(--dot-working)}
+.status-pill.blocked{background:var(--col-blocked);color:var(--dot-blocked);border-color:var(--dot-blocked)}
+.status-pill.todo{background:var(--col-todo);color:var(--dot-todo);border-color:var(--dot-todo)}
+.status-pill.pending{background:var(--col-pending);color:var(--dot-pending);border-color:var(--dot-pending)}
+.status-pill.done{background:var(--col-done);color:var(--dot-done);border-color:var(--dot-done)}
+.owner{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.avatar{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--border);color:var(--card);font-size:10px;font-weight:700}
+.story-chip{font-size:11px;padding:2px 8px;border-radius:var(--r-pill);background:var(--purple-soft);color:var(--purple);font-weight:700}
+.label{font-size:10px;padding:2px 7px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--border);font-weight:500}
+.priority{font-size:10px;padding:2px 7px;border-radius:var(--r-pill);font-weight:800;letter-spacing:.03em}
+.priority.high{background:var(--warn-soft);color:var(--warn)}
+.time{font-size:11px;color:var(--muted)}
+.journey{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 0 10px;
+  font-size:11px;color:var(--muted);
+  overflow-x:auto;scrollbar-width:none
+}
+.journey::-webkit-scrollbar{display:none}
+.j-step{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:2px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:500}
+.j-step.active{background:var(--text);color:var(--panel);border-color:var(--text);font-weight:700}
+.j-arrow{color:var(--faint)}
+
+/* tabs 44px */
+.tabs{
+  display:flex;gap:4px;
+  padding:0 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+  height:44px;min-height:44px;
+  align-items:flex-end;
+  overflow-x:auto;scrollbar-width:none
+}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{
+  background:transparent;border:0;
+  border-bottom:2px solid transparent;
+  padding:0 12px;
+  height:44px;
+  font-size:13px;font-weight:600;color:var(--muted);
+  display:inline-flex;align-items:center;gap:6px;
+  white-space:nowrap;
+  transform:translateY(1px)
+}
+.tabs button[aria-selected=true]{
+  color:var(--text);border-bottom-color:var(--text);font-weight:700
+}
+.tabs .count{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-pill);padding:1px 6px;font-weight:700;min-width:18px;text-align:center}
+
+/* body */
+.task-body{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px;flex:1;min-height:0;background:var(--panel)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.card h3{margin:0 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.mono{font-family:ui-monospace,monospace;font-size:11px}
+.chip{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.allowed{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.outside{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.evidence{font-family:ui-monospace,monospace;background:var(--panel);border-color:var(--border);color:var(--text);font-size:10px}
+.report-list{display:flex;flex-direction:column;gap:10px}
+.report-row{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.report-row .tick{width:20px;height:20px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 20px;border:1px solid var(--ok)}
+.report-row .content{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.report-row .title{font-weight:600;font-size:13px}
+.report-row .desc{font-size:12px;color:var(--text);line-height:1.4}
+.report-row .evidence{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.collapse{font-size:11px;color:var(--muted);cursor:pointer;background:transparent;border:0;padding:0;text-decoration:underline}
+.checks{display:flex;gap:6px;flex-wrap:wrap}
+.check-pill{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.check-pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.check-pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.check-pill.fail{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.timeline{border-left:2px solid var(--border);padding-left:12px;margin-left:4px;display:flex;flex-direction:column;gap:10px}
+.tl-item{font-size:12px;display:flex;flex-direction:column;gap:2px;position:relative}
+.tl-item::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--border);position:absolute;left:-17px;top:4px}
+.tl-item.active::before{background:var(--accent)}
+.silent{font-size:11px;background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger);border-radius:8px;padding:6px 8px;display:flex;gap:8px;align-items:center}
+.files{display:flex;gap:6px;flex-wrap:wrap}
+.files .more{font-size:11px;color:var(--muted);cursor:pointer}
+
+/* footer sticky */
+.task-foot{
+  position:sticky;bottom:0;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+  padding:12px 16px;
+  display:flex;flex-direction:column;gap:8px;
+  flex:0 0 auto;
+}
+.foot-primary{display:flex;gap:8px;align-items:center}
+.foot-quiet{display:flex;gap:8px;flex-wrap:wrap}
+.foot-quiet .btn{font-size:11px}
+
+/* phone sheet */
+.phone-wrap{display:flex;justify-content:center;padding:12px}
+.phone{
+  width:390px;max-width:100%;
+  height:700px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:20px;
+  box-shadow:var(--shadow-lg);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.phone .task-head{padding:12px}
+.phone .tabs{padding:0 12px}
+.phone .task-body{padding:12px}
+.phone .task-foot{padding:10px 12px}
+@media(max-width:500px){
+  .shell{padding:0}
+  .task-window{border-radius:0;max-height:100vh;width:100%}
+}
+
+/* reduced motion */
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-size:11px;font-weight:700;color:var(--muted)">State:</span>
+  <button class="btn small" data-state="review" aria-pressed="true">Code review</button>
+  <button class="btn small" data-state="blocked">Needs answer</button>
+  <button class="btn small" data-state="working">In progress</button>
+  <button class="btn small" data-state="todo">To do open</button>
+  <button class="btn small" data-state="pending">Pending deploy</button>
+  <button class="btn small" data-state="done">Done</button>
+  <button class="btn small" data-state="manual">Manual</button>
+  <button class="btn small" data-state="edit">Edit tab</button>
+  <button class="btn small" id="themeBtn">◐ Theme</button>
+</div>
+
+<div class="page">
+<div class="shell">
+
+<!-- ===== task window ===== -->
+<div class="task-window" role="dialog" aria-label="Task detail" aria-modal="true" id="taskWindow">
+  <div class="task-head">
+    <div class="head-row">
+      <span class="task-id">TASK-118</span>
+      <span class="status-pill review" id="statusPill">Code review</span>
+      <span class="owner"><span class="avatar">CX</span> Codex</span>
+      <span class="story-chip">Story STORY-12</span>
+      <span class="time">⏱ 42m in review</span>
+      <span class="label">constraints</span>
+      <span class="label">ai</span>
+      <span class="priority high">HIGH</span>
+    </div>
+    <div class="journey" aria-label="Task journey">
+      <span class="j-step">To do</span><span class="j-arrow">→</span>
+      <span class="j-step">In progress</span><span class="j-arrow">→</span>
+      <span class="j-step active">Code review</span><span class="j-arrow">→</span>
+      <span class="j-step">Pending deploy</span><span class="j-arrow">→</span>
+      <span class="j-step">Done</span>
+    </div>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Task tabs">
+    <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
+    <button role="tab" aria-selected="false" data-tab="progress">Progress <span class="count">4</span></button>
+    <button role="tab" aria-selected="false" data-tab="edit">Edit</button>
+  </div>
+  <div class="task-body" id="taskBody">
+
+    <!-- overview -->
+    <div data-tab-panel="overview">
+      <div class="card">
+        <h3>Brief</h3>
+        <div style="font-size:13px">Wire Codex to read board state at start of each turn and respect constraints extractor output. Keep existing board working.</div>
+      </div>
+
+      <div class="card">
+        <h3>Acceptance — structured report</h3>
+        <div class="report-list" id="reportList">
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <div class="title">Codex reads board each turn</div>
+              <div class="desc">Added fetch in runner start, reads /api/mesh state, stores in memory for prompt building. File: src/agent/runner.ts</div>
+              <div class="evidence"><span class="chip evidence">tsc exit 0</span><span class="chip evidence">lint exit 0</span></div>
+            </div>
+          </div>
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <div class="title">Uses constraints extractor</div>
+              <div class="desc">Calls extractor in prompt builder, passes constraints to model. Where: prompts/build.ts line 42</div>
+              <div class="evidence"><span class="chip evidence">unit tests 12 pass</span></div>
+            </div>
+          </div>
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <div class="title">No break of existing board</div>
+              <div class="desc">Kept file locks, board render, rail. Tested with demo data, no regression. Long details collapsed.</div>
+              <div class="evidence"><span class="chip evidence">manual check ok</span><button class="collapse" data-more="more1">Show more</button></div>
+              <div id="more1" class="hidden" style="font-size:12px;color:var(--muted);margin-top:4px">Full log: checked board at 1440px, 1024px, 390px, light/dark/compact, drag still works, modal still opens.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Automatic checks</h3>
+        <div class="checks">
+          <span class="check-pill ok">✓ lint — clean</span>
+          <span class="check-pill ok">✓ tests — 12 pass</span>
+          <span class="check-pill warn">⚠ boundary — 2 files outside</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">2 files outside allowed: src/board/tokens.css, src/agent/runner.ts — within exception for this task</div>
+      </div>
+
+      <div class="card">
+        <h3>Files modified <span id="filesCount" style="font-weight:400;color:var(--muted)">(4)</span></h3>
+        <div class="files" id="filesList">
+          <span class="chip allowed">src/agent/runner.ts</span>
+          <span class="chip allowed">prompts/build.ts</span>
+          <span class="chip outside">src/board/tokens.css — outside</span>
+          <span class="chip outside">src/agent/runner.ts — outside (dup)</span>
+        </div>
+        <button class="btn small ghost" id="toggleFiles" style="margin-top:6px">Show all</button>
+      </div>
+    </div>
+
+    <!-- progress -->
+    <div data-tab-panel="progress" class="hidden">
+      <div class="card"><h3>Progress timeline — 4 steps</h3><div class="timeline">
+        <div class="tl-item"><span>12:02 Backlog — created by Arena</span><span class="muted" style="font-size:11px">AI: wire Codex to read board every turn</span></div>
+        <div class="tl-item"><span>12:10 In progress — Codex claimed</span><span class="muted" style="font-size:11px">started work</span></div>
+        <div class="tl-item"><span>12:30 Needs answer — question asked</span><span class="muted" style="font-size:11px">Q: schema v2?</span></div>
+        <div class="tl-item active"><span>12:45 Code review — deliverable posted</span><span class="muted" style="font-size:11px">report + checks</span></div>
+      </div></div>
+      <div class="card"><h3>Latest report — structured, not duplicated</h3><div style="font-size:12px;color:var(--muted)">Report is shown above as checklist — no wall of text repeated. Evidence chips keep it calm.</div></div>
+    </div>
+
+    <!-- edit -->
+    <div data-tab-panel="edit" class="hidden">
+      <div class="card"><h3>Edit task</h3><div style="display:flex;flex-direction:column;gap:8px"><label style="font-size:12px;font-weight:600">Title<input style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);margin-top:4px" value="AI: wire Codex to read board every turn"></label><label style="font-size:12px;font-weight:600">Brief<textarea style="width:100%;min-height:80px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);margin-top:4px">Wire Codex to read board state at start of each turn</textarea></label><button class="btn primary small">Save changes</button></div></div>
+    </div>
+
+    <!-- states extra panels -->
+    <div data-state-panel="blocked" class="hidden">
+      <div class="card"><h3>Question from Antigravity IDE</h3><div style="font-size:13px">How to handle constraints extractor? Should it run every turn or only when files change?</div><div style="margin-top:8px"><label style="font-size:12px;font-weight:600">Your answer<textarea style="width:100%;min-height:80px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);margin-top:4px" placeholder="Type answer…"></textarea></label><button class="btn primary small" style="margin-top:8px">Send answer</button></div></div>
+    </div>
+
+    <div data-state-panel="working" class="hidden">
+      <div class="card"><h3>Live progress</h3><div class="timeline"><div class="tl-item active"><span>Reading board state</span><span class="muted" style="font-size:11px">now</span></div><div class="tl-item"><span>Running constraints extractor</span></div><div class="tl-item"><span>Building prompt</span></div></div><div class="silent" style="margin-top:10px"><span>⚠</span><span>no progress for 7 min — agent may be stuck</span><button class="btn small">Copy nudge</button></div></div>
+    </div>
+
+    <div data-state-panel="todo" class="hidden">
+      <div class="card"><h3>To do — open to anyone</h3><div style="font-size:13px">Open to any agent — this task is not reserved. It will open to anyone in 3 min if not claimed.</div><div style="margin-top:8px"><span class="chip">Open to any agent</span><span class="time">opens in 3m</span></div></div>
+    </div>
+
+    <div data-state-panel="pending" class="hidden">
+      <div class="card"><h3>Pending deployment</h3><div style="font-size:13px">Ready to deploy — checks passed, waiting for manager to ship.</div><div style="margin-top:8px;display:flex;gap:8px"><button class="btn primary small">Mark deployed → Done</button><button class="btn small">Deploy</button></div></div>
+    </div>
+
+    <div data-state-panel="done" class="hidden">
+      <div class="card"><h3>Done — read-only</h3><div style="font-size:12px">Completed on 2025-10-05 by Codex<br>What shipped: board reads state each turn, extractor wired, no regression.<br>Files: 2 modified, 1 outside boundary approved.</div></div>
+    </div>
+
+    <div data-state-panel="manual" class="hidden">
+      <div class="card"><h3>Manual agent flow</h3><div style="font-size:12px">This task is assigned to a manual agent. Copy request and paste response.</div><div style="margin-top:8px;display:flex;gap:8px"><button class="btn small">Copy request</button></div><div style="margin-top:8px"><label style="font-size:12px;font-weight:600">Paste response<textarea style="width:100%;min-height:100px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card);margin-top:4px" placeholder="Paste agent output…"></textarea></label><button class="btn primary small" style="margin-top:8px">Submit response</button></div></div>
+    </div>
+
+  </div>
+
+  <div class="task-foot">
+    <div class="foot-primary" id="footPrimary">
+      <button class="btn primary" id="primaryAction">Approve → Pending deployment</button>
+      <span class="time" id="primaryHint">Primary for Code review</span>
+    </div>
+    <div class="foot-quiet" id="footQuiet">
+      <button class="btn small">Approve without deploying → Done</button>
+      <button class="btn small">Send back</button>
+      <button class="btn small ghost">Release to To do</button>
+    </div>
+    <div id="feedbackBox" class="hidden" style="margin-top:8px"><textarea placeholder="Feedback for send back…" style="width:100%;min-height:60px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card)"></textarea><button class="btn small primary" style="margin-top:6px">Send back with feedback</button></div>
+  </div>
+</div>
+
+</div>
+
+<div style="margin-top:20px" class="note">PHONE version 390px — full-screen sheet, bottom action bar sticky, tabs still 44px with underline below text</div>
+<div class="phone-wrap">
+<div class="phone" role="dialog" aria-label="Task detail phone">
+  <div class="task-head">
+    <div class="head-row"><span class="task-id">TASK-118</span><span class="status-pill review">Code review</span><span class="owner"><span class="avatar">CX</span> Codex</span></div>
+    <div class="journey"><span class="j-step">To do</span><span class="j-arrow">→</span><span class="j-step">In progress</span><span class="j-arrow">→</span><span class="j-step active">Review</span><span class="j-arrow">→</span><span class="j-step">Done</span></div>
+  </div>
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="true">Overview</button><button role="tab" aria-selected="false">Progress <span class="count">4</span></button><button role="tab" aria-selected="false">Edit</button></div>
+  <div class="task-body">
+    <div class="card"><h3>Brief</h3><div style="font-size:13px">Wire Codex to read board each turn</div></div>
+    <div class="card"><h3>Structured report</h3><div class="report-list"><div class="report-row"><span class="tick">✓</span><div class="content"><div class="title">Reads board each turn</div><div class="desc">src/agent/runner.ts — fetch state</div><span class="chip evidence">tsc exit 0</span></div></div></div></div>
+    <div class="card"><h3>Files (4)</h3><div class="files"><span class="chip allowed">runner.ts</span><span class="chip outside">tokens.css outside</span></div></div>
+  </div>
+  <div class="task-foot"><div class="foot-primary"><button class="btn primary" style="flex:1">Approve → Pending</button></div><div class="foot-quiet"><button class="btn small" style="flex:1">Send back</button><button class="btn small ghost" style="flex:1">To do</button></div></div>
+</div>
+</div>
+
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.task-window.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.task-window.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+  // tab switching 44px underline below text
+  var tabBtns = document.querySelectorAll('.tabs button[data-tab]');
+  var tabPanels = document.querySelectorAll('[data-tab-panel]');
+  function showTab(name){
+    for(var i=0;i<tabBtns.length;i++){
+      var b = tabBtns[i];
+      b.setAttribute('aria-selected', b.getAttribute('data-tab')===name ? 'true' : 'false');
+    }
+    for(var j=0;j<tabPanels.length;j++){
+      var p = tabPanels[j];
+      if(p.getAttribute('data-tab-panel')===name) p.classList.remove('hidden');
+      else p.classList.add('hidden');
+    }
+  }
+  for(var k=0;k<tabBtns.length;k++){
+    (function(btn){
+      btn.addEventListener('click', function(){ showTab(btn.getAttribute('data-tab')); });
+      btn.addEventListener('keydown', function(e){
+        if(e.key==='ArrowRight' || e.key==='ArrowLeft'){
+          e.preventDefault();
+          var list = Array.prototype.slice.call(tabBtns);
+          var idx = list.indexOf(btn);
+          var next = e.key==='ArrowRight' ? (idx+1)%list.length : (idx-1+list.length)%list.length;
+          list[next].focus();
+          showTab(list[next].getAttribute('data-tab'));
+        }
+      });
+    })(tabBtns[k]);
+  }
+  // state switcher
+  var stateBtns = document.querySelectorAll('[data-state]');
+  var statusPill = document.getElementById('statusPill');
+  var primaryAction = document.getElementById('primaryAction');
+  var primaryHint = document.getElementById('primaryHint');
+  var footQuiet = document.getElementById('footQuiet');
+  var feedbackBox = document.getElementById('feedbackBox');
+  var statePanels = document.querySelectorAll('[data-state-panel]');
+  function showState(name){
+    for(var i=0;i<stateBtns.length;i++){
+      var b = stateBtns[i];
+      b.setAttribute('aria-pressed', b.getAttribute('data-state')===name ? 'true' : 'false');
+    }
+    for(var j=0;j<statePanels.length;j++){
+      var p = statePanels[j];
+      if(p.getAttribute('data-state-panel')===name) p.classList.remove('hidden');
+      else p.classList.add('hidden');
+    }
+    var map = {
+      review:{ status:'Code review', cls:'review', primary:'Approve → Pending deployment', hint:'Primary for Code review', quiet:['Approve without deploying → Done','Send back','Release to To do'] },
+      blocked:{ status:'Needs answer', cls:'blocked', primary:'Send answer', hint:'Answer the question', quiet:['Release to To do'] },
+      working:{ status:'In progress', cls:'working', primary:'Copy nudge', hint:'Agent working', quiet:['Release to To do','Hand over'] },
+      todo:{ status:'To do', cls:'todo', primary:'Claim', hint:'Open to any agent', quiet:['Assign to…'] },
+      pending:{ status:'Pending deployment', cls:'pending', primary:'Mark deployed → Done', hint:'Ready to ship', quiet:['Deploy','Send back'] },
+      done:{ status:'Done', cls:'done', primary:'Done — read-only', hint:'Completed', quiet:[] },
+      manual:{ status:'To do', cls:'todo', primary:'Copy request', hint:'Manual flow', quiet:['Paste and Submit'] },
+      edit:{ status:'Code review', cls:'review', primary:'Save changes', hint:'Edit tab', quiet:[] }
+    };
+    var cfg = map[name] || map.review;
+    if(statusPill){
+      statusPill.textContent = cfg.status;
+      statusPill.className = 'status-pill ' + cfg.cls;
+    }
+    if(primaryAction){
+      primaryAction.textContent = cfg.primary;
+      if(name==='done') primaryAction.disabled = true;
+      else primaryAction.disabled = false;
+    }
+    if(primaryHint) primaryHint.textContent = cfg.hint;
+    if(footQuiet){
+      while(footQuiet.firstChild) footQuiet.removeChild(footQuiet.firstChild);
+      for(var q=0;q<cfg.quiet.length;q++){
+        var btn = document.createElement('button');
+        btn.className = 'btn small' + (q===2 ? ' ghost' : '');
+        btn.textContent = cfg.quiet[q];
+        if(cfg.quiet[q].indexOf('Send back')>=0){
+          btn.addEventListener('click', function(){
+            if(feedbackBox) feedbackBox.classList.toggle('hidden');
+          });
+        }
+        footQuiet.appendChild(btn);
+      }
+    }
+    if(name==='edit') showTab('edit');
+    else if(name==='review') showTab('overview');
+  }
+  for(var s=0;s<stateBtns.length;s++){
+    (function(btn){
+      btn.addEventListener('click', function(){ showState(btn.getAttribute('data-state')); });
+    })(stateBtns[s]);
+  }
+  // files expandable
+  var toggleFiles = document.getElementById('toggleFiles');
+  var filesList = document.getElementById('filesList');
+  var filesCount = document.getElementById('filesCount');
+  var filesExpanded = false;
+  if(toggleFiles && filesList){
+    toggleFiles.addEventListener('click', function(){
+      filesExpanded = !filesExpanded;
+      var chips = filesList.querySelectorAll('.chip');
+      for(var i=0;i<chips.length;i++){
+        if(i>=2){
+          if(filesExpanded) chips[i].classList.remove('hidden');
+          else chips[i].classList.add('hidden');
+        }
+      }
+      toggleFiles.textContent = filesExpanded ? 'Show less' : 'Show all';
+      if(filesCount) filesCount.textContent = filesExpanded ? '(4)' : '(4, 2 hidden)';
+    });
+    // init hidden
+    var chipsInit = filesList.querySelectorAll('.chip');
+    for(var j=2;j<chipsInit.length;j++) chipsInit[j].classList.add('hidden');
+    if(filesCount) filesCount.textContent = '(4, 2 hidden)';
+  }
+  // show more in report
+  var moreBtns = document.querySelectorAll('[data-more]');
+  for(var m=0;m<moreBtns.length;m++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-more');
+        var el = document.getElementById(id);
+        if(!el) return;
+        var isHidden = el.classList.contains('hidden');
+        if(isHidden){ el.classList.remove('hidden'); btn.textContent='Show less'; }
+        else { el.classList.add('hidden'); btn.textContent='Show more'; }
+      });
+    })(moreBtns[m]);
+  }
+  // Esc closes
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+      var win = document.getElementById('taskWindow');
+      if(win) win.style.display='none';
+      window.setTimeout(function(){ if(win) win.style.display='flex'; }, 1200);
+    }
+  });
+  showState('review');
+  showTab('overview');
+})();
+</script>
+</body>
+</html>
