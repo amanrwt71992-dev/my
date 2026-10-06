@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Notifications v1 — Centre + Settings</title>
+<style>
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --dot-blocked:#d87a2a;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+  --dot-blocked:#e6a15a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1240px;margin:0 auto;padding:0 16px 40px}
+.demo-bar{display:flex;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.topbar{height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.brand{font-weight:700;font-size:14px}
+.bell{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--card);display:grid;place-items:center;position:relative}
+.bell-dot{position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--danger);border:2px solid var(--card)}
+.shell{display:flex;gap:24px;justify-content:center;padding:24px 0;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.mono{font-family:ui-monospace,monospace;font-size:11px}
+.chip{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.muted{background:var(--panel);color:var(--faint);border-color:var(--border)}
+
+/* centre popover */
+.popover{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;display:flex;flex-direction:column;max-height:560px}
+.pop-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--panel)}
+.pop-head h3{margin:0;font-size:13px;font-weight:700}
+.pop-head .meta{margin-left:auto;font-size:11px;color:var(--muted)}
+.pop-body{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:12px;flex:1}
+.group{display:flex;flex-direction:column;gap:6px}
+.group-head{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;padding:4px 6px}
+.group-head .dot{width:6px;height:6px;border-radius:50%;background:var(--dot-working)}
+.row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--card);position:relative}
+.row.unread{border-color:var(--accent);background:var(--card);box-shadow:0 0 0 1px var(--accent-soft) inset}
+.row .unread-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:0 0 8px;margin-top:6px}
+.row .content{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row .loc{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .evt{font-size:12px;font-weight:600;line-height:1.35}
+.row .sub{font-size:11px;color:var(--muted)}
+.row .markers{display:flex;gap:6px;align-items:center;margin-top:2px}
+.row .marker{font-size:10px;padding:1px 6px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);font-weight:600}
+.row .marker.delivered{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.row .marker.muted{background:var(--panel);color:var(--faint);border-color:var(--border)}
+.empty{padding:32px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:8px;align-items:center}
+.empty .icon{width:36px;height:36px;border-radius:50%;background:var(--panel);border:1px solid var(--border);display:grid;place-items:center;font-size:16px}
+
+/* settings dialog */
+.dialog{width:min(520px,100%);background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
+.dialog-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.dialog-head h3{margin:0;font-size:14px;font-weight:700}
+.dialog-body{padding:16px;display:flex;flex-direction:column;gap:16px;overflow:auto;max-height:70vh}
+.dialog-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--panel)}
+.switch-list{display:flex;flex-direction:column;gap:8px}
+.switch-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.switch-row .info{flex:1;min-width:0}
+.switch-row .title{font-size:12px;font-weight:600}
+.switch-row .desc{font-size:11px;color:var(--muted)}
+.toggle{width:40px;height:24px;border-radius:var(--r-pill);background:var(--border);border:1px solid var(--border);position:relative;flex:0 0 40px;transition:all var(--t)}
+.toggle::after{content:'';width:18px;height:18px;border-radius:50%;background:var(--card);position:absolute;top:2px;left:2px;transition:all var(--t);box-shadow:var(--shadow-sm)}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle.on::after{left:18px;background:var(--accent-fg)}
+.quiet{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.quiet label{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.quiet input{border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--panel);color:var(--text);width:90px}
+.check-row{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:12px}
+.check-row input{width:16px;height:16px}
+
+/* phone */
+.phone-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;height:780px}
+.phone-frame .topbar{height:48px}
+.phone-frame .pop-body{padding:8px}
+@media(max-width:560px){.shell{padding:12px 0}.popover{width:100%}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-weight:700;font-size:12px">Notifications v1</span>
+  <button class="btn small" data-state="centre-unread" aria-pressed="true">Centre: unread</button>
+  <button class="btn small" data-state="centre-empty">Centre: empty</button>
+  <button class="btn small" data-state="centre-muted">Centre: muted vs delivered</button>
+  <button class="btn small" data-state="settings">Settings dialog</button>
+  <button class="btn small" data-state="phone">Phone 390px</button>
+  <span style="margin-left:auto;display:flex;gap:6px"><button class="btn small" id="themeBtn">◐ Theme</button></span>
+</div>
+
+<div class="page">
+  <div class="topbar">
+    <span class="brand">Board</span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+      <span class="chip">Sprout</span>
+      <button class="bell" id="bellBtn" aria-label="Notifications"><span aria-hidden="true">🔔</span><span class="bell-dot" id="bellDot"></span></button>
+    </span>
+  </div>
+
+  <div class="shell" id="mainShell">
+    <!-- centre -->
+    <div class="popover" id="centrePopover" role="dialog" aria-label="Notification centre">
+      <div class="pop-head">
+        <h3>Notifications</h3>
+        <span class="meta" id="centreMeta">6 new</span>
+        <button class="btn small ghost" id="markAll" style="margin-left:auto">Mark all read</button>
+      </div>
+      <div class="pop-body" id="centreBody">
+        <!-- groups injected by JS -->
+      </div>
+    </div>
+
+    <!-- settings -->
+    <div class="dialog" id="settingsDialog" role="dialog" aria-label="Notification settings">
+      <div class="dialog-head"><h3>Notification settings</h3><span class="chip" style="margin-left:auto">Per user</span></div>
+      <div class="dialog-body">
+        <div class="switch-list" id="switchList"></div>
+
+        <div class="quiet">
+          <span style="font-size:12px;font-weight:700">Quiet hours</span>
+          <label>From <input type="time" id="quietFrom" value="22:00"></label>
+          <label>To <input type="time" id="quietTo" value="07:00"></label>
+          <span class="chip">No pings in quiet hours except high priority</span>
+        </div>
+
+        <label class="check-row"><input type="checkbox" id="highAlways" checked><span><b>High priority always notifies</b> — even in quiet hours or when muted</span></label>
+
+        <div style="font-size:11px;color:var(--muted);line-height:1.4">Grouped by task, newest first. Row = locator TASK-id · column · owner + event label. Unread dot + delivered vs muted marker. Contrast 4.5:1, light+dark, no external files.</div>
+      </div>
+      <div class="dialog-foot"><button class="btn small ghost" id="cancelSettings">Cancel</button><button class="btn small primary" id="saveSettings">Save</button></div>
+    </div>
+  </div>
+
+  <div class="shell hidden" id="phoneShell">
+    <div class="phone-frame">
+      <div class="topbar"><span class="brand">Board</span><button class="bell" aria-label="Notifications">🔔<span class="bell-dot"></span></button></div>
+      <div class="pop-body" id="phoneCentreBody" style="flex:1;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:12px"></div>
+      <div style="border-top:1px solid var(--border);padding:10px;background:var(--panel);display:flex;gap:8px"><button class="btn small" style="flex:1">Settings</button><button class="btn small ghost" style="flex:1">Mark all read</button></div>
+    </div>
+    <div class="phone-frame">
+      <div class="dialog-head"><h3>Settings</h3></div>
+      <div class="dialog-body" id="phoneSettingsBody" style="flex:1"></div>
+      <div class="dialog-foot"><button class="btn small primary" style="width:100%">Save</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.notifications.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.notifications.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+
+  var events = [
+    {id:'needs-answer', title:'Needs your answer', desc:'Agent asks a question, blocked', on:true},
+    {id:'ready-review', title:'Ready for review', desc:'Task moved to Code review', on:true},
+    {id:'boundary', title:'Boundary violation', desc:'Off-boundary write attempt', on:true},
+    {id:'silent', title:'Agent silent', desc:'No progress 7 min', on:true},
+    {id:'deploy-fail', title:'Deploy failed', desc:'Deploy step failed', on:true},
+    {id:'deploy-ok', title:'Deploy succeeded', desc:'Deploy completed', on:true},
+    {id:'recovery-fail', title:'Recovery failed', desc:'Recovery could not fix', on:true},
+    {id:'quota', title:'Quota exhausted', desc:'Worker quota hit', on:true},
+    {id:'ready-deploy', title:'Ready for deploy', desc:'Pending deployment', on:true},
+    {id:'completed', title:'Task completed', desc:'Moved to Done', on:true},
+    {id:'internal', title:'Every internal status change', desc:'Picked, coding, testing…', on:false}
+  ];
+
+  var notifications = [
+    {task:'TASK-207', col:'Code review', owner:'Codex', evt:'Needs your answer', time:'2m', unread:true, delivered:true},
+    {task:'TASK-207', col:'Code review', owner:'Codex', evt:'Agent silent — no progress 7m', time:'5m', unread:true, delivered:true},
+    {task:'TASK-203', col:'In progress', owner:'Antigravity', evt:'Boundary violation — lib/tmp/cache.ts', time:'8m', unread:true, delivered:false},
+    {task:'TASK-201', col:'Pending', owner:'Codex', evt:'Deploy failed — main', time:'12m', unread:false, delivered:true},
+    {task:'TASK-204', col:'In progress', owner:'Omni', evt:'Ready for review', time:'18m', unread:false, delivered:true},
+    {task:'TASK-202', col:'To do', owner:'Arena', evt:'Task completed', time:'22m', unread:false, delivered:false},
+    {task:'TASK-202', col:'To do', owner:'Arena', evt:'Quota exhausted', time:'25m', unread:false, delivered:true},
+    {task:'TASK-201', col:'Pending', owner:'Codex', evt:'Deploy succeeded', time:'30m', unread:false, delivered:true}
+  ];
+
+  var centreBody = document.getElementById('centreBody');
+  var centreMeta = document.getElementById('centreMeta');
+  var bellDot = document.getElementById('bellDot');
+  var markAll = document.getElementById('markAll');
+  var switchList = document.getElementById('switchList');
+  var phoneCentreBody = document.getElementById('phoneCentreBody');
+  var phoneSettingsBody = document.getElementById('phoneSettingsBody');
+  var mainShell = document.getElementById('mainShell');
+  var phoneShell = document.getElementById('phoneShell');
+  var centrePopover = document.getElementById('centrePopover');
+  var settingsDialog = document.getElementById('settingsDialog');
+
+  function groupByTask(list){
+    var map = {};
+    var order = [];
+    for(var i=0;i<list.length;i++){
+      var n = list[i];
+      if(!map[n.task]){
+        map[n.task]=[];
+        order.push(n.task);
+      }
+      map[n.task].push(n);
+    }
+    var res=[];
+    for(var j=0;j<order.length;j++){
+      res.push({task:order[j], items:map[order[j]]});
+    }
+    return res;
+  }
+
+  function makeRow(n){
+    var row = document.createElement('div');
+    row.className = 'row' + (n.unread ? ' unread' : '');
+    if(n.unread){
+      var dot = document.createElement('span');
+      dot.className = 'unread-dot';
+      row.appendChild(dot);
+    } else {
+      var spacer = document.createElement('span');
+      spacer.style.width='8px';
+      spacer.style.flex='0 0 8px';
+      row.appendChild(spacer);
+    }
+    var content = document.createElement('div');
+    content.className='content';
+    var loc = document.createElement('div');
+    loc.className='loc';
+    loc.textContent = n.task + ' · ' + n.col + ' · ' + n.owner;
+    content.appendChild(loc);
+    var evt = document.createElement('div');
+    evt.className='evt';
+    evt.textContent = n.evt;
+    content.appendChild(evt);
+    var sub = document.createElement('div');
+    sub.className='sub';
+    sub.textContent = n.time + ' ago';
+    content.appendChild(sub);
+    var markers = document.createElement('div');
+    markers.className='markers';
+    var m = document.createElement('span');
+    m.className = 'marker ' + (n.delivered ? 'delivered' : 'muted');
+    m.textContent = n.delivered ? 'delivered' : 'muted';
+    markers.appendChild(m);
+    content.appendChild(markers);
+    row.appendChild(content);
+    return row;
+  }
+
+  function renderCentre(target, list){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    if(list.length===0){
+      var empty = document.createElement('div');
+      empty.className='empty';
+      var icon = document.createElement('div');
+      icon.className='icon';
+      icon.textContent='🔕';
+      empty.appendChild(icon);
+      var t1 = document.createElement('div');
+      t1.textContent='No notifications';
+      t1.style.fontWeight='600';
+      empty.appendChild(t1);
+      var t2 = document.createElement('div');
+      t2.textContent='When agents need you, they appear here grouped by task.';
+      t2.style.fontSize='11px';
+      empty.appendChild(t2);
+      target.appendChild(empty);
+      return;
+    }
+    var groups = groupByTask(list);
+    for(var g=0;g<groups.length;g++){
+      var grp = document.createElement('div');
+      grp.className='group';
+      var head = document.createElement('div');
+      head.className='group-head';
+      var d = document.createElement('span');
+      d.className='dot';
+      head.appendChild(d);
+      var txt = document.createElement('span');
+      txt.textContent = groups[g].task + ' · ' + groups[g].items.length;
+      head.appendChild(txt);
+      grp.appendChild(head);
+      for(var i=0;i<groups[g].items.length;i++){
+        grp.appendChild(makeRow(groups[g].items[i]));
+      }
+      target.appendChild(grp);
+    }
+  }
+
+  function renderSwitches(target){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    for(var i=0;i<events.length;i++){
+      var ev = events[i];
+      var row = document.createElement('div');
+      row.className='switch-row';
+      var info = document.createElement('div');
+      info.className='info';
+      var title = document.createElement('div');
+      title.className='title';
+      title.textContent = ev.title;
+      info.appendChild(title);
+      var desc = document.createElement('div');
+      desc.className='desc';
+      desc.textContent = ev.desc;
+      info.appendChild(desc);
+      row.appendChild(info);
+      var tog = document.createElement('button');
+      tog.className = 'toggle' + (ev.on ? ' on' : '');
+      tog.setAttribute('aria-label', ev.title + ' toggle');
+      tog.setAttribute('data-id', ev.id);
+      (function(t, idx){
+        t.addEventListener('click', function(){
+          events[idx].on = !events[idx].on;
+          if(events[idx].on) t.classList.add('on');
+          else t.classList.remove('on');
+        });
+      })(tog, i);
+      row.appendChild(tog);
+      target.appendChild(row);
+    }
+  }
+
+  function updateMeta(){
+    var unread = 0;
+    for(var i=0;i<notifications.length;i++) if(notifications[i].unread) unread++;
+    if(centreMeta) centreMeta.textContent = unread>0 ? unread + ' new' : 'all read';
+    if(bellDot) bellDot.style.display = unread>0 ? 'block' : 'none';
+  }
+
+  if(markAll){
+    markAll.addEventListener('click', function(){
+      for(var i=0;i<notifications.length;i++) notifications[i].unread=false;
+      renderCentre(centreBody, notifications);
+      renderCentre(phoneCentreBody, notifications);
+      updateMeta();
+    });
+  }
+
+  var stateBtns = document.querySelectorAll('[data-state]');
+  function applyState(state){
+    for(var s=0;s<stateBtns.length;s++){
+      var b = stateBtns[s];
+      if(b.getAttribute('data-state')===state) b.setAttribute('aria-pressed','true');
+      else b.setAttribute('aria-pressed','false');
+    }
+    if(mainShell) mainShell.classList.remove('hidden');
+    if(phoneShell) phoneShell.classList.add('hidden');
+    if(centrePopover) centrePopover.classList.remove('hidden');
+    if(settingsDialog) settingsDialog.classList.remove('hidden');
+
+    if(state==='centre-unread'){
+      renderCentre(centreBody, notifications);
+      renderCentre(phoneCentreBody, notifications);
+      if(centrePopover) centrePopover.classList.remove('hidden');
+      if(settingsDialog) settingsDialog.classList.add('hidden');
+    } else if(state==='centre-empty'){
+      renderCentre(centreBody, []);
+      renderCentre(phoneCentreBody, []);
+      if(centrePopover) centrePopover.classList.remove('hidden');
+      if(settingsDialog) settingsDialog.classList.add('hidden');
+    } else if(state==='centre-muted'){
+      var mutedList = [];
+      for(var i=0;i<notifications.length;i++){
+        var c = {};
+        for(var k in notifications[i]) c[k]=notifications[i][k];
+        if(i%2===0) c.delivered=false;
+        mutedList.push(c);
+      }
+      renderCentre(centreBody, mutedList);
+      renderCentre(phoneCentreBody, mutedList);
+      if(centrePopover) centrePopover.classList.remove('hidden');
+      if(settingsDialog) settingsDialog.classList.add('hidden');
+    } else if(state==='settings'){
+      if(centrePopover) centrePopover.classList.add('hidden');
+      if(settingsDialog) settingsDialog.classList.remove('hidden');
+    } else if(state==='phone'){
+      if(mainShell) mainShell.classList.add('hidden');
+      if(phoneShell) phoneShell.classList.remove('hidden');
+      renderCentre(phoneCentreBody, notifications);
+      renderSwitches(phoneSettingsBody);
+    }
+  }
+
+  for(var j=0;j<stateBtns.length;j++){
+    (function(btn){ btn.addEventListener('click', function(){ applyState(btn.getAttribute('data-state')); }); })(stateBtns[j]);
+  }
+
+  renderCentre(centreBody, notifications);
+  renderCentre(phoneCentreBody, notifications);
+  renderSwitches(switchList);
+  renderSwitches(phoneSettingsBody);
+  updateMeta();
+  applyState('centre-unread');
+})();
+</script>
+</body>
+</html>
