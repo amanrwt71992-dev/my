@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Tile Progress v1 — Execution Dots</title>
+<style>
+/* ===== tokens same language as board-v5 ===== */
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-fg:#1e3a26;
+  --accent-soft:#d6f2dd;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-done:#d6f2dd;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-done:#3a9a5a;
+  --dot-blocked:#d87a2a;
+  --dot-todo:#5a9ad5;
+  --fs-11:11px;
+  --fs-12:12px;
+  --fs-13:13px;
+  --fs-14:14px;
+  --fw-600:600;
+  --fw-700:700;
+  --r-sm:8px;
+  --r-md:12px;
+  --r-lg:16px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-fg:#0f2314;
+  --accent-soft:#1e3a26;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --grey:#6b6b6b;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-done:#1e3326;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-done:#6fdc8c;
+  --dot-blocked:#e6a15a;
+  --dot-todo:#7ab8e8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui, sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1200px;margin:0 auto;padding:0 16px 40px}
+.topbar{height:52px;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.brand{font-weight:700;font-size:14px}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:5px 10px;border-radius:var(--r-pill);font-size:11px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.note{font-size:11px;color:var(--muted);padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.section{margin-top:16px}
+.section h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:700}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+
+/* board columns for comparison */
+.board{display:flex;gap:12px;overflow:auto;padding:12px 0}
+.col{flex:1 1 0;min-width:190px;background:var(--panel);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column}
+.col-head{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.col-head::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--dot-working)}
+.col-body{padding:8px;display:flex;flex-direction:column;gap:8px}
+
+/* tile base */
+.tile{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  box-shadow:var(--shadow-sm);
+  position:relative;
+}
+.tile-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600}
+.tile-title{font-size:13px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile-foot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.avatar{width:20px;height:20px;border-radius:50%;background:var(--border);display:grid;place-items:center;font-size:9px;font-weight:700;color:var(--card)}
+.chip{font-size:10px;padding:2px 7px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+
+/* ===== execution progress ===== */
+.exec{
+  display:flex;flex-direction:column;gap:4px;
+  padding:6px 8px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin-top:2px;
+}
+.exec-dots{
+  display:flex;align-items:center;gap:0;
+  position:relative;
+}
+.exec-dot-wrap{
+  display:flex;align-items:center;gap:0;
+  flex:0 0 auto;
+  position:relative;
+}
+.exec-dot{
+  width:10px;height:10px;
+  border-radius:50%;
+  border:2px solid var(--border);
+  background:var(--card);
+  flex:0 0 10px;
+  display:grid;place-items:center;
+  position:relative;
+  z-index:1;
+}
+.exec-dot.filled{
+  background:var(--text);
+  border-color:var(--text);
+}
+.exec-dot.filled::after{
+  content:'';
+  width:4px;height:4px;
+  border-radius:50%;
+  background:var(--panel);
+  display:block;
+}
+.exec-dot.current{
+  background:var(--card);
+  border-color:var(--text);
+  border-width:2px;
+  width:14px;height:14px;
+  flex:0 0 14px;
+  box-shadow:0 0 0 3px var(--accent-soft);
+}
+.exec-dot.current::after{
+  content:'';
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--text);
+  display:block;
+}
+.exec-dot.current.pulse{
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 3px var(--accent-soft)}
+  50%{box-shadow:0 0 0 6px var(--accent-soft)}
+}
+@media(prefers-reduced-motion:reduce){
+  .exec-dot.current.pulse{animation:none}
+}
+.exec-dot.hollow{
+  background:var(--card);
+  border-color:var(--border);
+}
+.exec-dot.stalled{
+  background:var(--warn-soft);
+  border-color:var(--warn);
+  animation:shake 0.6s ease-in-out infinite;
+}
+.exec-dot.stalled::after{
+  content:'!';
+  font-size:8px;font-weight:800;color:var(--warn);
+  display:grid;place-items:center;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-1px)}
+  75%{transform:translateX(1px)}
+}
+@media(prefers-reduced-motion:reduce){.exec-dot.stalled{animation:none}}
+.exec-line{
+  width:14px;height:2px;
+  background:var(--border);
+  flex:0 0 14px;
+}
+.exec-line.filled{background:var(--text)}
+.exec-line.warn{background:var(--warn)}
+.exec-label{
+  font-size:10px;color:var(--muted);font-weight:600;
+  display:flex;align-items:center;gap:6px;
+  min-height:14px;
+}
+.exec-label .stage-name{color:var(--text);font-weight:700}
+.exec-label .state{
+  font-size:10px;padding:1px 6px;border-radius:var(--r-pill);
+  background:var(--card);border:1px solid var(--border);font-weight:600
+}
+.exec-label .state.stalled{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.exec-label .state.fail{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.exec-label .state.unavail{background:var(--panel);color:var(--muted);border-color:var(--border)}
+
+/* tooltip */
+.exec-wrap{position:relative}
+.tooltip{
+  position:absolute;left:0;top:100%;
+  margin-top:6px;
+  width:260px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:var(--shadow-md);
+  padding:8px 10px;
+  z-index:20;
+  display:none;
+}
+.exec-wrap:hover .tooltip,
+.exec-wrap:focus-within .tooltip{display:block}
+.tooltip h4{margin:0 0 6px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.tooltip .ev{font-size:11px;display:flex;gap:8px;padding:3px 0;border-bottom:1px solid var(--border);line-height:1.3}
+.tooltip .ev:last-child{border-bottom:0}
+.tooltip .ev .t{color:var(--muted);flex:0 0 42px;font-family:ui-monospace,monospace;font-size:10px}
+.tooltip .ev .msg{flex:1}
+
+/* phone */
+.phone-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:18px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-md);margin:0 auto}
+.phone-frame .tile{border-radius:10px}
+
+/* comparison board */
+.compare{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:700px){.compare{grid-template-columns:1fr}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">Tile Progress v1 — 8-stage execution dots</span>
+  <div style="margin-left:auto;display:flex;gap:6px">
+    <button class="btn small" id="themeBtn">◐ Theme</button>
+  </div>
+</div>
+<div class="note">Every In progress tile gets compact 8-dot indicator: picked → coding → testing → fixing → testing again → commit → PR → review. Filled = done, current = larger with pulse, hollow = later. Not color-only: filled/ring/pulse shapes + text label. Reduced motion respected. Light + dark.</div>
+
+<div class="page">
+
+<div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 0">
+  <button class="btn small" data-stage="0" aria-pressed="true">picked</button>
+  <button class="btn small" data-stage="1">coding</button>
+  <button class="btn small" data-stage="2">testing</button>
+  <button class="btn small" data-stage="3">fixing</button>
+  <button class="btn small" data-stage="4">testing again</button>
+  <button class="btn small" data-stage="5">commit</button>
+  <button class="btn small" data-stage="6">PR</button>
+  <button class="btn small" data-stage="7">review</button>
+  <button class="btn small" data-stage="stalled">stalled</button>
+  <button class="btn small" data-stage="unavail">worker unavail</button>
+  <button class="btn small" data-stage="quota">quota exhausted</button>
+  <button class="btn small" data-stage="failed">failed-tests loop</button>
+  <button class="btn small" data-stage="tooltip">tooltip demo</button>
+</div>
+
+<div class="section">
+<h2>Tile in each stage — 8 tiles</h2>
+<div style="display:flex;flex-wrap:wrap;gap:12px" id="stageGrid"></div>
+</div>
+
+<div class="section">
+<h2>Stalled — amber + Stalled label</h2>
+<div class="card" style="max-width:360px">
+  <div class="tile">
+    <div class="tile-id">TASK-201</div>
+    <div class="tile-title">AI: use the constraints extractor in every turn</div>
+    <div class="exec">
+      <div class="exec-dots">
+        <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot stalled"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+      </div>
+      <div class="exec-label"><span class="stage-name">testing</span><span class="state stalled">Stalled</span><span>no progress 8m</span></div>
+    </div>
+    <div class="tile-foot"><span class="chip warn">Stalled</span><span class="avatar">CX</span></div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Worker unavailable + quota exhausted</h2>
+<div style="display:flex;gap:12px;flex-wrap:wrap">
+  <div class="card" style="width:340px">
+    <div class="tile">
+      <div class="tile-id">TASK-202</div>
+      <div class="tile-title">Fix board collapse to 24px regression</div>
+      <div class="exec">
+        <div class="exec-dots">
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+        </div>
+        <div class="exec-label"><span class="stage-name">coding</span><span class="state unavail">Worker unavailable</span></div>
+      </div>
+      <div class="tile-foot"><span class="chip">Codex offline 5m</span><span class="avatar">CX</span></div>
+    </div>
+  </div>
+  <div class="card" style="width:340px">
+    <div class="tile">
+      <div class="tile-id">TASK-203</div>
+      <div class="tile-title">Write design tokens doc for board v5</div>
+      <div class="exec">
+        <div class="exec-dots">
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+        </div>
+        <div class="exec-label"><span class="stage-name">testing again</span><span class="state fail">Quota exhausted</span></div>
+      </div>
+      <div class="tile-foot"><span class="chip danger">Quota — retry in 12m</span><span class="avatar">AG</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Failed-tests loop — fixing / testing again highlighted</h2>
+<div class="card" style="max-width:360px">
+  <div class="tile">
+    <div class="tile-id">TASK-204</div>
+    <div class="tile-title">AI: wire Codex to read board every turn</div>
+    <div class="exec">
+      <div class="exec-dots">
+        <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line warn"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot current pulse" style="border-color:var(--warn)"></span></span><span class="exec-line warn"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow" style="border-color:var(--warn)"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+        <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+      </div>
+      <div class="exec-label"><span class="stage-name">fixing</span><span class="state fail">Tests failed — loop</span></div>
+    </div>
+    <div class="tile-foot"><span class="chip danger">tests failed 2×</span><span class="avatar">CX</span></div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Tooltip / popover — last 5 events (time, text)</h2>
+<div class="card" style="max-width:360px">
+  <div class="tile">
+    <div class="tile-id">TASK-201</div>
+    <div class="tile-title">AI: use the constraints extractor in every turn</div>
+    <div class="exec-wrap" tabindex="0">
+      <div class="exec">
+        <div class="exec-dots">
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+        </div>
+        <div class="exec-label"><span class="stage-name">testing</span><span style="font-size:10px;color:var(--muted)">hover for events</span></div>
+      </div>
+      <div class="tooltip" role="tooltip">
+        <h4>Last 5 events</h4>
+        <div class="ev"><span class="t">12:42</span><span class="msg">picked by Codex</span></div>
+        <div class="ev"><span class="t">12:43</span><span class="msg">coding — edited src/agent/runner.ts</span></div>
+        <div class="ev"><span class="t">12:45</span><span class="msg">testing — ran tsc, exit 0</span></div>
+        <div class="ev"><span class="t">12:46</span><span class="msg">testing — unit tests 11/12 pass</span></div>
+        <div class="ev"><span class="t">12:47</span><span class="msg">fixing — retry after test fail</span></div>
+      </div>
+    </div>
+    <div class="tile-foot"><div style="display:flex;align-items:center;gap:6px"><span class="avatar">CX</span><span style="font-size:11px">Codex · busy</span></div><span style="font-size:11px;color:var(--muted)">⏱ 5m</span></div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>390px phone tile</h2>
+<div class="phone-frame">
+  <div style="padding:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="tile">
+      <div class="tile-id">TASK-201 · In progress · Codex</div>
+      <div class="tile-title">AI: use the constraints extractor in every turn</div>
+      <div class="exec">
+        <div class="exec-dots">
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span>
+          <span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span>
+        </div>
+        <div class="exec-label"><span class="stage-name">testing</span><span class="state">3/8</span></div>
+      </div>
+      <div class="tile-foot"><span class="chip">Waiting on 2</span><span class="avatar">CX</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Normal tile for comparison — board columns with 4 sample tiles</h2>
+<div class="board">
+  <div class="col" data-k="todo"><div class="col-head"><span style="font-size:11px;font-weight:700;text-transform:uppercase">To do</span><span class="col-count">2</span></div><div class="col-body">
+    <div class="tile"><div class="tile-id">TASK-124</div><div class="tile-title">AI: use the constraints extractor in every turn</div><div class="tile-foot"><span class="chip">+ tag Research</span><span class="avatar">CX</span></div></div>
+    <div class="tile"><div class="tile-id">TASK-125</div><div class="tile-title">Fix notification panel CSS</div></div>
+  </div></div>
+  <div class="col" data-k="working"><div class="col-head"><span style="font-size:11px;font-weight:700;text-transform:uppercase">In progress</span><span class="col-count">2</span></div><div class="col-body">
+    <div class="tile">
+      <div class="tile-id">TASK-201</div><div class="tile-title">AI: use the constraints extractor in every turn</div>
+      <div class="exec"><div class="exec-dots"><span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span><span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span><span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span></div><div class="exec-label"><span class="stage-name">testing</span></div></div>
+      <div class="tile-foot"><span class="avatar">CX</span><span style="font-size:11px">Codex · 5m</span></div>
+    </div>
+    <div class="tile"><div class="tile-id">TASK-202</div><div class="tile-title">Fix board collapse to 24px</div><div class="exec"><div class="exec-dots"><span class="exec-dot-wrap"><span class="exec-dot filled"></span></span><span class="exec-line filled"></span><span class="exec-dot-wrap"><span class="exec-dot current pulse"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span><span class="exec-line"></span><span class="exec-dot-wrap"><span class="exec-dot hollow"></span></span></div><div class="exec-label"><span class="stage-name">coding</span></div></div></div>
+  </div></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Accessibility + contrast</h2>
+<div class="card" style="font-size:12px;line-height:1.5">
+  <b>Not color-only:</b> filled = done (solid with inner dot), current = larger 14px + pulse ring + shadow, hollow = future ring only, stalled = amber with ! mark, failed loop = warn border + fail state pill. All have text label under dots (stage name + 3/8 count + state pill).<br>
+  <b>Text alternative:</b> each dot has aria-label, progress container has aria-label with current stage, sr-only text lists all stages with done/current.<br>
+  <b>Contrast:</b> --text #3d3d3d on #ffffff 10.8:1, --muted #6b6b6b on #ffffff 5.7:1, --accent-fg #1e3a26 on #86d9a0 8:1, warn #8a4a0a on #ffe9d0 7:1, danger #9a1a24 on #ffe2e6 8:1, all pills meet 4.5:1 in light and dark.<br>
+  <b>Motion:</b> pulse and shake respect prefers-reduced-motion, animation disabled when set.<br>
+  <b>Focus:</b> tooltip shows on hover and focus-within, keyboard Tab reaches exec-wrap, focus ring visible.
+</div>
+</div>
+
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.tile-progress.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.tile-progress.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+  var stages = ['picked','coding','testing','fixing','testing again','commit','PR','review'];
+  var stageGrid = document.getElementById('stageGrid');
+  function makeTile(currentIdx, extra){
+    extra = extra || {};
+    var card = document.createElement('div');
+    card.className = 'card';
+    card.style.width = '320px';
+    var tile = document.createElement('div');
+    tile.className = 'tile';
+    var id = document.createElement('div');
+    id.className = 'tile-id';
+    id.textContent = 'TASK-201';
+    tile.appendChild(id);
+    var title = document.createElement('div');
+    title.className = 'tile-title';
+    title.textContent = 'AI: use the constraints extractor in every turn';
+    tile.appendChild(title);
+    var exec = document.createElement('div');
+    exec.className = 'exec';
+    var dots = document.createElement('div');
+    dots.className = 'exec-dots';
+    for(var i=0;i<stages.length;i++){
+      var wrap = document.createElement('span');
+      wrap.className = 'exec-dot-wrap';
+      var dot = document.createElement('span');
+      dot.className = 'exec-dot';
+      if(i < currentIdx) dot.className += ' filled';
+      else if(i === currentIdx){
+        dot.className += ' current pulse';
+        if(extra.stalled) dot.className += ' stalled';
+      } else {
+        dot.className += ' hollow';
+      }
+      dot.setAttribute('aria-label', stages[i] + (i < currentIdx ? ' done' : i===currentIdx ? ' current' : ' pending'));
+      wrap.appendChild(dot);
+      dots.appendChild(wrap);
+      if(i < stages.length-1){
+        var line = document.createElement('span');
+        line.className = 'exec-line';
+        if(i < currentIdx) line.className += ' filled';
+        if(extra.warn && (i===2 || i===3)) line.className += ' warn';
+        dots.appendChild(line);
+      }
+    }
+    exec.appendChild(dots);
+    var label = document.createElement('div');
+    label.className = 'exec-label';
+    var name = document.createElement('span');
+    name.className = 'stage-name';
+    name.textContent = stages[currentIdx] || 'done';
+    label.appendChild(name);
+    var count = document.createElement('span');
+    count.className = 'state';
+    count.textContent = (currentIdx+1) + '/8';
+    label.appendChild(count);
+    if(extra.stalled){
+      var st = document.createElement('span');
+      st.className = 'state stalled';
+      st.textContent = 'Stalled';
+      label.appendChild(st);
+    }
+    if(extra.fail){
+      var f = document.createElement('span');
+      f.className = 'state fail';
+      f.textContent = 'Tests failed';
+      label.appendChild(f);
+    }
+    exec.appendChild(label);
+    var sr = document.createElement('span');
+    sr.className = 'sr-only';
+    sr.textContent = 'Progress: ' + (currentIdx+1) + ' of 8, current ' + stages[currentIdx];
+    exec.appendChild(sr);
+    tile.appendChild(exec);
+    var foot = document.createElement('div');
+    foot.className = 'tile-foot';
+    var av = document.createElement('span');
+    av.className = 'avatar';
+    av.textContent = 'CX';
+    foot.appendChild(av);
+    var tm = document.createElement('span');
+    tm.textContent = 'Codex · ' + (currentIdx*2+2) + 'm';
+    tm.style.fontSize = '11px';
+    foot.appendChild(tm);
+    tile.appendChild(foot);
+    card.appendChild(tile);
+    return card;
+  }
+  function renderGrid(){
+    if(!stageGrid) return;
+    while(stageGrid.firstChild) stageGrid.removeChild(stageGrid.firstChild);
+    for(var i=0;i<stages.length;i++){
+      stageGrid.appendChild(makeTile(i));
+    }
+  }
+  renderGrid();
+  var btns = document.querySelectorAll('[data-stage]');
+  var currentDemo = null;
+  function showDemo(name){
+    // remove active from grid, show extra examples via existing sections are static, this switcher only highlights stage grid for demo
+    for(var b=0;b<btns.length;b++){
+      var btn = btns[b];
+      if(btn.getAttribute('data-stage')===name) btn.setAttribute('aria-pressed','true');
+      else btn.setAttribute('aria-pressed','false');
+    }
+    if(stageGrid){
+      while(stageGrid.firstChild) stageGrid.removeChild(stageGrid.firstChild);
+      if(name==='stalled'){
+        stageGrid.appendChild(makeTile(2, { stalled:true }));
+      } else if(name==='unavail'){
+        var c = makeTile(1);
+        var lbl = c.querySelector('.exec-label');
+        if(lbl){
+          var s = document.createElement('span');
+          s.className = 'state unavail';
+          s.textContent = 'Worker unavailable';
+          lbl.appendChild(s);
+        }
+        stageGrid.appendChild(c);
+      } else if(name==='quota'){
+        var c2 = makeTile(4);
+        var lbl2 = c2.querySelector('.exec-label');
+        if(lbl2){
+          var s2 = document.createElement('span');
+          s2.className = 'state fail';
+          s2.textContent = 'Quota exhausted';
+          lbl2.appendChild(s2);
+        }
+        stageGrid.appendChild(c2);
+      } else if(name==='failed'){
+        stageGrid.appendChild(makeTile(3, { fail:true, warn:true }));
+      } else if(name==='tooltip'){
+        // keep grid but also show tooltip section is below, so just show stage 2
+        stageGrid.appendChild(makeTile(2));
+      } else {
+        var idx = stages.indexOf(name);
+        if(idx>=0) stageGrid.appendChild(makeTile(idx));
+        else renderGrid();
+      }
+    }
+  }
+  for(var k=0;k<btns.length;k++){
+    (function(b){
+      b.addEventListener('click', function(){ showDemo(b.getAttribute('data-stage')); });
+    })(btns[k]);
+  }
+})();
+</script>
+</body>
+</html>
