@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprout — AI Panel Mockup</title>
+<meta name="color-scheme" content="light dark">
+<style>
+/* Sprout tokens */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card-bg:#ffffff;
+  --card-bg-2:#fff8ed;
+  --card-shadow:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --card-shadow-hover:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --ok-border:#86d9a0;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --warn-border:#ffb86a;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --danger-border:#ffb3b8;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --purple-border:#c9b6ff;
+  --blue-soft:#ddeaff;
+  --blue-border:#a8c4ff;
+  --grey-dot:#d8d2c4;
+  --radius:16px;
+  --radius-sm:12px;
+  --radius-pill:999px;
+  --t:180ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card-bg:#2e2e34;
+  --card-bg-2:#3a3a40;
+  --card-shadow:none;
+  --card-shadow-hover:none;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#2a4a32;
+  --accent-fg:#d6f2dd;
+  --ok:#86d9a0;
+  --ok-soft:#2a4a32;
+  --ok-border:#3a6a42;
+  --warn:#ffb86a;
+  --warn-soft:#4a3520;
+  --warn-border:#7a5a32;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --danger-border:#7a3a42;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --purple-border:#4a3a6a;
+  --blue-soft:#24344a;
+  --blue-border:#3a4a6a;
+  --grey-dot:#4a4a54;
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:ui-sans-system, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* page layout */
+.page{
+  max-width:1100px;
+  margin:0 auto;
+  padding:24px 20px 48px;
+}
+.top{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:20px;
+}
+.brand{
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+.brand-mark{
+  width:36px;height:36px;border-radius:12px;
+  background:var(--accent);
+  color:var(--accent-fg);
+  display:grid;place-items:center;
+  font-weight:800;
+  box-shadow:var(--card-shadow);
+}
+.brand h1{font-size:18px;margin:0;letter-spacing:-0.01em}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
+.top-actions{display:flex;gap:8px;align-items:center}
+
+.btn{
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  color:var(--text);
+  padding:7px 12px;
+  border-radius:var(--radius-pill);
+  font-size:13px;
+  font-weight:600;
+  line-height:1;
+  transition:background var(--t), border-color var(--t), transform var(--t), box-shadow var(--t);
+}
+.btn:hover{border-color:var(--border-strong);background:var(--panel)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:var(--accent-fg);
+}
+[data-theme="dark"] .btn.primary{color:#0f2314}
+.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.small{padding:6px 10px;font-size:12px}
+.btn.tiny{padding:4px 8px;font-size:11px;border-radius:999px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--panel);color:var(--text);border-color:var(--border)}
+
+.chip{
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  color:var(--text);
+  padding:6px 12px;
+  border-radius:var(--radius-pill);
+  font-size:12px;
+  font-weight:600;
+  transition:all var(--t);
+}
+.chip:hover{border-color:var(--border-strong);background:var(--panel)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-fg)}
+[data-theme="dark"] .chip[aria-pressed="true"]{color:var(--text)}
+
+/* state switcher */
+.switcher{
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--card-shadow);
+  padding:12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:20px;
+}
+.switcher .label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:100%;margin-bottom:2px}
+
+/* stage */
+.stage{
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+  justify-content:center;
+}
+.panel-wrap{
+  width:380px;
+  flex:0 0 380px;
+}
+.panel{
+  width:380px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--card-shadow);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:640px;
+}
+.panel-header{
+  height:52px;
+  flex:0 0 52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--panel);
+}
+.panel-header-left{display:flex;align-items:center;gap:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.panel-title{font-weight:700;font-size:13px;letter-spacing:-0.01em}
+.panel-sub{font-size:11px;color:var(--muted);font-weight:600}
+.panel-header-right{display:flex;gap:6px}
+
+.chat{
+  flex:1 1 auto;
+  overflow-y:auto;
+  padding:16px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  background:var(--card-bg);
+  scrollbar-width:thin;
+}
+.chat::-webkit-scrollbar{width:6px}
+.chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+
+.msg{display:flex;flex-direction:column;gap:6px;max-width:100%}
+.msg.user{align-items:flex-end}
+.bubble{
+  max-width:86%;
+  padding:10px 14px;
+  border-radius:18px;
+  font-size:13px;
+  line-height:1.45;
+  word-wrap:break-word;
+}
+.msg.user .bubble{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-bottom-right-radius:6px;
+  color:var(--text);
+}
+.msg.assistant .text{
+  font-size:13px;
+  line-height:1.5;
+  color:var(--text);
+  padding:0 2px;
+}
+.meta{font-size:11px;color:var(--muted);padding:0 4px}
+.msg.user .meta{text-align:right}
+
+/* cards */
+.card{
+  border:1px solid var(--border);
+  background:var(--card-bg-2);
+  border-radius:var(--radius-sm);
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  box-shadow:var(--card-shadow);
+}
+.card-head{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;letter-spacing:-0.01em;
+}
+.card-head .icon{font-size:14px}
+.change-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.change-title{font-size:13px;font-weight:600}
+.change-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.change-line{
+  font-size:11px;
+  font-weight:600;
+  padding:3px 8px;
+  border-radius:var(--radius-pill);
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  color:var(--muted);
+}
+.change-line.positive{background:var(--accent-soft);border-color:var(--ok-border);color:var(--ok)}
+[data-theme="dark"] .change-line.positive{color:var(--accent)}
+.card-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* receipt */
+.card.receipt.done{
+  background:var(--ok-soft);
+  border-color:var(--ok-border);
+}
+.receipt-head{
+  display:flex;align-items:center;gap:8px;
+  font-weight:800;font-size:13px;
+  color:var(--ok);
+}
+.receipt-head .check{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--accent);
+  color:var(--accent-fg);
+  display:grid;place-items:center;
+  font-size:12px;font-weight:800;
+}
+[data-theme="dark"] .receipt-head .check{color:#0f2314}
+.receipt-body{display:flex;flex-direction:column;gap:8px}
+.receipt-item{
+  font-size:12px;
+  line-height:1.45;
+  padding:8px 10px;
+  border-radius:10px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+}
+.receipt-item.failed{
+  background:var(--warn-soft);
+  border-color:var(--warn-border);
+  color:var(--warn);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.receipt-item .reason{font-size:11px;color:var(--muted);line-height:1.4}
+.receipt-item.failed .reason{color:var(--warn)}
+
+/* clarifying */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+
+/* working */
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.step{
+  display:flex;align-items:center;gap:10px;
+  font-size:12px;
+  font-weight:600;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  color:var(--muted);
+  transition:all var(--t);
+}
+.step.done{color:var(--text);border-color:var(--ok-border);background:var(--ok-soft)}
+.step.current{color:var(--text);border-color:var(--border-strong);background:var(--panel);box-shadow:var(--card-shadow)}
+.step.pending{opacity:.85}
+.step-icon{
+  width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;
+  font-size:11px;font-weight:800;
+  flex:0 0 20px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+}
+.step.done .step-icon{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.spinner{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--border);
+  border-top-color:var(--accent);
+  animation:spin .7s linear infinite;
+  flex:0 0 16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none;border-top-color:var(--border)}}
+
+/* error */
+.card.error{
+  background:var(--danger-soft);
+  border-color:var(--danger-border);
+}
+.error-head{font-weight:800;font-size:13px;color:var(--danger)}
+.error-body{font-size:12px;line-height:1.5;color:var(--text)}
+
+/* memory */
+.memory-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 10px;
+  border-radius:var(--radius-pill);
+  background:var(--purple-soft);
+  border:1px solid var(--purple-border);
+  font-size:11px;font-weight:600;
+  color:var(--text);
+}
+.memory-chip .memory-icon{font-size:12px}
+.memory-drawer{
+  border:1px solid var(--border);
+  background:var(--card-bg-2);
+  border-radius:var(--radius-sm);
+  padding:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.drawer-toggle{
+  border:0;background:transparent;
+  font-size:12px;font-weight:700;
+  color:var(--muted);
+  text-align:left;
+  padding:0;
+  cursor:pointer;
+}
+.memory-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.memory-list li{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 8px;
+  border-radius:8px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  font-size:11px;
+}
+
+/* feedback */
+.feedback{
+  display:flex;align-items:center;gap:6px;
+  margin-top:4px;
+}
+.icon-btn{
+  width:28px;height:28px;
+  border-radius:50%;
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  display:grid;place-items:center;
+  font-size:14px;
+  transition:all var(--t);
+}
+.icon-btn:hover{border-color:var(--border-strong);background:var(--panel)}
+.icon-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.feedback-panel{
+  margin-top:8px;
+  padding:10px;
+  border-radius:10px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.feedback-panel .chip-row{margin:0}
+.textbox{
+  width:100%;
+  min-height:64px;
+  resize:vertical;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  color:var(--text);
+  font-size:12px;
+}
+.textbox:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+/* undo */
+.undo-line{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:var(--panel);
+  border:1px dashed var(--border);
+  font-size:12px;
+  font-weight:600;
+  color:var(--muted);
+}
+.undo-icon{font-size:14px}
+
+/* input bar */
+.input-bar{
+  flex:0 0 auto;
+  border-top:1px solid var(--border);
+  padding:10px;
+  background:var(--panel);
+  display:flex;gap:8px;align-items:center;
+}
+.input-bar input{
+  flex:1;
+  padding:10px 12px;
+  border-radius:var(--radius-pill);
+  border:1px solid var(--border);
+  background:var(--card-bg);
+  color:var(--text);
+  font-size:13px;
+}
+.input-bar input:disabled{opacity:.6}
+
+/* notes panel */
+.notes{
+  flex:1;
+  min-width:260px;
+  background:var(--card-bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--card-shadow);
+  padding:16px;
+}
+.notes h2{font-size:13px;margin:0 0 8px}
+.notes h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+.notes p, .notes li{font-size:12px;line-height:1.5;color:var(--muted)}
+.notes ul{margin:0;padding-left:16px}
+.notes code{font-size:11px;background:var(--panel);padding:2px 6px;border-radius:6px;border:1px solid var(--border)}
+
+/* hidden */
+.hidden{display:none !important}
+
+/* responsive */
+@media (max-width:900px){
+  .stage{flex-direction:column;align-items:center}
+  .notes{width:380px;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">S</div>
+      <div>
+        <h1>Sprout — AI Panel Mockup</h1>
+        <p>Right-hand chat · 380px panel · cream #f5edde · mint #86d9a0 · pastel tints</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn small" id="themeToggle" aria-label="Toggle dark mode">◐ Theme</button>
+    </div>
+  </div>
+
+  <div class="switcher" role="tablist" aria-label="Panel states">
+    <div class="label">Switch state (keyboard: Tab, Enter, arrow keys)</div>
+    <button class="chip" role="tab" data-state="normal" aria-selected="true" aria-controls="state-normal">Normal</button>
+    <button class="chip" role="tab" data-state="receipt" aria-selected="false" aria-controls="state-receipt">Receipt</button>
+    <button class="chip" role="tab" data-state="receipt-fail" aria-selected="false" aria-controls="state-receipt-fail">Receipt · partial fail</button>
+    <button class="chip" role="tab" data-state="clarify" aria-selected="false" aria-controls="state-clarify">Clarify</button>
+    <button class="chip" role="tab" data-state="working" aria-selected="false" aria-controls="state-working">Working</button>
+    <button class="chip" role="tab" data-state="error" aria-selected="false" aria-controls="state-error">Error</button>
+    <button class="chip" role="tab" data-state="memory" aria-selected="false" aria-controls="state-memory">Memory</button>
+    <button class="chip" role="tab" data-state="feedback" aria-selected="false" aria-controls="state-feedback">Feedback</button>
+    <button class="chip" role="tab" data-state="undo" aria-selected="false" aria-controls="state-undo">Undo</button>
+  </div>
+
+  <div class="stage">
+    <div class="panel-wrap">
+      <div class="panel" role="region" aria-label="AI chat panel">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="dot" aria-hidden="true"></span>
+            <div>
+              <div class="panel-title">Sprout AI</div>
+              <div class="panel-sub">Helps with your board</div>
+            </div>
+          </div>
+          <div class="panel-header-right">
+            <button class="btn tiny ghost" aria-label="Memory" title="Memory">◍ Memory</button>
+            <button class="btn tiny ghost" aria-label="Close panel" title="Close">✕</button>
+          </div>
+        </div>
+
+        <div class="chat" id="chatRoot">
+
+          <!-- STATE: Normal -->
+          <section id="state-normal" data-panel-state="normal" aria-label="Normal turn">
+            <div class="msg user">
+              <div class="bubble">Add a task to fetch results from DB and tag it Work, also add a comment about checking filters</div>
+              <div class="meta">You · just now</div>
+            </div>
+            <div class="msg assistant">
+              <div class="text">Got it — I'll create the task and add the details you mentioned. Review the changes below.</div>
+              <div class="meta">Sprout AI · now</div>
+            </div>
+            <div class="card proposal">
+              <div class="card-head"><span class="icon" aria-hidden="true">✦</span> Proposed changes</div>
+              <ul class="change-list">
+                <li>
+                  <div class="change-title">#38 Fetch results from DB</div>
+                  <div class="change-meta">
+                    <span class="change-line positive">+ in To Do</span>
+                    <span class="change-line">+ tag Work (from your message)</span>
+                    <span class="change-line">+1 comment</span>
+                  </div>
+                </li>
+              </ul>
+              <div class="card-actions">
+                <button class="btn primary small" aria-label="Approve proposal">Approve</button>
+                <button class="btn small" aria-label="Edit proposal">Edit</button>
+                <button class="btn small ghost" aria-label="Reject proposal">Reject</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STATE: Receipt success -->
+          <section id="state-receipt" data-panel-state="receipt" class="hidden" aria-label="Receipt after execution">
+            <div class="msg assistant">
+              <div class="text">All set — I created the task and added the comment.</div>
+            </div>
+            <div class="card receipt done">
+              <div class="receipt-head"><span class="check" aria-hidden="true">✓</span> Done</div>
+              <div class="receipt-body">
+                <div class="receipt-item"><strong>#38 Fetch results from DB</strong>, in To Do, tag Work, 1 comment</div>
+                <div class="receipt-item">Added comment: "Check filters for archived rows before returning"</div>
+              </div>
+              <div class="card-actions">
+                <button class="btn small" aria-label="Undo last action">Undo</button>
+                <button class="btn small primary" aria-label="View board">View board</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STATE: Receipt partial fail -->
+          <section id="state-receipt-fail" data-panel-state="receipt-fail" class="hidden" aria-label="Receipt with partial failure">
+            <div class="msg assistant">
+              <div class="text">I tried to do both tasks — one needed a quick fix.</div>
+            </div>
+            <div class="card receipt done">
+              <div class="receipt-head"><span class="check" aria-hidden="true">✓</span> Done with 1 issue</div>
+              <div class="receipt-body">
+                <div class="receipt-item"><strong>#38 Fetch results from DB</strong>, in To Do, 1 comment</div>
+                <div class="receipt-item failed">
+                  <div><strong>Tag Work not added</strong></div>
+                  <div class="reason">Your tag list is full (12 tags). I left the task without a tag so you don't lose work.</div>
+                  <div><button class="btn tiny" aria-label="Retry adding tag">Retry</button></div>
+                </div>
+              </div>
+              <div class="card-actions">
+                <button class="btn small" aria-label="Undo">Undo</button>
+                <button class="btn small primary" aria-label="View board">View board</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STATE: Clarifying question -->
+          <section id="state-clarify" data-panel-state="clarify" class="hidden" aria-label="Clarifying question">
+            <div class="msg assistant">
+              <div class="text">When should I schedule "Fetch results from DB"? I didn't catch a date.</div>
+              <div class="chip-row" role="group" aria-label="Quick replies">
+                <button class="chip" aria-label="Schedule for today">Today</button>
+                <button class="chip" aria-label="Schedule for tomorrow">Tomorrow</button>
+                <button class="chip" aria-label="Schedule for next week">Next week</button>
+                <button class="chip" aria-label="No due date">No due date</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STATE: Working -->
+          <section id="state-working" data-panel-state="working" class="hidden" aria-label="Working">
+            <div class="msg assistant">
+              <div class="text">Working on it — I'll update each step as I go.</div>
+            </div>
+            <ol class="steps" aria-label="Progress steps">
+              <li class="step done" id="step1"><span class="step-icon" aria-hidden="true">✓</span> Reading your board</li>
+              <li class="step current" id="step2"><span class="spinner" aria-hidden="true"></span> Creating the task</li>
+              <li class="step pending" id="step3"><span class="step-icon" aria-hidden="true">3</span> Adding the comment</li>
+            </ol>
+          </section>
+
+          <!-- STATE: Error -->
+          <section id="state-error" data-panel-state="error" class="hidden" aria-label="Error">
+            <div class="card error">
+              <div class="error-head">Something didn't work</div>
+              <div class="error-body">I couldn't create the task — the board is temporarily unavailable. Your draft is saved, so you can retry without retyping.</div>
+              <div class="card-actions">
+                <button class="btn small primary" aria-label="Retry">Retry</button>
+                <button class="btn small ghost" id="copyDetailsBtn" aria-label="Copy error details">Copy details</button>
+              </div>
+            </div>
+            <div class="msg assistant" style="margin-top:10px">
+              <div class="text" id="copyFeedback" aria-live="polite"></div>
+            </div>
+          </section>
+
+          <!-- STATE: Memory -->
+          <section id="state-memory" data-panel-state="memory" class="hidden" aria-label="Memory">
+            <div class="memory-chip">
+              <span class="memory-icon" aria-hidden="true">◍</span>
+              <span>Remembered: Levy approves data requests</span>
+              <button class="btn tiny ghost" aria-label="Forget this memory">Forget</button>
+            </div>
+            <div class="msg assistant">
+              <div class="text">I'll route data requests to Levy from now on. You can manage what I remember below.</div>
+            </div>
+            <div class="memory-drawer">
+              <button class="drawer-toggle" id="memoryToggle" aria-expanded="true" aria-controls="memoryList">Memory (3) ▾</button>
+              <ul class="memory-list" id="memoryList">
+                <li><span>Levy approves data requests</span><button class="btn tiny ghost" aria-label="Forget Levy approves">Forget</button></li>
+                <li><span>Work tag means urgent</span><button class="btn tiny ghost" aria-label="Forget Work tag">Forget</button></li>
+                <li><span>Use DB schema v2 for new tasks</span><button class="btn tiny ghost" aria-label="Forget schema">Forget</button></li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- STATE: Feedback -->
+          <section id="state-feedback" data-panel-state="feedback" class="hidden" aria-label="Feedback">
+            <div class="msg assistant">
+              <div class="text">Created #38 Fetch results from DB in To Do with tag Work.</div>
+              <div class="feedback">
+                <button class="icon-btn" aria-label="Thumbs up" aria-pressed="false" data-feedback="up">👍</button>
+                <button class="icon-btn" aria-label="Thumbs down" aria-pressed="false" data-feedback="down">👎</button>
+              </div>
+              <div class="feedback-panel hidden" id="feedbackPanel">
+                <div style="font-size:12px;font-weight:700">What went wrong?</div>
+                <div class="chip-row" role="group" aria-label="Feedback reasons">
+                  <button class="chip" role="checkbox" aria-checked="false">Wrong task</button>
+                  <button class="chip" role="checkbox" aria-checked="false">Wrong date or tag</button>
+                  <button class="chip" role="checkbox" aria-checked="false">Did not do what I asked</button>
+                </div>
+                <label class="sr-only" for="feedbackText">Additional feedback</label>
+                <textarea class="textbox" id="feedbackText" placeholder="Add more detail (optional)"></textarea>
+                <div class="card-actions">
+                  <button class="btn small primary" aria-label="Send feedback">Send</button>
+                  <button class="btn small ghost" aria-label="Cancel feedback" id="feedbackCancel">Cancel</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="msg assistant" style="margin-top:12px">
+              <div class="text">Added comment about checking filters.</div>
+              <div class="feedback">
+                <button class="icon-btn" aria-label="Thumbs up" aria-pressed="false">👍</button>
+                <button class="icon-btn" aria-label="Thumbs down" aria-pressed="false">👎</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- STATE: Undo -->
+          <section id="state-undo" data-panel-state="undo" class="hidden" aria-label="Undo result">
+            <div class="undo-line">
+              <span class="undo-icon" aria-hidden="true">↩</span>
+              <span>Undone: Removed #38 Fetch results from DB and its comment. Tag Work was not applied.</span>
+            </div>
+            <div class="msg assistant" style="margin-top:10px">
+              <div class="text">Your board is back to how it was before. Want me to try again with a different tag?</div>
+              <div class="card-actions" style="margin-top:8px">
+                <button class="btn small primary" aria-label="Retry with different tag">Retry with different tag</button>
+                <button class="btn small" aria-label="Dismiss">Dismiss</button>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="input-bar">
+          <input type="text" placeholder="Ask Sprout to create or update tasks…" aria-label="Message Sprout" disabled>
+          <button class="btn primary small" aria-label="Send message" disabled>Send</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h2>Design notes</h2>
+      <p>This mockup shows all AI panel states in a 380px panel with Sprout look (cream #f5edde, white soft-shadow cards, mint #86d9a0). No external files, no HTML injection, keyboard accessible, contrast ≥4.5:1.</p>
+      <h3>Reusable components</h3>
+      <ul>
+        <li><code>.card</code> base + variants <code>.proposal</code> <code>.receipt.done</code> <code>.error</code> — proposal, receipt, error, memory drawer all share</li>
+        <li><code>.btn</code> primary / small / tiny / ghost — Approve, Undo, View board, Retry, Forget</li>
+        <li><code>.chip</code> pill — quick replies, state switcher, feedback reasons</li>
+        <li><code>.bubble</code> + <code>.msg</code> — user and assistant turns</li>
+        <li><code>.steps</code> + <code>.step</code> + <code>.spinner</code> — working live progress</li>
+        <li><code>.feedback</code> + <code>.icon-btn</code> + <code>.feedback-panel</code> — thumbs and reason chips</li>
+        <li><code>.memory-chip</code> + <code>.memory-drawer</code> — remembered facts</li>
+      </ul>
+      <h3>Accessibility</h3>
+      <ul>
+        <li>Focus rings via :focus-visible, tablist for states, aria-selected, aria-controls, aria-labels on all icon buttons, aria-live for copy feedback</li>
+        <li>Text contrast: #3d3d3d on #ffffff 10.8:1, #6b6b6b on #ffffff 5.7:1, #1e3a26 on #86d9a0 8.1:1</li>
+        <li>Spinner respects prefers-reduced-motion</li>
+      </ul>
+      <h3>Dark mode</h3>
+      <p>Toggle sets <code>html[data-theme=dark]</code>, all tokens swap, same shadows removed, mint stays primary but text adapts.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var savedTheme = null;
+  try { savedTheme = window.localStorage.getItem('sprout.ai-panel.theme'); } catch(e){}
+  if (savedTheme === 'dark') root.setAttribute('data-theme','dark');
+
+  function setTheme(next){
+    if (next === 'dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try { window.localStorage.setItem('sprout.ai-panel.theme', next); } catch(e){}
+  }
+
+  if (themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme') === 'dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+
+  // state switcher
+  var tabs = document.querySelectorAll('[role="tab"][data-state]');
+  var sections = document.querySelectorAll('[data-panel-state]');
+  var current = 'normal';
+
+  function showState(name){
+    current = name;
+    for (var i=0;i<tabs.length;i++){
+      var t = tabs[i];
+      var isActive = t.getAttribute('data-state') === name;
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive) t.setAttribute('aria-pressed','true');
+      else t.removeAttribute('aria-pressed');
+    }
+    for (var j=0;j<sections.length;j++){
+      var s = sections[j];
+      var match = s.getAttribute('data-panel-state') === name;
+      if (match) s.classList.remove('hidden');
+      else s.classList.add('hidden');
+    }
+    if (name === 'working') startWorking();
+    else stopWorking();
+  }
+
+  for (var k=0;k<tabs.length;k++){
+    (function(btn){
+      btn.addEventListener('click', function(){ showState(btn.getAttribute('data-state')); });
+      btn.addEventListener('keydown', function(e){
+        var idx = Array.prototype.indexOf.call(tabs, btn);
+        var nextIdx = -1;
+        if (e.key === 'ArrowRight') nextIdx = (idx+1)%tabs.length;
+        if (e.key === 'ArrowLeft') nextIdx = (idx-1+tabs.length)%tabs.length;
+        if (nextIdx >=0){
+          e.preventDefault();
+          tabs[nextIdx].focus();
+          showState(tabs[nextIdx].getAttribute('data-state'));
+        }
+      });
+    })(tabs[k]);
+  }
+
+  // working live demo
+  var workingTimer = null;
+  var step = 0;
+  function resetWorking(){
+    var s1 = document.getElementById('step1');
+    var s2 = document.getElementById('step2');
+    var s3 = document.getElementById('step3');
+    if (!s1 || !s2 || !s3) return;
+    s1.className = 'step done';
+    s1.textContent = '';
+    var icon1 = document.createElement('span');
+    icon1.className = 'step-icon';
+    icon1.setAttribute('aria-hidden','true');
+    icon1.textContent = '✓';
+    s1.appendChild(icon1);
+    s1.appendChild(document.createTextNode(' Reading your board'));
+
+    s2.className = 'step current';
+    s2.textContent = '';
+    var spin = document.createElement('span');
+    spin.className = 'spinner';
+    spin.setAttribute('aria-hidden','true');
+    s2.appendChild(spin);
+    s2.appendChild(document.createTextNode(' Creating the task'));
+
+    s3.className = 'step pending';
+    s3.textContent = '';
+    var icon3 = document.createElement('span');
+    icon3.className = 'step-icon';
+    icon3.setAttribute('aria-hidden','true');
+    icon3.textContent = '3';
+    s3.appendChild(icon3);
+    s3.appendChild(document.createTextNode(' Adding the comment'));
+    step = 1;
+  }
+
+  function advanceWorking(){
+    var s1 = document.getElementById('step1');
+    var s2 = document.getElementById('step2');
+    var s3 = document.getElementById('step3');
+    if (!s1 || !s2 || !s3) return;
+    if (step === 1){
+      s2.className = 'step done';
+      s2.textContent = '';
+      var i2 = document.createElement('span');
+      i2.className = 'step-icon';
+      i2.setAttribute('aria-hidden','true');
+      i2.textContent = '✓';
+      s2.appendChild(i2);
+      s2.appendChild(document.createTextNode(' Creating the task'));
+      s3.className = 'step current';
+      s3.textContent = '';
+      var sp = document.createElement('span');
+      sp.className = 'spinner';
+      sp.setAttribute('aria-hidden','true');
+      s3.appendChild(sp);
+      s3.appendChild(document.createTextNode(' Adding the comment'));
+      step = 2;
+    } else if (step === 2){
+      s3.className = 'step done';
+      s3.textContent = '';
+      var i3 = document.createElement('span');
+      i3.className = 'step-icon';
+      i3.setAttribute('aria-hidden','true');
+      i3.textContent = '✓';
+      s3.appendChild(i3);
+      s3.appendChild(document.createTextNode(' Adding the comment'));
+      step = 3;
+      stopWorking();
+    }
+  }
+
+  function startWorking(){
+    resetWorking();
+    if (workingTimer) window.clearInterval(workingTimer);
+    workingTimer = window.setInterval(advanceWorking, 1600);
+  }
+  function stopWorking(){
+    if (workingTimer){ window.clearInterval(workingTimer); workingTimer = null; }
+  }
+
+  // feedback
+  var feedbackDown = document.querySelector('#state-feedback [data-feedback="down"]');
+  var feedbackPanel = document.getElementById('feedbackPanel');
+  var feedbackCancel = document.getElementById('feedbackCancel');
+  if (feedbackDown && feedbackPanel){
+    feedbackDown.addEventListener('click', function(){
+      var pressed = feedbackDown.getAttribute('aria-pressed') === 'true';
+      feedbackDown.setAttribute('aria-pressed', pressed ? 'false' : 'true');
+      if (!pressed) feedbackPanel.classList.remove('hidden');
+      else feedbackPanel.classList.add('hidden');
+    });
+  }
+  if (feedbackCancel && feedbackPanel && feedbackDown){
+    feedbackCancel.addEventListener('click', function(){
+      feedbackPanel.classList.add('hidden');
+      feedbackDown.setAttribute('aria-pressed','false');
+    });
+  }
+
+  // memory drawer
+  var memToggle = document.getElementById('memoryToggle');
+  var memList = document.getElementById('memoryList');
+  if (memToggle && memList){
+    memToggle.addEventListener('click', function(){
+      var expanded = memToggle.getAttribute('aria-expanded') === 'true';
+      memToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      if (expanded){
+        memList.classList.add('hidden');
+        memToggle.textContent = 'Memory (3) ▸';
+      } else {
+        memList.classList.remove('hidden');
+        memToggle.textContent = 'Memory (3) ▾';
+      }
+    });
+  }
+
+  // error copy details (no stack traces, plain text)
+  var copyBtn = document.getElementById('copyDetailsBtn');
+  var copyFeedback = document.getElementById('copyFeedback');
+  if (copyBtn){
+    copyBtn.addEventListener('click', function(){
+      var details = 'Error: board unavailable while creating task #38. Draft saved locally. Please retry.';
+      var done = false;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(details).then(function(){
+          if (copyFeedback){
+            copyFeedback.textContent = 'Details copied';
+            window.setTimeout(function(){ copyFeedback.textContent = ''; }, 2500);
+          }
+        }).catch(function(){
+          done = false;
+        });
+        done = true;
+      }
+      if (!done && copyFeedback){
+        copyFeedback.textContent = 'Details: board unavailable, draft saved';
+        window.setTimeout(function(){ copyFeedback.textContent = ''; }, 3500);
+      }
+    });
+  }
+
+  // initial
+  showState('normal');
+})();
+</script>
+</body>
+</html>
