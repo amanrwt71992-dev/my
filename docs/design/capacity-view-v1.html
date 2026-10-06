@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Capacity View v1 — Agent Capacity + Team Editing</title>
+<style>
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --dot-blocked:#d87a2a;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+  --dot-blocked:#e6a15a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1240px;margin:0 auto;padding:0 16px 40px}
+.demo-bar{display:flex;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.chip{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.purple{background:var(--purple-soft);color:var(--purple);border-color:transparent}
+.mono{font-family:ui-monospace,monospace;font-size:11px}
+.badge{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:600}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.badge.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+
+/* summary strip */
+.summary{display:flex;gap:8px;flex-wrap:wrap;padding:12px;background:var(--panel);border:1px solid var(--border);border-radius:12px}
+.summary .item{font-size:11px;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.summary .item .dot{width:8px;height:8px;border-radius:50%}
+.waiting{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.waiting .line{font-size:12px;padding:8px 10px;border-radius:10px;border:1px dashed var(--border);background:var(--card);display:flex;gap:8px;align-items:flex-start}
+.waiting .line b{font-weight:700}
+
+/* capacity grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:12px}
+.agent-card{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:var(--shadow-sm)}
+.agent-head{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--border);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--card);flex:0 0 32px}
+.agent-meta{flex:1;min-width:0}
+.agent-name{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.agent-sub{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.avail{font-size:11px;padding:2px 8px;border-radius:var(--r-pill);font-weight:700;border:1px solid transparent}
+.avail.available{background:var(--ok-soft);color:var(--ok)}
+.avail.working{background:var(--col-working);color:var(--dot-working);border-color:var(--dot-working)}
+.avail.idle{background:var(--panel);color:var(--muted);border-color:var(--border)}
+.avail.offline{background:var(--panel);color:var(--faint);border-color:var(--border)}
+.avail.blocked{background:var(--warn-soft);color:var(--warn)}
+.avail.quota{background:var(--danger-soft);color:var(--danger)}
+.avail.error{background:var(--danger-soft);color:var(--danger);border-color:var(--danger)}
+.tasks{font-size:11px;display:flex;flex-direction:column;gap:4px}
+.tasks .t{padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel);display:flex;gap:6px;align-items:center}
+.cap{display:flex;gap:6px;flex-wrap:wrap}
+.quota{display:flex;flex-direction:column;gap:4px}
+.quota .bar{height:8px;border-radius:var(--r-pill);background:var(--border);overflow:hidden;position:relative}
+.quota .bar .fill{height:100%;background:var(--accent);border-radius:var(--r-pill)}
+.quota .bar.warn .fill{background:var(--warn)}
+.quota .bar.danger .fill{background:var(--danger)}
+.quota .meta{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+
+/* team editing */
+.dialog{width:min(560px,100%);background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
+.dialog-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.dialog-head h3{margin:0;font-size:14px;font-weight:700}
+.dialog-body{padding:16px;display:flex;flex-direction:column;gap:16px;overflow:auto;max-height:75vh}
+.dialog-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--panel)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--text)}
+.chip-select{display:flex;gap:6px;flex-wrap:wrap;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--card);min-height:44px}
+.chip-select .chip{cursor:pointer}
+.chip-select .chip.on{background:var(--text);color:var(--panel);border-color:var(--text)}
+.catalog{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.catalog .chip{cursor:pointer}
+.catalog .chip:hover{border-color:var(--border-strong)}
+.quota-edit{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.quota-edit{grid-template-columns:1fr}}
+
+/* states */
+.state-box{padding:24px;text-align:center;border:1px dashed var(--border);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;gap:8px;align-items:center;color:var(--muted)}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+
+/* phone */
+.phone-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;height:820px}
+.phone-frame .summary{border-radius:0;border-left:0;border-right:0}
+.phone-frame .grid{grid-template-columns:1fr;padding:0 8px 12px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-weight:700;font-size:12px">Capacity v1</span>
+  <button class="btn small" data-state="capacity" aria-pressed="true">Capacity view</button>
+  <button class="btn small" data-state="waiting">Why waiting?</button>
+  <button class="btn small" data-state="team">Team editing</button>
+  <button class="btn small" data-state="empty">Empty</button>
+  <button class="btn small" data-state="loading">Loading</button>
+  <button class="btn small" data-state="error">Error</button>
+  <button class="btn small" data-state="phone">Phone 390px</button>
+  <span style="margin-left:auto"><button class="btn small" id="themeBtn">◐ Theme</button></span>
+</div>
+
+<div class="page">
+  <div id="capacitySection">
+    <div class="summary" id="summaryStrip"></div>
+    <div class="waiting" id="waitingLines"></div>
+    <div class="grid" id="agentGrid"></div>
+  </div>
+
+  <div id="teamSection" class="hidden">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center">
+      <div class="dialog" id="teamDialog">
+        <div class="dialog-head"><h3>Team — Edit agent</h3><span class="badge ok" style="margin-left:auto">Worker</span></div>
+        <div class="dialog-body">
+          <div class="field"><label>Agent name</label><input id="editName" value="Codex"></div>
+          <div class="field"><label>Agent type</label><select id="editType"><option>worker</option><option>manual</option><option>endpoint</option><option>admin</option></select></div>
+
+          <div class="field"><label>Capabilities — selected</label><div class="chip-select" id="selectedCaps"></div><div class="catalog" id="catalogCaps"></div><div style="font-size:11px;color:var(--muted)">Multi-select chips with catalogue. Click to toggle.</div></div>
+
+          <div class="field"><label>Max parallel</label><input id="editParallel" type="number" value="2" min="1" max="10"></div>
+
+          <div class="field"><label>Quota</label><div class="quota-edit">
+            <div class="field"><label>Window hours</label><input id="quotaWindow" type="number" value="24"></div>
+            <div class="field"><label>Limit</label><input id="quotaLimit" type="number" value="100"></div>
+            <div class="field"><label>Used</label><input id="quotaUsed" type="number" value="78"></div>
+            <div class="field"><label>Reset</label><input id="quotaReset" value="01:30"></div>
+          </div><div style="font-size:11px;color:var(--muted)">Bar shows 78% used — resets 01:30</div></div>
+
+          <div class="field"><label>Endpoint record</label><div style="display:flex;flex-direction:column;gap:8px">
+            <input id="epName" placeholder="Name" value="codex-prod">
+            <input id="epUrl" placeholder="URL" value="wss://agent.example/ws">
+            <input id="epAuth" placeholder="Auth reference NAME only" value="CODEX_TOKEN_REF">
+          </div><div style="font-size:11px;color:var(--muted)">Auth reference NAME only — never show secret value.</div></div>
+        </div>
+        <div class="dialog-foot"><button class="btn small ghost" id="cancelEdit">Cancel</button><button class="btn small primary" id="saveEdit">Save</button></div>
+      </div>
+
+      <div class="dialog" style="width:360px">
+        <div class="dialog-head"><h3>Agent types</h3></div>
+        <div class="dialog-body" style="font-size:12px;line-height:1.5">
+          <div><b>worker</b> — auto picks tasks, respects capacity and capabilities</div>
+          <div><b>manual</b> — human triggered, shows in Team tab</div>
+          <div><b>endpoint</b> — remote URL + auth ref, wss or http endpoint</div>
+          <div><b>admin</b> — manager actions only, approve/merge</div>
+          <div style="margin-top:8px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--card)">Endpoint record: name, URL, auth reference NAME only. Never log secret.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stateSection" class="hidden">
+    <div class="state-box" id="stateBox"></div>
+  </div>
+
+  <div id="phoneSection" class="hidden" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div class="phone-frame">
+      <div class="summary" id="phoneSummary" style="font-size:11px"></div>
+      <div style="padding:8px;display:flex;flex-direction:column;gap:8px;overflow:auto;flex:1" id="phoneGrid"></div>
+    </div>
+    <div class="phone-frame">
+      <div class="dialog-head"><h3>Team edit — phone</h3></div>
+      <div class="dialog-body" style="flex:1;overflow:auto">
+        <div class="field"><label>Capabilities</label><div class="chip-select" id="phoneCaps"></div></div>
+        <div class="field"><label>Max parallel</label><input value="2"></div>
+        <div class="field"><label>Quota</label><div style="display:flex;gap:8px"><input value="24" style="width:60px"><input value="100" style="width:60px"><input value="78%" style="width:60px"></div></div>
+        <div class="field"><label>Endpoint</label><input value="codex-prod"><input value="wss://agent.example/ws"><input value="CODEX_TOKEN_REF"></div>
+      </div>
+      <div class="dialog-foot"><button class="btn small primary" style="width:100%">Save</button></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.capacity.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.capacity.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+
+  var agents = [
+    {name:'Codex', type:'worker', avail:'working', tasks:[{id:'TASK-207', col:'Code review', owner:'Codex'}], ws:'/home/user/my', caps:['constraints','guard','tsc'], working:2, capacity:1, quota:{used:78, limit:100, reset:'01:30'}, last:'2m ago', avatar:'CX'},
+    {name:'Antigravity', type:'worker', avail:'available', tasks:[], ws:'/home/user/my', caps:['board','render'], working:0, capacity:2, quota:{used:12, limit:100, reset:'12:00'}, last:'1m ago', avatar:'AG'},
+    {name:'Omni', type:'endpoint', avail:'idle', tasks:[{id:'TASK-204', col:'In progress', owner:'Omni'}], ws:'remote', caps:['deploy','review'], working:1, capacity:2, quota:{used:45, limit:100, reset:'06:00'}, last:'5m ago', avatar:'OM'},
+    {name:'Arena', type:'admin', avail:'available', tasks:[], ws:'-', caps:['approve','merge'], working:0, capacity:1, quota:{used:0, limit:100, reset:'-'}, last:'now', avatar:'AR'},
+    {name:'Manual', type:'manual', avail:'offline', tasks:[], ws:'/home/user/my', caps:['research'], working:0, capacity:1, quota:{used:0, limit:100, reset:'-'}, last:'1h ago', avatar:'MA'},
+    {name:'Claude', type:'worker', avail:'blocked', tasks:[{id:'TASK-203', col:'To do', owner:'Claude'}], ws:'/home/user/my', caps:['docs'], working:1, capacity:1, quota:{used:90, limit:100, reset:'00:30'}, last:'10m ago', avatar:'CL'},
+    {name:'Quotas', type:'worker', avail:'quota', tasks:[], ws:'/home/user/my', caps:['tests'], working:0, capacity:1, quota:{used:100, limit:100, reset:'01:30'}, last:'3m ago', avatar:'QT'},
+    {name:'Failer', type:'worker', avail:'error', tasks:[], ws:'/home/user/my', caps:['guard'], working:0, capacity:1, quota:{used:20, limit:100, reset:'08:00'}, last:'7m ago', avatar:'ER'}
+  ];
+
+  var waiting = [
+    {task:'TASK-203', reason:'No agent with capability board and capacity — all workers busy. Next free: Codex in ~5m', dispatcher:'capability mismatch'},
+    {task:'TASK-205', reason:'Quota exhausted for Codex — resets 01:30, trying Antigravity', dispatcher:'quota'},
+    {task:'TASK-206', reason:'Blocked — waiting for TASK-201 to complete', dispatcher:'dependency'}
+  ];
+
+  var allCaps = ['constraints','guard','tsc','eslint','board','render','deploy','review','approve','merge','research','docs','tests','worker','manual'];
+
+  var summaryStrip = document.getElementById('summaryStrip');
+  var agentGrid = document.getElementById('agentGrid');
+  var waitingLines = document.getElementById('waitingLines');
+  var selectedCaps = document.getElementById('selectedCaps');
+  var catalogCaps = document.getElementById('catalogCaps');
+  var phoneSummary = document.getElementById('phoneSummary');
+  var phoneGrid = document.getElementById('phoneGrid');
+  var phoneCaps = document.getElementById('phoneCaps');
+  var capacitySection = document.getElementById('capacitySection');
+  var teamSection = document.getElementById('teamSection');
+  var stateSection = document.getElementById('stateSection');
+  var stateBox = document.getElementById('stateBox');
+  var phoneSection = document.getElementById('phoneSection');
+
+  function availColor(a){
+    if(a==='available') return '#3a9a5a';
+    if(a==='working') return '#c9a81a';
+    if(a==='idle') return '#6b6b6b';
+    if(a==='offline') return '#9a9590';
+    if(a==='blocked') return '#d87a2a';
+    if(a==='quota') return '#9a1a24';
+    if(a==='error') return '#9a1a24';
+    return '#6b6b6b';
+  }
+
+  function renderSummary(target){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    var counts = {};
+    for(var i=0;i<agents.length;i++){
+      var a = agents[i].avail;
+      counts[a] = (counts[a]||0)+1;
+    }
+    var order = ['available','working','idle','offline','blocked','quota','error'];
+    for(var j=0;j<order.length;j++){
+      var key = order[j];
+      if(!counts[key]) continue;
+      var item = document.createElement('div');
+      item.className='item';
+      var dot = document.createElement('span');
+      dot.className='dot';
+      dot.style.background = availColor(key);
+      item.appendChild(dot);
+      var txt = document.createElement('span');
+      txt.textContent = key + ' ' + counts[key];
+      item.appendChild(txt);
+      target.appendChild(item);
+    }
+    var total = document.createElement('div');
+    total.className='item';
+    total.style.fontWeight='700';
+    total.textContent = 'Total ' + agents.length + ' agents';
+    target.appendChild(total);
+  }
+
+  function makeAgentCard(agent){
+    var card = document.createElement('div');
+    card.className='agent-card';
+    var head = document.createElement('div');
+    head.className='agent-head';
+    var av = document.createElement('div');
+    av.className='avatar';
+    av.textContent = agent.avatar;
+    head.appendChild(av);
+    var meta = document.createElement('div');
+    meta.className='agent-meta';
+    var name = document.createElement('div');
+    name.className='agent-name';
+    var n = document.createElement('span');
+    n.textContent = agent.name;
+    name.appendChild(n);
+    var type = document.createElement('span');
+    type.className='chip purple';
+    type.textContent = agent.type;
+    name.appendChild(type);
+    meta.appendChild(name);
+    var sub = document.createElement('div');
+    sub.className='agent-sub';
+    var avail = document.createElement('span');
+    avail.className='avail ' + agent.avail;
+    avail.textContent = agent.avail;
+    sub.appendChild(avail);
+    var last = document.createElement('span');
+    last.textContent = 'last seen ' + agent.last;
+    sub.appendChild(last);
+    meta.appendChild(sub);
+    head.appendChild(meta);
+    card.appendChild(head);
+
+    var tasks = document.createElement('div');
+    tasks.className='tasks';
+    if(agent.tasks.length===0){
+      var none = document.createElement('div');
+      none.textContent = 'No current task';
+      none.style.color='var(--muted)';
+      tasks.appendChild(none);
+    } else {
+      for(var i=0;i<agent.tasks.length;i++){
+        var t = agent.tasks[i];
+        var row = document.createElement('div');
+        row.className='t';
+        var loc = document.createElement('span');
+        loc.className='mono';
+        loc.textContent = t.id + ' · ' + t.col + ' · ' + t.owner;
+        row.appendChild(loc);
+        tasks.appendChild(row);
+      }
+    }
+    var ws = document.createElement('div');
+    ws.className='mono';
+    ws.style.color='var(--muted)';
+    ws.textContent = 'workspace: ' + agent.ws;
+    tasks.appendChild(ws);
+    card.appendChild(tasks);
+
+    var cap = document.createElement('div');
+    cap.className='cap';
+    for(var c=0;c<agent.caps.length;c++){
+      var chip = document.createElement('span');
+      chip.className='chip';
+      chip.textContent = agent.caps[c];
+      cap.appendChild(chip);
+    }
+    card.appendChild(cap);
+
+    var capLine = document.createElement('div');
+    capLine.className='mono';
+    capLine.textContent = 'Working ' + agent.working + ' / Capacity ' + agent.capacity;
+    card.appendChild(capLine);
+
+    var quota = document.createElement('div');
+    quota.className='quota';
+    var bar = document.createElement('div');
+    bar.className='bar';
+    var pct = Math.round((agent.quota.used / agent.quota.limit)*100) || 0;
+    if(pct>=90) bar.className+=' danger';
+    else if(pct>=70) bar.className+=' warn';
+    var fill = document.createElement('div');
+    fill.className='fill';
+    fill.style.width = pct + '%';
+    bar.appendChild(fill);
+    quota.appendChild(bar);
+    var metaQ = document.createElement('div');
+    metaQ.className='meta';
+    var left = document.createElement('span');
+    left.textContent = 'Quota ' + pct + '% · ' + agent.quota.used + '/' + agent.quota.limit;
+    var right = document.createElement('span');
+    right.textContent = 'Resets ' + agent.quota.reset;
+    metaQ.appendChild(left);
+    metaQ.appendChild(right);
+    quota.appendChild(metaQ);
+    card.appendChild(quota);
+
+    return card;
+  }
+
+  function renderAgents(target){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    for(var i=0;i<agents.length;i++){
+      target.appendChild(makeAgentCard(agents[i]));
+    }
+  }
+
+  function renderWaiting(target){
+    if(!target) return;
+    while(target.firstChild) target.removeChild(target.firstChild);
+    for(var i=0;i<waiting.length;i++){
+      var w = waiting[i];
+      var line = document.createElement('div');
+      line.className='line';
+      var b = document.createElement('b');
+      b.textContent = w.task + ' waiting:';
+      line.appendChild(b);
+      var txt = document.createElement('span');
+      txt.textContent = w.reason + ' (' + w.dispatcher + ')';
+      line.appendChild(txt);
+      target.appendChild(line);
+    }
+  }
+
+  function renderCaps(selectedTarget, catalogueTarget, selected){
+    if(!selectedTarget) return;
+    while(selectedTarget.firstChild) selectedTarget.removeChild(selectedTarget.firstChild);
+    if(catalogueTarget) while(catalogueTarget.firstChild) catalogueTarget.removeChild(catalogueTarget.firstChild);
+    for(var i=0;i<selected.length;i++){
+      var chip = document.createElement('span');
+      chip.className='chip on';
+      chip.textContent = selected[i] + ' ×';
+      (function(c, idx){
+        chip.addEventListener('click', function(){
+          selected.splice(idx,1);
+          renderCaps(selectedTarget, catalogueTarget, selected);
+        });
+      })(chip, i);
+      selectedTarget.appendChild(chip);
+    }
+    if(!catalogueTarget) return;
+    for(var j=0;j<allCaps.length;j++){
+      var cap = allCaps[j];
+      if(selected.indexOf(cap)!==-1) continue;
+      var cat = document.createElement('span');
+      cat.className='chip';
+      cat.textContent = cap + ' +';
+      (function(ct, name){
+        ct.addEventListener('click', function(){
+          if(selected.indexOf(name)===-1) selected.push(name);
+          renderCaps(selectedTarget, catalogueTarget, selected);
+        });
+      })(cat, cap);
+      catalogueTarget.appendChild(cat);
+    }
+  }
+
+  var selected = ['constraints','guard','tsc'];
+  renderSummary(summaryStrip);
+  renderAgents(agentGrid);
+  renderWaiting(waitingLines);
+  renderSummary(phoneSummary);
+  renderAgents(phoneGrid);
+  renderCaps(selectedCaps, catalogCaps, selected);
+  renderCaps(phoneCaps, null, selected.slice());
+
+  var stateBtns = document.querySelectorAll('[data-state]');
+  function applyState(state){
+    for(var s=0;s<stateBtns.length;s++){
+      var btn = stateBtns[s];
+      if(btn.getAttribute('data-state')===state) btn.setAttribute('aria-pressed','true');
+      else btn.setAttribute('aria-pressed','false');
+    }
+    if(capacitySection) capacitySection.classList.add('hidden');
+    if(teamSection) teamSection.classList.add('hidden');
+    if(stateSection) stateSection.classList.add('hidden');
+    if(phoneSection) phoneSection.classList.add('hidden');
+    if(stateBox) while(stateBox.firstChild) stateBox.removeChild(stateBox.firstChild);
+
+    if(state==='capacity'){
+      if(capacitySection) capacitySection.classList.remove('hidden');
+    } else if(state==='waiting'){
+      if(capacitySection) capacitySection.classList.remove('hidden');
+    } else if(state==='team'){
+      if(teamSection) teamSection.classList.remove('hidden');
+    } else if(state==='empty'){
+      if(stateSection) stateSection.classList.remove('hidden');
+      var empty = document.createElement('div');
+      empty.textContent = 'No agents configured — add a worker in Team tab';
+      if(stateBox) stateBox.appendChild(empty);
+    } else if(state==='loading'){
+      if(stateSection) stateSection.classList.remove('hidden');
+      var sp = document.createElement('div');
+      sp.className='spinner';
+      if(stateBox) stateBox.appendChild(sp);
+      var txt = document.createElement('div');
+      txt.textContent='Loading agents…';
+      if(stateBox) stateBox.appendChild(txt);
+    } else if(state==='error'){
+      if(stateSection) stateSection.classList.remove('hidden');
+      var err = document.createElement('div');
+      err.style.color='var(--danger)';
+      err.style.fontWeight='700';
+      err.textContent='Failed to load agents — dispatcher unreachable';
+      if(stateBox) stateBox.appendChild(err);
+      var retry = document.createElement('button');
+      retry.className='btn small';
+      retry.textContent='Retry';
+      if(stateBox) stateBox.appendChild(retry);
+    } else if(state==='phone'){
+      if(phoneSection) phoneSection.classList.remove('hidden');
+    }
+  }
+
+  for(var k=0;k<stateBtns.length;k++){
+    (function(b){ b.addEventListener('click', function(){ applyState(b.getAttribute('data-state')); }); })(stateBtns[k]);
+  }
+  applyState('capacity');
+})();
+</script>
+</body>
+</html>
