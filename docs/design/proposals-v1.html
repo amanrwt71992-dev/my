@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>AgentMesh + Sprout — Product Design Review v1</title>
+<style>
+/* ===== tokens ===== */
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-backlog:#ece7f3;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-blocked:#ffe0c8;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-backlog:#8a7ab8;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-blocked:#d87a2a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --fs-12:12px;
+  --fs-13:13px;
+  --fs-14:14px;
+  --fs-16:16px;
+  --fs-20:20px;
+  --fw-500:500;
+  --fw-600:600;
+  --fw-700:700;
+  --sp-4:4px;
+  --sp-8:8px;
+  --sp-12:12px;
+  --sp-16:16px;
+  --sp-20:20px;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --grey:#6b6b6b;
+  --col-backlog:#2a2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-blocked:#3d2a1e;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-backlog:#a99ad6;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-blocked:#e6a15a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.page{max-width:1440px;margin:0 auto;padding:0 0 40px}
+
+/* top bar */
+.topbar{
+  height:56px;display:flex;align-items:center;gap:12px;
+  padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20
+}
+.brand{font-weight:700;font-size:14px}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:var(--r-pill);padding:2px 10px;background:var(--card)}
+.live .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700;box-shadow:var(--shadow-sm)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn.icon{width:32px;height:32px;padding:0;display:grid;place-items:center;border-radius:50%}
+.btn.small{padding:4px 10px;font-size:11px}
+
+/* tab bar */
+.tabbar{
+  display:flex;gap:2px;overflow-x:auto;
+  background:var(--panel);border-bottom:1px solid var(--border);
+  padding:0 12px;height:44px;align-items:center;scrollbar-width:none
+}
+.tabbar::-webkit-scrollbar{display:none}
+.tabbar button{
+  border:0;background:transparent;
+  border-bottom:2px solid transparent;
+  padding:0 12px;height:44px;
+  font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap
+}
+.tabbar button[aria-selected=true]{color:var(--text);border-bottom-color:var(--text);font-weight:700}
+
+/* sections */
+.section{display:none;padding:16px}
+.section.active{display:block}
+.section h2{font-size:16px;margin:12px 0 4px}
+.section h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px;font-weight:700}
+.problem{font-size:12px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0}
+.measure{font-size:11px;color:var(--muted);margin:4px 0 8px}
+.a11y{font-size:11px;color:var(--muted);border-left:3px solid var(--accent);padding:4px 8px;margin:8px 0;background:var(--card)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-sm)}
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.stat{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--border);font-size:12px;font-weight:600;box-shadow:var(--shadow-sm)}
+.stat .dot{width:8px;height:8px;border-radius:50%}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--border);font-size:12px;font-weight:600;white-space:nowrap}
+.chip.warn{background:var(--warn-soft)}
+.chip.danger{background:var(--danger-soft)}
+.col{display:flex;flex-direction:column;min-height:120px;background:var(--col-bg, var(--panel));border:1px solid var(--border);border-radius:12px}
+.col[data-k=backlog]{--col-bg:var(--col-backlog);--col-dot:var(--dot-backlog)}
+.col[data-k=todo]{--col-bg:var(--col-todo);--col-dot:var(--dot-todo)}
+.col[data-k=working]{--col-bg:var(--col-working);--col-dot:var(--dot-working)}
+.col[data-k=blocked]{--col-bg:var(--col-blocked);--col-dot:var(--dot-blocked)}
+.col[data-k=review]{--col-bg:var(--col-review);--col-dot:var(--dot-review)}
+.col[data-k=pending]{--col-bg:var(--col-pending);--col-dot:var(--dot-pending)}
+.col[data-k=done]{--col-bg:var(--col-done);--col-dot:var(--dot-done)}
+.col-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);background:var(--col-bg);border-radius:12px 12px 0 0;position:sticky;top:0}
+.col-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px;flex:1}
+.col-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--col-dot)}
+.col-count{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-pill);padding:1px 6px;font-weight:700}
+.col-body{padding:8px;display:flex;flex-direction:column;gap:8px;flex:1}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-sm)}
+.tile-id{font-size:11px;color:var(--muted);font-family:ui-monospace,monospace}
+.tile-title{font-size:13px;font-weight:600;line-height:1.35}
+.tile-foot{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.board{display:flex;gap:12px;overflow:auto;padding:12px 0}
+.board .col{flex:1 1 0;min-width:190px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;border:1px dashed var(--border);border-radius:12px;background:var(--panel);text-align:center;color:var(--muted);font-size:12px}
+.macos-notif{width:360px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.macos-notif .icon{width:28px;height:28px;border-radius:8px;background:var(--panel);display:grid;place-items:center;font-size:14px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:92vw;background:var(--panel);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);z-index:30;transform:translateX(100%);transition:transform var(--t);display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:20;display:none}
+.backdrop.open{display:block}
+.palette{width:min(640px,92vw);background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);padding:8px;display:flex;flex-direction:column;gap:6px}
+.palette input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel)}
+.palette .item{padding:8px 10px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.palette .item:hover{background:var(--panel)}
+.detail{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.detail-main{display:flex;flex-direction:column;gap:12px}
+.detail-side{display:flex;flex-direction:column;gap:12px}
+@media(max-width:800px){.detail{grid-template-columns:1fr}}
+.timeline{display:flex;flex-direction:column;gap:8px;border-left:2px solid var(--border);padding-left:12px;margin-left:4px}
+.tl{font-size:12px;display:flex;flex-direction:column;gap:2px}
+.roadmap{display:flex;flex-direction:column;gap:12px}
+.lane{border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:8px}
+.lane-head{display:flex;gap:8px;align-items:center;font-weight:600;font-size:13px}
+.lane-body{display:flex;gap:8px;overflow:auto;padding:8px 0}
+.mobile-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:18px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-md);margin:0 auto}
+.mobile-frame .top{height:48px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border);background:var(--card)}
+.rank{counter-reset:rank}
+.rank li{counter-increment:rank;display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.rank li::before{content:counter(rank);width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font-weight:700;font-size:11px;flex:0 0 22px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="brand">AgentMesh + Sprout — Design Review v1</span>
+  <span class="live"><span class="dot"></span> live</span>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn small" id="themeBtn">◐ Theme</button>
+    <button class="btn small" id="drawerDemoBtn">🔔 Bell</button>
+  </div>
+</div>
+<div class="tabbar" role="tablist" aria-label="Proposals">
+  <button role="tab" aria-selected="true" data-tab="cockpit">1 Cockpit</button>
+  <button role="tab" aria-selected="false" data-tab="notif">2 Notifications</button>
+  <button role="tab" aria-selected="false" data-tab="detail">3 Task Detail</button>
+  <button role="tab" aria-selected="false" data-tab="palette">4 Palette</button>
+  <button role="tab" aria-selected="false" data-tab="agents">5 Agents</button>
+  <button role="tab" aria-selected="false" data-tab="timeline">6 Timeline</button>
+  <button role="tab" aria-selected="false" data-tab="roadmap">7 Stories</button>
+  <button role="tab" aria-selected="false" data-tab="states">8 States</button>
+  <button role="tab" aria-selected="false" data-tab="sprout">9 Sprout</button>
+  <button role="tab" aria-selected="false" data-tab="mobile">10 Mobile</button>
+  <button role="tab" aria-selected="false" data-tab="rank">Rank + Q</button>
+</div>
+
+<div class="page">
+
+<!-- 1 cockpit -->
+<div class="section active" id="sec-cockpit">
+<h2>1 Manager Cockpit — what needs me right now?</h2>
+<div class="problem"><b>Problem:</b> Manager opens board and scans 7 columns to find what blocks agents. Wastes time, misses silent agents and stale reviews.</div>
+<div class="measure">Measure: time to first action, % of questions answered within 10m, review turnaround.</div>
+<div class="a11y">A11y: focus order top→primary actions, live region for since-you-looked, color not sole signal, dot+label.</div>
+<div class="grid grid-2">
+  <div class="card"><h3 style="margin:0">Since you last looked (2h ago)</h3><div style="font-size:12px">• 3 new questions, 2 reviews done, Codex silent 12m, 1 deploy failed<br>• Omni finished TASK-118, Arena started TASK-121</div><button class="btn small">Dismiss</button></div>
+  <div class="card"><h3 style="margin:0">Top priority</h3><div style="display:flex;flex-direction:column;gap:6px">
+    <div class="chip danger">❓ TASK-Q7K2M · Needs answer · Antigravity IDE</div>
+    <div class="chip">👀 TASK-118 · Code review · Codex — checks: 2/3 pass</div>
+    <div class="chip warn">🚀 TASK-110 · Pending deploy · Omni — Deploy failed</div>
+  </div></div>
+</div>
+<div class="grid grid-3" style="margin-top:12px">
+  <div class="card"><b>Questions (3)</b><br><span style="font-size:12px">TASK-Q7K2M: how to handle constraints extractor? — Antigravity IDE, 18m ago<br>TASK-124: schema v2? — Codex, 4m ago</span></div>
+  <div class="card"><b>Reviews (2) with checks</b><br><span style="font-size:12px">TASK-118: AI wire Codex — ✅ lint, ✅ tests, ⚠ boundary (2 files)<br>TASK-115: refactor tokens — ✅ all</span><button class="btn small primary">Approve</button></div>
+  <div class="card"><b>Agents</b><br><span style="font-size:12px">Codex busy TASK-201 · last seen now<br>Antigravity IDE idle · last seen 2m · silent 12m<br>Omni busy TASK-110 · deploy failed<br>Arena offline · last seen 1h</span></div>
+</div>
+<div class="card" style="margin-top:12px"><b>Pending deploy (6)</b> — list with Deploy button<br><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><span class="chip">TASK-110 · Pending · Omni</span><button class="btn small primary">Deploy all</button></div></div>
+</div>
+
+<!-- 2 notifications -->
+<div class="section" id="sec-notif">
+<h2>2 Notifications — macOS style + bell panel</h2>
+<div class="problem"><b>Problem:</b> Today notif body repeats long title, hard to scan, no grouping, bell panel lacks question preview.</div>
+<div class="measure">Measure: click-through rate, time to answer question from notif, grouping reduces noise.</div>
+<div class="a11y">A11y: title says kind, body only TASK-ID·column·owner, screen reader reads kind first, no auto-dismiss for questions.</div>
+<div class="grid grid-2">
+  <div>
+    <h3>macOS mock — body ONLY TASK-ID · column · owner</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="macos-notif"><div class="icon">❓</div><div><div style="font-weight:700;font-size:13px">Question waiting</div><div style="font-size:12px;color:var(--muted)">TASK-Q7K2M · Needs answer · Antigravity IDE</div></div></div>
+      <div class="macos-notif"><div class="icon">👀</div><div><div style="font-weight:700;font-size:13px">Review ready</div><div style="font-size:12px;color:var(--muted)">TASK-118 · Code review · Codex</div></div></div>
+      <div class="macos-notif"><div class="icon">✍</div><div><div style="font-weight:700;font-size:13px">Nudge needed</div><div style="font-size:12px;color:var(--muted)">TASK-121 · To do · Arena</div></div></div>
+      <div class="macos-notif"><div class="icon">⚠</div><div><div style="font-weight:700;font-size:13px">Boundary violation</div><div style="font-size:12px;color:var(--muted)">TASK-115 · In progress · Omni</div></div></div>
+      <div class="macos-notif"><div class="icon">🔴</div><div><div style="font-weight:700;font-size:13px">Agent silent</div><div style="font-size:12px;color:var(--muted)">TASK-201 · In progress · Codex</div></div></div>
+      <div class="macos-notif"><div class="icon">📦</div><div><div style="font-weight:700;font-size:13px">Deploy failed</div><div style="font-size:12px;color:var(--muted)">TASK-110 · Pending deploy · Omni</div></div></div>
+      <div class="macos-notif"><div class="icon">🔔</div><div><div style="font-weight:700;font-size:13px">4 items need you</div><div style="font-size:12px;color:var(--muted)">Grouped · Board</div></div></div>
+    </div>
+  </div>
+  <div>
+    <h3>Bell panel — expands to show title + question</h3>
+    <div class="card" style="width:360px">
+      <div style="font-weight:700;display:flex;justify-content:space-between">Attention (5) <span style="font-size:11px;color:var(--muted)">question first</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <div class="chip danger">❓ TASK-Q7K2M · Needs answer · Antigravity IDE</div>
+        <div style="font-size:12px;padding-left:8px">Q: How to handle constraints extractor? Should it run every turn?<br><i style="color:var(--muted)">Task: AI: use the constraints extractor in every turn</i></div>
+        <div class="chip">👀 TASK-118 · Code review · Codex</div>
+        <div class="chip">✍ TASK-121 · To do · Arena</div>
+        <div class="chip">⚠ TASK-115 · In progress · Omni</div>
+        <div class="chip">🚀 TASK-110 · Pending deploy · Omni</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- 3 task detail -->
+<div class="section" id="sec-detail">
+<h2>3 Task Detail — roomier than modal, phone collapses</h2>
+<div class="problem"><b>Problem:</b> Modal is cramped, brief/files/acceptance/timeline/feedback all stacked, hard to review checks and reply.</div>
+<div class="measure">Measure: review completion time, number of scrolls, feedback thread replies.</div>
+<div class="a11y">A11y: heading hierarchy, skip to actions, focus trap only when modal, on phone single column with sticky actions.</div>
+<div class="detail">
+  <div class="detail-main">
+    <div class="card"><div style="display:flex;gap:8px;align-items:center"><span style="width:24px;height:24px;border-radius:6px;background:var(--col-review);display:grid;place-items:center">✦</span><span style="font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)">TASK-118</span><span style="font-size:11px;background:var(--col-review);padding:2px 8px;border-radius:999px">Code review</span></div><div style="font-size:16px;font-weight:700;margin-top:6px">AI: wire Codex to read board every turn</div><div style="font-size:13px">Brief: Codex should fetch /api/mesh state at start of each turn and respect constraints extractor output.</div></div>
+    <div class="card"><b>Files</b><br><span style="font-size:12px;font-family:ui-monospace,monospace">allowed: src/mesh/*, prompts/*<br>forbidden: live.html, docs/*<br>changes: 2 files outside boundary — src/board/tokens.css, src/agent/runner.ts</span></div>
+    <div class="card"><b>Acceptance</b><br><span style="font-size:12px">- Codex reads board each turn<br>- Uses constraints extractor<br>- No break of existing board</span></div>
+    <div class="card"><b>Review feedback thread</b><br><div style="font-size:12px">Omni: Please keep file lock logic.<br>Codex: Fixed, kept lock.<br><input placeholder="Reply…" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel);margin-top:6px"></div></div>
+  </div>
+  <div class="detail-side">
+    <div class="card"><b>Automatic checks</b><br><span style="font-size:12px">✅ lint<br>✅ unit tests<br>⚠ boundary — 2 files outside</span></div>
+    <div class="card"><b>Progress timeline</b><div class="timeline"><div class="tl"><span>12:02 Backlog — created</span><span style="color:var(--muted);font-size:11px">by Arena</span></div><div class="tl"><span>12:10 In progress — Codex claimed</span></div><div class="tl"><span>12:45 Code review — deliverable posted</span></div></div></div>
+    <div class="card"><b>Actions</b><br><button class="btn primary small">Approve → Pending deploy</button> <button class="btn small">Send back</button> <button class="btn small ghost">Hand over</button></div>
+    <div class="card"><b>Owner</b><br><span style="font-size:12px">Codex · busy · last seen now · 3 open tasks</span></div>
+  </div>
+</div>
+<div style="margin-top:12px"><b>Phone (390px):</b> single column, sticky Approve bar at bottom, timeline collapses to horizontal dots.</div>
+</div>
+
+<!-- 4 palette -->
+<div class="section" id="sec-palette">
+<h2>4 Command Palette (Cmd+K) + Bulk</h2>
+<div class="problem"><b>Problem:</b> Jumping to task requires search + scroll, assign/move needs modal, no bulk move for many tiles.</div>
+<div class="measure">Measure: palette open rate, time to jump, bulk actions per session.</div>
+<div class="a11y">A11y: palette is dialog with aria-modal, input autofocus, arrow keys, Esc closes, screen reader announces count.</div>
+<div class="grid grid-2">
+  <div class="card"><b>Palette</b><div class="palette" style="margin-top:8px"><input placeholder="Type task id, title, or action…  ⌘K" aria-label="Command palette"><div class="item"><span>→ TASK-201 AI: use the constraints extractor…</span><span style="font-size:11px;color:var(--muted)">Jump</span></div><div class="item"><span>Assign TASK-201 to Codex</span><span style="font-size:11px">↵</span></div><div class="item"><span>Move TASK-201 to In progress</span></div><div class="item"><span>Create task: AI fix rail</span></div><div class="item"><span>Filter: Need answer</span></div></div></div>
+  <div class="card"><b>Bulk actions on selected tiles</b><div style="font-size:12px;margin-top:6px">Select: click tile + Shift or Cmd, count badge shows 3 selected.<br>Bar appears bottom: Assign to… | Move to… | Add label | Cancel | Archive<br>Example: 3 tiles selected in Backlog → Move to To do in one go.</div><div style="display:flex;gap:8px;margin-top:8px"><span class="chip">3 selected</span><button class="btn small">Move to To do</button><button class="btn small">Assign to Codex</button></div></div>
+</div>
+</div>
+
+<!-- 5 agents -->
+<div class="section" id="sec-agents">
+<h2>5 Agents View — workload, silent, hand-over</h2>
+<div class="problem"><b>Problem:</b> Manager does not know who is overloaded, who is silent, who should take task from whom.</div>
+<div class="measure">Measure: hand-over acceptance, silent recovery time, workload balance.</div>
+<div class="a11y">A11y: state ring not only color — label busy/idle/silent/offline, tooltip with last seen, keyboard cards.</div>
+<div class="grid grid-3">
+  <div class="card"><b>Codex — busy</b><br><span style="font-size:12px">Current: TASK-201 AI: use constraints extractor…<br>Workload: 3 open (1 working, 2 todo)<br>Last seen now · silent —<br>Bar: ■■□</span></div>
+  <div class="card"><b>Antigravity IDE — idle + silent 12m</b><br><span style="font-size:12px">Current: —<br>Workload: 1 open<br>⚠ silent 12 min — last seen 12m ago<br>Suggestion: Antigravity is idle: take TASK-124 from Codex?</span><button class="btn small">Hand over</button></div>
+  <div class="card"><b>Omni — busy deploy failed</b><br><span style="font-size:12px">Current: TASK-110 Deploy board<br>Deploy failed 2 times<br>Last seen now</span></div>
+</div>
+<div class="card" style="margin-top:12px"><b>Hand-over suggestion logic</b><br><span style="font-size:12px">If agent idle &gt;5m and another has &gt;2 open, suggest move. Show in cockpit and agents view. One click hand-over with note.</span></div>
+</div>
+
+<!-- 6 timeline -->
+<div class="section" id="sec-timeline">
+<h2>6 Activity and Timeline — calm feed grouped by task</h2>
+<div class="problem"><b>Problem:</b> Activity feed is noisy, not grouped, no filters, no since-you-looked banner.</div>
+<div class="measure">Measure: feed filter use, time to find task history, banner dismiss rate.</div>
+<div class="a11y">A11y: grouped by task with headings, aria-live polite for new items, filters are buttons with pressed state.</div>
+<div class="grid grid-2">
+  <div class="card"><div style="display:flex;gap:6px"><button class="btn small primary">All</button><button class="btn small">Questions</button><button class="btn small">Reviews</button><button class="btn small">Deploys</button></div><div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-weight:700;font-size:12px">TASK-201 — AI: use constraints extractor…</div><div class="timeline"><div class="tl"><span>12:10 Codex claimed</span><span style="color:var(--muted)">2m ago</span></div><div class="tl"><span>12:12 Antigravity IDE asked question</span></div></div>
+    <div style="font-weight:700;font-size:12px;margin-top:8px">TASK-118 — wire Codex</div><div class="timeline"><div class="tl"><span>12:45 Codex posted deliverable → review</span></div></div>
+  </div></div>
+  <div class="card"><b>Since you last looked banner</b><br><div style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:8px 10px;font-size:12px;margin-top:6px">Since 10:00 — 3 questions, 2 reviews, 1 deploy failed. <button class="btn small">Show</button> <button class="btn small ghost">Dismiss</button></div></div>
+</div>
+</div>
+
+<!-- 7 roadmap -->
+<div class="section" id="sec-roadmap">
+<h2>7 Stories / Roadmap — lanes, deps, progress, blocks</h2>
+<div class="problem"><b>Problem:</b> Stories are list, no visual of what blocks what, no roadmap view of progress.</div>
+<div class="measure">Measure: story completion, blocked time, dependency resolution.</div>
+<div class="a11y">A11y: lanes have headings, dependency chips have tooltip with full chain, progress bar has aria-valuenow.</div>
+<div class="roadmap">
+  <div class="lane"><div class="lane-head"><span>STORY-12 Sprout board polish — 4 of 13 done</span><span style="font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:2px 8px">30%</span></div><div class="lane-body"><div class="tile" style="min-width:200px"><div class="tile-title">AI: use constraints extractor</div><div class="chip">Waiting on 2</div></div><div class="tile" style="min-width:200px"><div class="tile-title">Fix board collapse 24px</div><div class="chip">Done</div></div><div class="tile" style="min-width:200px"><div class="tile-title">Design tokens</div></div></div><div style="font-size:11px;color:var(--muted)">Dep: TASK-201 → TASK-203 → TASK-205, blocked by TASK-124</div></div>
+  <div class="lane"><div class="lane-head"><span>STORY-13 AgentMesh cockpit</span><span style="font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:2px 8px">2 of 5</span></div><div class="lane-body"><div class="tile" style="min-width:200px"><div class="tile-title">Manager cockpit mock</div></div><div class="tile" style="min-width:200px"><div class="tile-title">Notification grouping</div></div></div></div>
+</div>
+</div>
+
+<!-- 8 states -->
+<div class="section" id="sec-states">
+<h2>8 States — skeleton, daemon down, empty, error, read-only</h2>
+<div class="problem"><b>Problem:</b> Loading shows blank, daemon down looks like empty, no read-only hint, error toast disappears fast.</div>
+<div class="measure">Measure: perceived load time, reconnect success, empty board confusion rate.</div>
+<div class="a11y">A11y: skeleton has aria-busy, banner has role alert, error toast has role status and stays 6s, read-only has aria-disabled.</div>
+<div class="grid grid-2">
+  <div class="card"><b>Loading skeleton</b><div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;height:60px;background:linear-gradient(90deg, var(--panel) 25%, var(--card) 50%, var(--panel) 75%);background-size:200% 100%;border-radius:10px"></div><div style="flex:1;height:60px;background:linear-gradient(90deg, var(--panel) 25%, var(--card) 50%, var(--panel) 75%);background-size:200% 100%;border-radius:10px"></div></div></div>
+  <div class="card"><b>Daemon down / reconnecting banner</b><div style="background:var(--danger-soft);border:1px solid var(--danger);border-radius:10px;padding:8px 10px;font-size:12px;margin-top:6px">Daemon not reachable — retrying in 3s… <button class="btn small">Retry now</button></div></div>
+  <div class="card"><b>Empty board</b><div class="empty"><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"/><path d="M10 13c1-1 2.5-1.5 6-1.5s5 .5 6 1.5M11 19a2 2 0 0 0 2 2M19 19a2 2 0 0 1 2 2M12 24c1.5 1 2.5 1.5 4 1.5s2.5-.5 4-1.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".5"/></svg><div class="empty-title">Board empty</div><div class="empty-text">No tasks yet — add a new task to get started</div></div></div>
+  <div class="card"><b>Error toast + read-only</b><div style="background:var(--card);border-left:3px solid var(--danger);border-radius:10px;padding:8px 10px;font-size:12px;box-shadow:var(--shadow-sm);margin-top:6px">Failed to move TASK-121 — board is read-only while deploying.</div><div style="margin-top:6px"><span class="chip danger">Read-only mode — deploy in progress</span></div></div>
+</div>
+</div>
+
+<!-- 9 sprout -->
+<div class="section" id="sec-sprout">
+<h2>9 Sprout — 3 best improvements next</h2>
+<div class="problem"><b>Problem:</b> Sprout board is personal but AI panel states exist alone, no link to board, no quick capture, no focus mode.</div>
+<div class="measure">Measure: tasks created via AI vs manual, focus session completion, capture time.</div>
+<div class="a11y">A11y: AI panel has focus trap when open, quick capture has label, focus mode hides distractions but keeps heading.</div>
+<div class="grid grid-3">
+  <div class="card"><b>1 Quick capture + AI suggest</b><br><span style="font-size:12px">Cmd+K or bottom bar: type 'Remind me to check DB filters tomorrow #Work' → AI suggests tag Work (from your message) + due tomorrow + 1 comment. One Approve creates #39.<br>Mock: input with ghost suggestion below.</span><div style="margin-top:8px"><input placeholder="Add task… try: check DB filters tomorrow #Work" style="width:100%;padding:8px;border-radius:999px;border:1px solid var(--border);background:var(--card)"><div style="font-size:11px;color:var(--muted);margin-top:4px">AI suggests: tag Work, due tomorrow, +1 comment</div></div></div>
+  <div class="card"><b>2 Focus mode — one column at a time</b><br><span style="font-size:12px">Button Focus: shows only In progress + Needs answer, hides other columns, large tiles, timer prominent, no rail. Helps personal flow.<br>Mock: 2 tiles large, rest hidden, exit Focus button.</span><div style="margin-top:8px;display:flex;gap:8px"><div class="tile" style="flex:1"><div class="tile-title">AI: use constraints extractor</div></div><div class="tile" style="flex:1"><div class="tile-title">Fix board collapse</div></div></div></div>
+  <div class="card"><b>3 AI panel linked to board selection</b><br><span style="font-size:12px">Select 2 tiles in board → AI panel shows '2 selected — Summarize? Move? Add label?' and proposal card updates live. No redo of existing AI states, adds what is missing: selection context + board diff preview.</span><div style="margin-top:8px"><div class="chip">2 selected</div><div class="chip">Summarize</div><div class="chip">Move to Done</div></div></div>
+</div>
+</div>
+
+<!-- 10 mobile -->
+<div class="section" id="sec-mobile">
+<h2>10 Mobile 390px — board, detail, cockpit</h2>
+<div class="problem"><b>Problem:</b> On phone board needs horizontal scroll, detail modal is cramped, cockpit info hidden.</div>
+<div class="measure">Measure: mobile task open rate, scroll vs tap, detail action completion.</div>
+<div class="a11y">A11y: 44px min touch target, tabs scroll with snap, drawer has close button, no hover-only actions.</div>
+<div class="grid grid-3">
+  <div class="mobile-frame"><div class="top"><span>◆ AgentMesh</span><span class="live" style="margin-left:auto"><span class="dot"></span> live</span></div><div style="padding:8px;display:flex;gap:6px;overflow:auto"><span class="stat"><span class="dot" style="background:var(--dot-working)"></span>2 Working</span><span class="stat"><span class="dot" style="background:var(--dot-review)"></span>2 Review</span></div><div style="padding:8px"><div class="col" data-k="working"><div class="col-head"><span class="col-title">In progress</span><span class="col-count">2</span></div><div class="col-body"><div class="tile"><div class="tile-title">AI: use constraints extractor</div></div></div></div></div></div>
+  <div class="mobile-frame"><div class="top"><span>← TASK-118</span><button class="btn small primary" style="margin-left:auto">Approve</button></div><div style="padding:12px;display:flex;flex-direction:column;gap:8px"><div style="font-weight:700">AI: wire Codex to read board</div><div style="font-size:12px">Brief…</div><div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px;font-size:12px">Checks: ✅ lint ✅ tests ⚠ boundary</div><div style="position:sticky;bottom:0;background:var(--panel);padding:8px;border-top:1px solid var(--border);display:flex;gap:8px"><button class="btn primary small" style="flex:1">Approve</button><button class="btn small" style="flex:1">Send back</button></div></div></div>
+  <div class="mobile-frame"><div class="top"><span>◆ Cockpit</span></div><div style="padding:12px;display:flex;flex-direction:column;gap:8px"><div class="chip danger">❓ TASK-Q7K2M · Needs answer · Antigravity IDE</div><div class="chip">👀 TASK-118 · Code review · Codex</div><div class="chip">🚀 TASK-110 · Pending deploy · Omni</div><div class="card" style="font-size:12px">Since you last looked: 3 questions, 2 reviews</div></div></div>
+</div>
+</div>
+
+<!-- rank + questions -->
+<div class="section" id="sec-rank">
+<h2>Ranked Top 5 + Questions for Owner</h2>
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Top 5 to build first — value vs effort</h3>
+    <ol class="rank">
+      <li><b>Cockpit + Since you looked</b> — high value, medium effort. Answers what needs me now, reduces scan time. One screen, reuses existing data.</li>
+      <li><b>Notifications — body TASK-ID·column·owner + grouped + bell panel with question preview</b> — high value, low effort. Fixes noise, improves click-through.</li>
+      <li><b>Command palette + bulk</b> — high value, medium effort. Speeds jump/assign/move, enables bulk, big power-user win.</li>
+      <li><b>Task detail roomy + checks + feedback thread</b> — high value, medium effort. Improves review quality, less scroll.</li>
+      <li><b>Agents view hand-over suggestion</b> — medium-high value, low effort. Balances workload, recovers silent agents fast.</li>
+    </ol>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Next: timeline grouped, stories roadmap deps, states skeleton/daemon banner, mobile 390px polish, Sprout quick capture + focus + selection link.</div>
+  </div>
+  <div class="card">
+    <h3>Open questions for owner (15 max)</h3>
+    <ol style="font-size:12px;padding-left:18px">
+      <li>How many agents run at once on a typical day?</li>
+      <li>How often do you open the board — hourly, few times daily?</li>
+      <li>Which view do you live in — Status, Agent, or Story?</li>
+      <li>What do you check first each morning — questions, reviews, deploys?</li>
+      <li>How long can an agent be silent before you worry — 5m, 15m, 30m?</li>
+      <li>Do you want deploy to be one-click or require confirmation?</li>
+      <li>Should notifications group by task or by kind — which helps more?</li>
+      <li>How do you hand over tasks today — manual or auto suggestion?</li>
+      <li>What is the biggest pain — finding tasks, reviewing, or deploying?</li>
+      <li>Do you use Stories as roadmap or just grouping — need deps arrows?</li>
+      <li>On phone, do you need full board or just cockpit + detail?</li>
+      <li>For Sprout, do you create tasks via AI or manual — ratio?</li>
+      <li>Should Sprout focus mode hide all but 1-2 columns — which?</li>
+      <li>How long should error toasts stay — 4s, 6s, sticky for questions?</li>
+      <li>Do you want read-only mode during deploy — block moves?</li>
+    </ol>
+  </div>
+</div>
+<div class="a11y">A11y overall: contrast 4.5:1 on all pills light+dark, focus visible 2px, motion respects prefers-reduced-motion, drawer has backdrop and Esc close, palette is dialog with aria-modal, timeline uses headings, icons have aria-hidden and label.</div>
+</div>
+
+</div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="drawer" id="drawer" role="dialog" aria-label="Notifications" aria-modal="true">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700"><span>Attention</span><span style="font-size:11px;color:var(--muted)">5 items — question first</span><button class="btn small ghost" id="closeDrawer" style="margin-left:auto" aria-label="Close">✕</button></div>
+  <div style="overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="chip danger">❓ TASK-Q7K2M · Needs answer · Antigravity IDE</div>
+    <div style="font-size:12px;padding:8px;background:var(--card);border:1px solid var(--border);border-radius:10px">Q: How to handle constraints extractor? Should it run every turn?<br><span style="color:var(--muted)">Task: AI: use the constraints extractor in every turn</span></div>
+    <div class="chip">👀 TASK-118 · Code review · Codex</div>
+    <div class="chip">✍ TASK-121 · To do · Arena</div>
+    <div class="chip">⚠ TASK-115 · In progress · Omni</div>
+    <div class="chip">🚀 TASK-110 · Pending deploy · Omni</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.proposals.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.proposals.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+  var tabs = document.querySelectorAll('.tabbar button[data-tab]');
+  var secs = document.querySelectorAll('.section');
+  function showTab(name){
+    for(var i=0;i<tabs.length;i++){
+      var t = tabs[i];
+      t.setAttribute('aria-selected', t.getAttribute('data-tab')===name ? 'true' : 'false');
+    }
+    for(var j=0;j<secs.length;j++){
+      var s = secs[j];
+      if(s.id==='sec-'+name) s.classList.add('active');
+      else s.classList.remove('active');
+    }
+  }
+  for(var k=0;k<tabs.length;k++){
+    (function(btn){
+      btn.addEventListener('click', function(){ showTab(btn.getAttribute('data-tab')); });
+    })(tabs[k]);
+  }
+  var drawer = document.getElementById('drawer');
+  var backdrop = document.getElementById('backdrop');
+  var bell = document.getElementById('drawerDemoBtn');
+  var close = document.getElementById('closeDrawer');
+  function openDrawer(){ drawer.classList.add('open'); backdrop.classList.add('open'); }
+  function shutDrawer(){ drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+  if(bell) bell.addEventListener('click', openDrawer);
+  if(close) close.addEventListener('click', shutDrawer);
+  if(backdrop) backdrop.addEventListener('click', shutDrawer);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') shutDrawer(); });
+})();
+</script>
+</body>
+</html>
