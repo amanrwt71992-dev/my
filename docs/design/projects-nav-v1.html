@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Projects Nav v1 — Projects > Feature > Story > Tasks</title>
+<style>
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1280px;margin:0 auto;padding:0 16px 40px}
+.demo-bar{display:flex;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:40}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.chip{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.purple{background:var(--purple-soft);color:var(--purple);border-color:transparent}
+.mono{font-family:ui-monospace,monospace;font-size:11px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.topbar{height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+.brand{font-weight:700;font-size:14px}
+.switcher{position:relative}
+.switcher-btn{border:1px solid var(--border);background:var(--card);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.switcher-list{position:absolute;top:100%;left:0;margin-top:6px;width:260px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;display:none;flex-direction:column;gap:4px;z-index:30}
+.switcher-list.open{display:flex}
+.switcher-list button{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:8px;font-size:12px}
+.switcher-list button:hover{background:var(--panel)}
+.breadcrumb{display:flex;align-items:center;gap:6px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);flex-wrap:wrap}
+.breadcrumb b{color:var(--text)}
+.breadcrumb .sep{color:var(--faint)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:12px}
+.proj-tile{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border);border-radius:16px;background:var(--card);box-shadow:var(--shadow-sm);transition:all var(--t)}
+.proj-tile:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+.proj-head{display:flex;align-items:center;gap:10px}
+.proj-avatar{width:32px;height:32px;border-radius:10px;background:var(--accent-soft);color:var(--accent-fg);display:grid;place-items:center;font-weight:700;font-size:13px}
+.proj-name{font-size:14px;font-weight:700}
+.proj-meta{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.proj-meta span{display:flex;gap:6px;align-items:center}
+.progress{height:6px;border-radius:var(--r-pill);background:var(--border);overflow:hidden}
+.progress .fill{height:100%;background:var(--accent);border-radius:var(--r-pill)}
+.counts{display:flex;gap:6px;flex-wrap:wrap}
+.counts .c{font-size:11px;padding:2px 7px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);font-weight:600}
+.agents{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.agents .av{width:20px;height:20px;border-radius:50%;background:var(--border);display:grid;place-items:center;font-size:9px;font-weight:700;color:var(--card)}
+.new-tile{border:1px dashed var(--border-strong);background:var(--panel);display:grid;place-items:center;min-height:180px;cursor:pointer;color:var(--muted);font-weight:600}
+.new-tile:hover{border-color:var(--text);color:var(--text)}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px}
+.feature-card{padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.feature-card h4{margin:0;font-size:13px;font-weight:700}
+.story-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.story-row{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card);display:flex;align-items:center;gap:10px}
+.story-row .mode{font-size:10px;padding:2px 6px;border-radius:var(--r-pill);background:var(--panel);border:1px solid var(--border);font-weight:700;text-transform:uppercase}
+.story-row .prog{margin-left:auto;font-size:11px;color:var(--muted)}
+.board{display:flex;gap:10px;overflow:auto;padding:8px 0}
+.col{flex:0 0 200px;background:var(--panel);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column}
+.col-head{padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.col-body{padding:8px;display:flex;flex-direction:column;gap:8px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.tile-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600}
+.tile-title{font-size:12px;font-weight:600}
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.2);display:none;place-items:center;z-index:50;padding:16px}
+.dialog.open{display:grid}
+.dialog-box{width:min(520px,100%);background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
+.dialog-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.dialog-head h3{margin:0;font-size:14px;font-weight:700}
+.dialog-body{padding:16px;display:flex;flex-direction:column;gap:12px;max-height:70vh;overflow:auto}
+.dialog-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--panel)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select,.field textarea{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--text)}
+.empty{padding:32px;text-align:center;border:1px dashed var(--border);border-radius:12px;background:var(--panel);color:var(--muted);display:flex;flex-direction:column;gap:8px;align-items:center}
+.skeleton{height:16px;border-radius:8px;background:linear-gradient(90deg,var(--border),var(--panel),var(--border));background-size:200% 100%;animation:shim 1.2s ease-in-out infinite}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.skeleton{animation:none}}
+.phone-frame{width:390px;max-width:100%;border:1px solid var(--border);border-radius:20px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;height:820px}
+.phone-frame .grid{grid-template-columns:1fr}
+.phone-frame .board{flex-direction:column}
+.phone-frame .col{flex:0 0 auto;width:100%}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-weight:700;font-size:12px">Projects Nav v1</span>
+  <button class="btn small" data-state="projects" aria-pressed="true">Projects view</button>
+  <button class="btn small" data-state="project">Project page</button>
+  <button class="btn small" data-state="feature">Feature page</button>
+  <button class="btn small" data-state="story">Story page</button>
+  <button class="btn small" data-state="empty">Empty</button>
+  <button class="btn small" data-state="loading">Loading</button>
+  <button class="btn small" data-state="dialogs">Dialogs</button>
+  <button class="btn small" data-state="phone">Phone 390px</button>
+  <span style="margin-left:auto"><button class="btn small" id="themeBtn">◐ Theme</button></span>
+</div>
+
+<div class="topbar">
+  <span class="brand">Connect Agent</span>
+  <div class="switcher" id="projectSwitcher">
+    <button class="switcher-btn" id="switcherBtn">Sprout ▾</button>
+    <div class="switcher-list" id="switcherList">
+      <button data-proj="Sprout">Sprout — /home/user/my</button>
+      <button data-proj="Board">Board — /home/user/board</button>
+      <button data-proj="Docs">Docs — /home/user/docs</button>
+    </div>
+  </div>
+  <span style="margin-left:auto;display:flex;gap:8px"><span class="chip">Env: dev</span><span class="chip ok">3 agents</span></span>
+</div>
+
+<div class="breadcrumb" id="breadcrumb">
+  <span>Projects</span><span class="sep">›</span><span><b>Sprout</b></span><span class="sep">›</span><span>Feature: Board v5</span><span class="sep">›</span><span>Story #12 Research</span><span class="sep">›</span><span>TASK-207</span>
+  <span style="margin-left:auto;font-size:11px;color:var(--muted)">Task › Story › Feature › Project</span>
+</div>
+
+<div class="page">
+  <div id="projectsView">
+    <div class="grid" id="projectsGrid"></div>
+  </div>
+
+  <div id="projectView" class="hidden">
+    <h3 style="margin:12px 0 0;font-size:14px;font-weight:700">Features in Sprout</h3>
+    <div class="feature-grid" id="featuresGrid"></div>
+  </div>
+
+  <div id="featureView" class="hidden">
+    <h3 style="margin:12px 0 0;font-size:14px;font-weight:700">Stories in Feature: Board v5</h3>
+    <div class="story-list" id="storiesList"></div>
+  </div>
+
+  <div id="storyView" class="hidden">
+    <h3 style="margin:12px 0 0;font-size:14px;font-weight:700">Tasks in Story #12 Research</h3>
+    <div class="board" id="storyBoard"></div>
+  </div>
+
+  <div id="emptyView" class="hidden">
+    <div class="empty"><div style="font-size:20px">📁</div><div style="font-weight:700">No projects yet</div><div style="font-size:11px">Create a new project to start tracking tasks.</div><button class="btn small primary" data-open="project">New project</button></div>
+  </div>
+
+  <div id="loadingView" class="hidden">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+      <div class="skeleton" style="width:60%"></div>
+      <div class="skeleton" style="width:80%"></div>
+      <div class="skeleton" style="width:40%"></div>
+      <div class="grid"><div class="card"><div class="skeleton" style="height:80px"></div></div><div class="card"><div class="skeleton" style="height:80px"></div></div><div class="card"><div class="skeleton" style="height:80px"></div></div></div>
+    </div>
+  </div>
+
+  <div id="phoneView" class="hidden" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div class="phone-frame">
+      <div class="topbar" style="height:48px"><span class="brand">Projects</span><button class="btn small ghost">+ New</button></div>
+      <div style="padding:10px;display:flex;flex-direction:column;gap:10px;overflow:auto;flex:1" id="phoneProjects"></div>
+    </div>
+    <div class="phone-frame">
+      <div class="breadcrumb" style="font-size:11px"><span>Projects › Sprout › Board v5</span></div>
+      <div style="padding:10px;display:flex;flex-direction:column;gap:10px;overflow:auto;flex:1" id="phoneFeatures"></div>
+    </div>
+  </div>
+</div>
+
+<div class="dialog" id="projectDialog" role="dialog" aria-label="Project dialog">
+  <div class="dialog-box">
+    <div class="dialog-head"><h3>Create / Edit Project</h3><button class="btn small ghost" data-close="project" style="margin-left:auto">✕</button></div>
+    <div class="dialog-body">
+      <div class="field"><label>Name</label><input id="pName" value="Sprout"></div>
+      <div class="field"><label>Workspace folder</label><input id="pFolder" value="/home/user/my"></div>
+      <div class="field"><label>Repo URL</label><input id="pRepo" value="git@github.com:amanrwt71992-dev/my.git"></div>
+      <div class="field"><label>Default branch</label><input id="pBranch" value="main"></div>
+      <div class="field"><label>Deploy target</label><input id="pDeploy" value="vercel"></div>
+      <div class="field"><label>Type</label><select id="pType"><option>git/github</option><option>local</option></select></div>
+      <div class="field"><label>Environment</label><select id="pEnv"><option>dev</option><option>staging</option><option>prod</option></select></div>
+    </div>
+    <div class="dialog-foot"><button class="btn small ghost" data-close="project">Cancel</button><button class="btn small primary" data-close="project">Save</button></div>
+  </div>
+</div>
+
+<div class="dialog" id="featureDialog" role="dialog" aria-label="Feature dialog">
+  <div class="dialog-box" style="width:400px">
+    <div class="dialog-head"><h3>Create / Edit Feature</h3><button class="btn small ghost" data-close="feature" style="margin-left:auto">✕</button></div>
+    <div class="dialog-body">
+      <div class="field"><label>Name</label><input value="Board v5"></div>
+      <div class="field"><label>Description</label><textarea rows="3">Board redesign with calm premium look</textarea></div>
+    </div>
+    <div class="dialog-foot"><button class="btn small ghost" data-close="feature">Cancel</button><button class="btn small primary" data-close="feature">Save</button></div>
+  </div>
+</div>
+
+<div class="dialog" id="storyDialog" role="dialog" aria-label="Story dialog">
+  <div class="dialog-box" style="width:400px">
+    <div class="dialog-head"><h3>Create / Edit Story</h3><button class="btn small ghost" data-close="story" style="margin-left:auto">✕</button></div>
+    <div class="dialog-body">
+      <div class="field"><label>Title</label><input value="Story #12 Research"></div>
+      <div class="field"><label>Mode</label><select><option>parallel</option><option>in order</option></select></div>
+      <div class="field"><label>Progress</label><input value="60%" disabled></div>
+    </div>
+    <div class="dialog-foot"><button class="btn small ghost" data-close="story">Cancel</button><button class="btn small primary" data-close="story">Save</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.projectsnav.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.projectsnav.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+
+  var projects = [
+    {name:'Sprout', folder:'/home/user/my', repo:'git@github.com:amanrwt71992-dev/my.git', branch:'main', deploy:'vercel', progress:68, counts:{todo:4, working:3, review:2, done:12}, agents:['CX','AG','AR']},
+    {name:'Board', folder:'/home/user/board', repo:'git@github.com:org/board.git', branch:'main', deploy:'netlify', progress:42, counts:{todo:6, working:2, review:1, done:5}, agents:['OM','CX']},
+    {name:'Docs', folder:'/home/user/docs', repo:'local', branch:'main', deploy:'none', progress:10, counts:{todo:2, working:0, review:0, done:1}, agents:[]}
+  ];
+
+  var features = [
+    {name:'Board v5', progress:60, stories:3, tasks:12},
+    {name:'Task window v1', progress:80, stories:2, tasks:8},
+    {name:'Notifications v1', progress:30, stories:2, tasks:6}
+  ];
+
+  var stories = [
+    {title:'Story #12 Research', progress:60, mode:'parallel', tasks:4},
+    {title:'Story #13 Implementation', progress:30, mode:'in order', tasks:5},
+    {title:'Story #14 Polish', progress:0, mode:'parallel', tasks:3}
+  ];
+
+  var storyTasks = [
+    {id:'TASK-201', title:'Use constraints extractor', col:'To do'},
+    {id:'TASK-203', title:'Board collapse fix', col:'In progress'},
+    {id:'TASK-207', title:'Review screen with merge', col:'Code review'},
+    {id:'TASK-209', title:'Task completed', col:'Done'}
+  ];
+
+  var projectsGrid = document.getElementById('projectsGrid');
+  var featuresGrid = document.getElementById('featuresGrid');
+  var storiesList = document.getElementById('storiesList');
+  var storyBoard = document.getElementById('storyBoard');
+  var phoneProjects = document.getElementById('phoneProjects');
+  var phoneFeatures = document.getElementById('phoneFeatures');
+  var projectsView = document.getElementById('projectsView');
+  var projectView = document.getElementById('projectView');
+  var featureView = document.getElementById('featureView');
+  var storyView = document.getElementById('storyView');
+  var emptyView = document.getElementById('emptyView');
+  var loadingView = document.getElementById('loadingView');
+  var phoneView = document.getElementById('phoneView');
+  var breadcrumb = document.getElementById('breadcrumb');
+
+  function makeProjectTile(p, isNew){
+    if(isNew){
+      var nt = document.createElement('div');
+      nt.className='proj-tile new-tile';
+      nt.textContent='+ New project';
+      nt.addEventListener('click', function(){ openDialog('project'); });
+      return nt;
+    }
+    var tile = document.createElement('div');
+    tile.className='proj-tile';
+    var head = document.createElement('div');
+    head.className='proj-head';
+    var av = document.createElement('div');
+    av.className='proj-avatar';
+    av.textContent = p.name.charAt(0);
+    head.appendChild(av);
+    var name = document.createElement('div');
+    name.className='proj-name';
+    name.textContent = p.name;
+    head.appendChild(name);
+    var chip = document.createElement('span');
+    chip.className='chip';
+    chip.textContent = p.branch;
+    chip.style.marginLeft='auto';
+    head.appendChild(chip);
+    tile.appendChild(head);
+    var meta = document.createElement('div');
+    meta.className='proj-meta';
+    var f = document.createElement('span');
+    f.textContent = 'Folder: ' + p.folder;
+    f.className='mono';
+    meta.appendChild(f);
+    var r = document.createElement('span');
+    r.textContent = 'Repo: ' + p.repo;
+    r.className='mono';
+    meta.appendChild(r);
+    var d = document.createElement('span');
+    d.textContent = 'Deploy: ' + p.deploy;
+    d.className='mono';
+    meta.appendChild(d);
+    tile.appendChild(meta);
+    var prog = document.createElement('div');
+    prog.className='progress';
+    var fill = document.createElement('div');
+    fill.className='fill';
+    fill.style.width = p.progress + '%';
+    prog.appendChild(fill);
+    tile.appendChild(prog);
+    var counts = document.createElement('div');
+    counts.className='counts';
+    for(var k in p.counts){
+      var c = document.createElement('span');
+      c.className='c';
+      c.textContent = k + ' ' + p.counts[k];
+      counts.appendChild(c);
+    }
+    tile.appendChild(counts);
+    var ag = document.createElement('div');
+    ag.className='agents';
+    var lab = document.createElement('span');
+    lab.textContent = p.agents.length + ' agents working';
+    ag.appendChild(lab);
+    for(var i=0;i<p.agents.length;i++){
+      var av2 = document.createElement('span');
+      av2.className='av';
+      av2.textContent = p.agents[i];
+      ag.appendChild(av2);
+    }
+    tile.appendChild(ag);
+    tile.addEventListener('click', function(){ showState('project'); });
+    return tile;
+  }
+
+  function renderProjects(){
+    if(!projectsGrid) return;
+    while(projectsGrid.firstChild) projectsGrid.removeChild(projectsGrid.firstChild);
+    for(var i=0;i<projects.length;i++) projectsGrid.appendChild(makeProjectTile(projects[i], false));
+    projectsGrid.appendChild(makeProjectTile(null, true));
+    if(phoneProjects){
+      while(phoneProjects.firstChild) phoneProjects.removeChild(phoneProjects.firstChild);
+      for(var j=0;j<projects.length;j++) phoneProjects.appendChild(makeProjectTile(projects[j], false));
+    }
+  }
+
+  function renderFeatures(){
+    if(!featuresGrid) return;
+    while(featuresGrid.firstChild) featuresGrid.removeChild(featuresGrid.firstChild);
+    for(var i=0;i<features.length;i++){
+      var f = features[i];
+      var card = document.createElement('div');
+      card.className='feature-card';
+      var h = document.createElement('h4');
+      h.textContent = f.name;
+      card.appendChild(h);
+      var prog = document.createElement('div');
+      prog.className='progress';
+      var fill = document.createElement('div');
+      fill.className='fill';
+      fill.style.width = f.progress + '%';
+      prog.appendChild(fill);
+      card.appendChild(prog);
+      var meta = document.createElement('div');
+      meta.className='mono';
+      meta.style.color='var(--muted)';
+      meta.textContent = f.stories + ' stories · ' + f.tasks + ' tasks · ' + f.progress + '%';
+      card.appendChild(meta);
+      card.addEventListener('click', function(){ showState('feature'); });
+      featuresGrid.appendChild(card);
+      if(phoneFeatures){
+        var pc = document.createElement('div');
+        pc.className='feature-card';
+        var hh = document.createElement('h4');
+        hh.textContent = f.name;
+        pc.appendChild(hh);
+        var pp = document.createElement('div');
+        pp.className='progress';
+        var ff = document.createElement('div');
+        ff.className='fill';
+        ff.style.width = f.progress + '%';
+        pp.appendChild(ff);
+        pc.appendChild(pp);
+        phoneFeatures.appendChild(pc);
+      }
+    }
+  }
+
+  function renderStories(){
+    if(!storiesList) return;
+    while(storiesList.firstChild) storiesList.removeChild(storiesList.firstChild);
+    for(var i=0;i<stories.length;i++){
+      var s = stories[i];
+      var row = document.createElement('div');
+      row.className='story-row';
+      var title = document.createElement('span');
+      title.textContent = s.title;
+      title.style.fontWeight='600';
+      row.appendChild(title);
+      var mode = document.createElement('span');
+      mode.className='mode';
+      mode.textContent = s.mode;
+      row.appendChild(mode);
+      var prog = document.createElement('span');
+      prog.className='prog';
+      prog.textContent = s.progress + '% · ' + s.tasks + ' tasks';
+      row.appendChild(prog);
+      row.addEventListener('click', function(){ showState('story'); });
+      storiesList.appendChild(row);
+    }
+  }
+
+  function renderStoryBoard(){
+    if(!storyBoard) return;
+    while(storyBoard.firstChild) storyBoard.removeChild(storyBoard.firstChild);
+    var cols = ['To do','In progress','Code review','Done'];
+    for(var c=0;c<cols.length;c++){
+      var col = document.createElement('div');
+      col.className='col';
+      var head = document.createElement('div');
+      head.className='col-head';
+      head.textContent = cols[c];
+      col.appendChild(head);
+      var body = document.createElement('div');
+      body.className='col-body';
+      for(var i=0;i<storyTasks.length;i++){
+        if(storyTasks[i].col===cols[c]){
+          var tile = document.createElement('div');
+          tile.className='tile';
+          var id = document.createElement('div');
+          id.className='tile-id';
+          id.textContent = storyTasks[i].id;
+          tile.appendChild(id);
+          var tt = document.createElement('div');
+          tt.className='tile-title';
+          tt.textContent = storyTasks[i].title;
+          tile.appendChild(tt);
+          body.appendChild(tile);
+        }
+      }
+      col.appendChild(body);
+      storyBoard.appendChild(col);
+    }
+  }
+
+  function showState(state){
+    if(projectsView) projectsView.classList.add('hidden');
+    if(projectView) projectView.classList.add('hidden');
+    if(featureView) featureView.classList.add('hidden');
+    if(storyView) storyView.classList.add('hidden');
+    if(emptyView) emptyView.classList.add('hidden');
+    if(loadingView) loadingView.classList.add('hidden');
+    if(phoneView) phoneView.classList.add('hidden');
+    if(breadcrumb) breadcrumb.classList.remove('hidden');
+
+    if(state==='projects'){ if(projectsView) projectsView.classList.remove('hidden'); if(breadcrumb) breadcrumb.textContent='Projects'; }
+    else if(state==='project'){ if(projectView) projectView.classList.remove('hidden'); if(breadcrumb) breadcrumb.textContent='Projects › Sprout'; }
+    else if(state==='feature'){ if(featureView) featureView.classList.remove('hidden'); if(breadcrumb) breadcrumb.textContent='Projects › Sprout › Board v5'; }
+    else if(state==='story'){ if(storyView) storyView.classList.remove('hidden'); if(breadcrumb) breadcrumb.textContent='Projects › Sprout › Board v5 › Story #12'; }
+    else if(state==='empty'){ if(emptyView) emptyView.classList.remove('hidden'); }
+    else if(state==='loading'){ if(loadingView) loadingView.classList.remove('hidden'); }
+    else if(state==='phone'){ if(phoneView) phoneView.classList.remove('hidden'); if(breadcrumb) breadcrumb.classList.add('hidden'); }
+    else if(state==='dialogs'){ if(projectsView) projectsView.classList.remove('hidden'); openDialog('project'); }
+
+    var btns = document.querySelectorAll('[data-state]');
+    for(var i=0;i<btns.length;i++){
+      if(btns[i].getAttribute('data-state')===state) btns[i].setAttribute('aria-pressed','true');
+      else btns[i].setAttribute('aria-pressed','false');
+    }
+  }
+
+  function openDialog(which){
+    var dlg = document.getElementById(which+'Dialog');
+    if(dlg) dlg.classList.add('open');
+  }
+  function closeDialog(which){
+    var dlg = document.getElementById(which+'Dialog');
+    if(dlg) dlg.classList.remove('open');
+  }
+
+  var stateBtns = document.querySelectorAll('[data-state]');
+  for(var s=0;s<stateBtns.length;s++){
+    (function(b){ b.addEventListener('click', function(){ showState(b.getAttribute('data-state')); }); })(stateBtns[s]);
+  }
+
+  var closeBtns = document.querySelectorAll('[data-close]');
+  for(var c=0;c<closeBtns.length;c++){
+    (function(b){ b.addEventListener('click', function(){ closeDialog(b.getAttribute('data-close')); }); })(closeBtns[c]);
+  }
+
+  var openBtns = document.querySelectorAll('[data-open]');
+  for(var o=0;o<openBtns.length;o++){
+    (function(b){ b.addEventListener('click', function(){ openDialog(b.getAttribute('data-open')); }); })(openBtns[o]);
+  }
+
+  var switcherBtn = document.getElementById('switcherBtn');
+  var switcherList = document.getElementById('switcherList');
+  if(switcherBtn && switcherList){
+    switcherBtn.addEventListener('click', function(){ switcherList.classList.toggle('open'); });
+    var projBtns = switcherList.querySelectorAll('[data-proj]');
+    for(var p=0;p<projBtns.length;p++){
+      (function(btn){ btn.addEventListener('click', function(){ if(switcherBtn) switcherBtn.textContent = btn.getAttribute('data-proj') + ' ▾'; switcherList.classList.remove('open'); }); })(projBtns[p]);
+    }
+  }
+
+  renderProjects();
+  renderFeatures();
+  renderStories();
+  renderStoryBoard();
+  showState('projects');
+})();
+</script>
+</body>
+</html>
