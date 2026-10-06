@@ -1,11 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>try{
+var LS='agentmesh.ui.v1',PREF='agentmesh.prefs.v1';
+var raw=localStorage.getItem(LS),o=raw?JSON.parse(raw):{};
+var theme=o.theme||'auto',mainTab=o.mainTab||'board',collapsed=o.collapsedCols||{},rail=o.railCollapsed!==false?'collapsed':'expanded';
+var praw=localStorage.getItem(PREF),p=praw?JSON.parse(praw):{},compact=!!p.compact;
+var html=document.documentElement;
+if(theme!=='auto')html.setAttribute('data-theme',theme);
+else{try{if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)html.setAttribute('data-theme','dark');}catch(e){}}
+html.setAttribute('data-compact',compact?'true':'false');
+html.setAttribute('data-rail',rail);
+html.setAttribute('data-tab',mainTab);
+var keys=[];for(var k in collapsed)if(collapsed[k])keys.push(k);
+if(keys.length)html.setAttribute('data-cols',keys.join(','));
+html.setAttribute('data-loaded','false');
+}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>AgentMesh</title>
 <style>
+
 
 /* Sprout restyle round 1 — colours, font, cards, columns */
 *,*::before,*::after{box-sizing:border-box}
@@ -714,6 +730,106 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
 /* hide board when not board tab */
 #board.hidden{display:none!important}
 
+
+
+/* V4-3: early attributes, no flash, tile squashing fix, slim scrollbar, skeleton, live updates, clarity */
+
+/* early attributes drive first paint */
+html[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --panel-2:#2a2a30;
+  --card-bg:#2e2e34;
+  --card-shadow:none;
+  --card-shadow-hover:none;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+}
+html[data-rail="collapsed"]{--rail-w:60px}
+html[data-rail="expanded"]{--rail-w:260px}
+html[data-compact="true"] .tile{padding:8px 10px;gap:5px}
+html[data-compact="true"] .col-body{gap:6px;padding:6px}
+html[data-compact="true"] .card{padding:7px 10px}
+html[data-compact="true"] .toolbar,html[data-compact="true"] .col-head{padding-top:6px;padding-bottom:6px}
+html[data-tab="board"] #board{display:flex!important}
+html[data-tab="board"] #storiesView,html[data-tab="board"] #teamView,html[data-tab="board"] #archiveView{display:none!important}
+html[data-tab="stories"] #storiesView{display:flex!important}
+html[data-tab="stories"] #board,html[data-tab="stories"] #teamView,html[data-tab="stories"] #archiveView{display:none!important}
+html[data-tab="team"] #teamView{display:flex!important}
+html[data-tab="team"] #board,html[data-tab="team"] #storiesView,html[data-tab="team"] #archiveView{display:none!important}
+html[data-tab="archive"] #archiveView{display:flex!important}
+html[data-tab="archive"] #board,html[data-tab="archive"] #storiesView,html[data-tab="archive"] #teamView{display:none!important}
+html[data-cols*="backlog"] .col[data-colkey=backlog]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="todo"] .col[data-colkey=todo]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="working"] .col[data-colkey=working]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="blocked"] .col[data-colkey=blocked]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="review"] .col[data-colkey=review]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="pending_deploy"] .col[data-colkey=pending_deploy]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="done"] .col[data-colkey=done]{flex:0 0 44px!important;width:44px!important}
+html[data-cols*="cancelled"] .col[data-colkey=cancelled]{flex:0 0 44px!important;width:44px!important}
+
+/* tile never shrinks, column scrolls */
+.tile{flex:0 0 auto!important;min-height:0}
+.col{display:flex;flex-direction:column;min-height:0;max-height:100%;overflow:hidden}
+.col-head{position:sticky;top:0;z-index:2;background:var(--col-bg, var(--panel-2));flex:0 0 auto}
+.col-body{overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.col-body::-webkit-scrollbar{width:6px;height:6px}
+.col-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+.col-body::-webkit-scrollbar-track{background:transparent}
+.col-body{padding:10px;gap:10px}
+.board{overflow:auto;align-items:stretch}
+.board-row{flex:1 1 auto;align-items:stretch;min-height:0}
+.lane-cols{overflow:auto}
+.lane-cols .col{max-height:60vh}
+
+/* Done show more */
+.done-show-more{width:100%;padding:8px 10px;background:var(--card-bg);border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-weight:600;font-size:12px;cursor:pointer;transition:background var(--t),border-color var(--t),color var(--t)}
+.done-show-more:hover{background:var(--panel);border-color:var(--border-strong);color:var(--text)}
+
+/* skeleton shimmer */
+.skeleton{pointer-events:none}
+.skeleton-card{background:linear-gradient(90deg, var(--panel) 25%, var(--card-bg) 37%, var(--panel) 63%);background-size:400% 100%;animation:shimmer 1.2s ease-in-out infinite;border-radius:16px;height:110px;flex:0 0 auto;box-shadow:var(--card-shadow);border:0}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+[data-theme="dark"] .skeleton-card{background:linear-gradient(90deg, #2a2a30 25%, #3a3a40 37%, #2a2a30 63%);background-size:400% 100%}
+@media (prefers-reduced-motion:reduce){.skeleton-card{animation:none}}
+
+/* live updates FLIP */
+.tile.tile-enter{animation:tileIn 220ms ease-out}
+.tile.tile-leave{animation:tileOut 180ms ease-in forwards}
+@keyframes tileOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.96)}}
+.tile.moving{transition:transform 200ms ease-out;z-index:5}
+@media (prefers-reduced-motion:reduce){.tile.tile-enter,.tile.tile-leave,.tile.moving{animation:none!important;transition:none!important}}
+
+/* counts transition */
+.col-count{transition:transform 150ms ease-out, background var(--t)}
+.col-count.bump{transform:scale(1.15)}
+
+/* story clarity */
+.tile.story-tile{border-left:3px solid var(--purple);background:linear-gradient(to right, var(--purple-soft), var(--card-bg) 28px)}
+[data-theme="dark"] .tile.story-tile{background:linear-gradient(to right, #2e2640, var(--card-bg) 28px);border-left-color:var(--purple)}
+.tile.story-tile .tile-owner{display:none}
+.tile.story-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:var(--radius-pill);background:var(--purple-soft);color:#4a2a7a;border:0}
+[data-theme="dark"] .tile.story-badge{background:#2e2640;color:#dccbff;border:1px solid #4a3a6a}
+.story-managed{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px}
+
+/* open to any agent */
+.tile-owner .owner-name.open{color:var(--muted);font-style:italic}
+
+/* ensure no layout shift: fixed header height, rail width, col widths */
+.topbar{height:52px;min-height:52px;flex:0 0 auto}
+.rail{width:var(--rail-w);min-width:var(--rail-w)}
+.col{flex:0 0 284px;width:284px}
+.col.narrow{flex:0 0 224px;width:224px}
+
+/* hide setup until loaded */
+html[data-loaded="false"] #setup,html[data-loaded="false"] #boardEmpty{display:none!important}
+html[data-loaded="false"] #counts{opacity:0}
+
+/* board-only already handled */
+
 </style>
 </head>
 <body>
@@ -791,8 +907,20 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
 </main>
 <datalist id="agentIds"></datalist>
 <div id="toasts" aria-live="polite" aria-atomic="false"></div>
+<script id="mesh-init" type="application/json"></script>
 <script>'use strict';
 (function () {
+
+  // V4-3: parse mesh-init early, actual apply after S/COLS defined
+  var __meshEmbedded = null;
+  try {
+    var __meshEl = document.getElementById('mesh-init');
+    if (__meshEl){
+      var __txt = __meshEl.textContent.trim();
+      if (__txt) __meshEmbedded = JSON.parse(__txt);
+    }
+  } catch(e){ __meshEmbedded = null; }
+
   /* 0. environment */
   var DEMO = false;
   try { DEMO = new URLSearchParams(location.search).get('demo') === '1'; } catch (e) { DEMO = false; }
@@ -853,6 +981,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     if (h < 24) return h + 'h ' + (m % 60) + 'm';
     return Math.floor(h / 24) + 'd ' + (h % 24) + 'h';
   }
+  var timerInterval = null;
   function refreshTimes() {
     var agos = document.querySelectorAll('[data-ago]');
     for (var i = 0; i < agos.length; i++) setText(agos[i], agoText(agos[i].dataset.ago));
@@ -863,7 +992,22 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
       if (limit) since[j].classList.toggle('stale', Date.now() - Number(since[j].dataset.since) > limit);
     }
   }
-  window.setInterval(refreshTimes, 5000);
+  function tickTimers(){
+    if (document.hidden) return;
+    refreshTimes();
+  }
+  function startTimer(){
+    if (timerInterval) return;
+    timerInterval = window.setInterval(tickTimers, 1000);
+  }
+  function stopTimer(){
+    if (timerInterval){ window.clearInterval(timerInterval); timerInterval=null; }
+  }
+  startTimer();
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) stopTimer();
+    else { refreshTimes(); startTimer(); }
+  });
   /* ---- identity ---- */
   function hueOf(id) { var h = 0, s = String(id || '?'); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
   function initialsOf(name) {
@@ -985,9 +1129,30 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
 
   /* 2. state + persisted view options */
   var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [], rejected: [], ides: [], prompts: {} };
-  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0, forceBoard: false, idesSuggestions: {}, mainTab: 'board', collapsedCols: {}, archiveSearch: '' };
+  var loaded = false;
+  var skeletonRendered = false;
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0, forceBoard: false, idesSuggestions: {}, mainTab: 'board', collapsedCols: {}, archiveSearch: '', doneExpanded: false };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
+  // V4-3: apply embedded data synchronously if present
+  if (__meshEmbedded && __meshEmbedded.tasks){
+    try {
+      S.tasks = Array.isArray(__meshEmbedded.tasks) ? __meshEmbedded.tasks : [];
+      S.locks = Array.isArray(__meshEmbedded.locks) ? __meshEmbedded.locks : [];
+      S.events = Array.isArray(__meshEmbedded.events) ? __meshEmbedded.events : [];
+      S.agents = Array.isArray(__meshEmbedded.agents) ? __meshEmbedded.agents : [];
+      S.launchers = Array.isArray(__meshEmbedded.launchers) ? __meshEmbedded.launchers : [];
+      S.agentState = __meshEmbedded.agentState && typeof __meshEmbedded.agentState === 'object' ? __meshEmbedded.agentState : {};
+      S.handoverHints = Array.isArray(__meshEmbedded.handoverHints) ? __meshEmbedded.handoverHints : [];
+      S.attention = Array.isArray(__meshEmbedded.attention) ? __meshEmbedded.attention : [];
+      S.rejected = Array.isArray(__meshEmbedded.rejected) ? __meshEmbedded.rejected : [];
+      S.ides = Array.isArray(__meshEmbedded.ides) ? __meshEmbedded.ides : [];
+      S.prompts = __meshEmbedded.prompts && typeof __meshEmbedded.prompts === 'object' ? __meshEmbedded.prompts : {};
+      if (__meshEmbedded.workspacePath) S.workspacePath = __meshEmbedded.workspacePath;
+      loaded = true;
+      try { document.documentElement.setAttribute('data-loaded','true'); } catch(e){}
+    } catch(e){}
+  }
   function loadUI() {
     try {
       var raw = window.localStorage.getItem(LS_KEY);
@@ -1008,6 +1173,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
       if (o.mainTab === 'board' || o.mainTab === 'stories' || o.mainTab === 'team' || o.mainTab === 'archive') UI.mainTab = o.mainTab;
       if (o.collapsedCols && typeof o.collapsedCols === 'object') UI.collapsedCols = o.collapsedCols;
       if (typeof o.archiveSearch === 'string') UI.archiveSearch = o.archiveSearch;
+      if (typeof o.doneExpanded === 'boolean') UI.doneExpanded = o.doneExpanded;
     } catch (e) { /* storage unavailable — fine */ }
   }
   function loadPrefs() {
@@ -1036,7 +1202,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
         groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
         activity: UI.activity, attention: !!UI.attention, forceBoard: !!UI.forceBoard, search: UI.search, filterAgent: UI.filterAgent,
         railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0, attentionSeen: UI.attentionSeen || 0,
-        mainTab: UI.mainTab || 'board', collapsedCols: UI.collapsedCols || {}, archiveSearch: UI.archiveSearch || ''
+        mainTab: UI.mainTab || 'board', collapsedCols: UI.collapsedCols || {}, archiveSearch: UI.archiveSearch || '', doneExpanded: !!UI.doneExpanded
       }));
     } catch (e) { /* ignore */ }
   }
@@ -1161,6 +1327,10 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
   function setConn(state, text) {
     var c = $('#conn');
     c.className = 'conn ' + (state === 'live' ? 'live' : state === 'down' ? 'down' : '');
+    if (!loaded && !DEMO && state === 'down'){
+      setText($('#connText'), 'connecting…');
+      return;
+    }
     setText($('#connText'), text);
   }
   function connect() {
@@ -1204,21 +1374,40 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     S.prompts = data.prompts && typeof data.prompts === 'object' ? data.prompts : {};
     if (DEMO) adoptDemoAvatars(data);
     if (data.workspacePath) S.workspacePath = data.workspacePath;
+    if (!loaded){
+      loaded = true;
+      try { document.documentElement.setAttribute('data-loaded','true'); } catch(e){}
+      // remove skeleton if present
+      var sk = document.querySelectorAll('.skeleton');
+      for (var i=0;i<sk.length;i++) if (sk[i].parentNode) sk[i].parentNode.removeChild(sk[i]);
+      skeletonRendered = false;
+    }
     if (T.open && !taskById(T.taskId)) closeTask();
     else if (T.open) updateTaskModal(false);
-    render();
+    // live patch instead of full render if already loaded
+    if (loaded && !skeletonRendered && document.querySelector('#board') && document.querySelector('#board').children.length){
+      patchBoard();
+      renderCounts();
+      renderNeeds();
+      renderAgentFilter();
+      renderRail();
+      renderMainTabs();
+      updateTitle();
+    } else {
+      render();
+    }
   }
   function push() { render(); if (T.open) updateTaskModal(false); }
 
   /* 4. filtering */
   var COLS = [
-    { key: 'backlog', label: 'Backlog', statuses: ['backlog'], emptyText: 'No tasks' },
-    { key: 'todo', label: 'To do', statuses: ['todo'], emptyText: 'No tasks' },
-    { key: 'working', label: 'In progress', statuses: ['claimed', 'in_progress'], emptyText: 'No tasks' },
-    { key: 'blocked', label: 'Needs answer', statuses: ['blocked'], emptyText: 'No tasks' },
-    { key: 'review', label: 'Code review', statuses: ['review'], emptyText: 'No tasks' },
+    { key: 'backlog', label: 'Backlog', statuses: ['backlog'], emptyText: 'Nothing here yet' },
+    { key: 'todo', label: 'To do', statuses: ['todo'], emptyText: 'Nothing here yet' },
+    { key: 'working', label: 'In progress', statuses: ['claimed', 'in_progress'], emptyText: 'Nothing here yet' },
+    { key: 'blocked', label: 'Needs answer', statuses: ['blocked'], emptyText: 'Nothing here yet' },
+    { key: 'review', label: 'Code review', statuses: ['review'], emptyText: 'Nothing here yet' },
     { key: 'pending_deploy', label: 'Pending deployment', statuses: ['pending_deploy'], emptyText: 'Nothing waiting to be deployed' },
-    { key: 'done', label: 'Done', statuses: ['done'], emptyText: 'No tasks' }
+    { key: 'done', label: 'Done', statuses: ['done'], emptyText: 'Nothing here yet' }
   ];
   var STATUS_LABEL = { backlog: 'backlog', todo: 'to do', claimed: 'in progress', in_progress: 'in progress', blocked: 'needs answer', review: 'code review', pending_deploy: 'pending deployment', done: 'done', cancelled: 'cancelled' };
   function matchesFilter(t) {
@@ -1246,6 +1435,13 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     refreshTimes();
   }
   function renderCounts() {
+    if (!loaded && !DEMO){
+      var cc = $('#counts');
+      if (cc) cc.style.opacity='0';
+      return;
+    }
+    var cc2 = $('#counts');
+    if (cc2) cc2.style.opacity='';
     var t = visibleTasks();
     var w = workers();
     var waiting = w.filter(isWaiting).length;
@@ -1529,13 +1725,15 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
   }
   function renderEmptyState() {
     var box = $('#boardEmpty');
+    if (!loaded && !DEMO) { box.classList.add('hidden'); return; }
     if (visibleTasks().length) { box.classList.add('hidden'); return; }
     box.classList.remove('hidden');
-    if (S.tasks.length) {   // filtered everything away
+    if (S.tasks.length) {
       box.className = 'notice';
       replace(box, el('span', { text: 'No tasks match the current search or filter.' }));
       return;
     }
+    if (!loaded && !DEMO) { box.classList.add('hidden'); return; }
     box.className = 'welcome';
     replace(box,
       el('div', { class: 'big', text: '◆' }),
@@ -1549,6 +1747,10 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
       DEMO ? null : el('p', { class: 'muted', text: 'Same file, sample data: every button, drag and popup works.' }));
   }
   function renderBoard() {
+    if (!loaded && !DEMO && skeletonRendered){
+      // keep skeleton until first real data
+      return;
+    }
     var board = $('#board'), keep = captureScroll(board);
     renderEmptyState();
     var tasks = visibleTasks();
@@ -1657,6 +1859,290 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     S.tasks.forEach(function (t) { ids[t.id] = 1; stat[t.id] = t.status; });
     seen.ids = ids; seen.status = stat;
   }
+
+  function renderSkeleton(){
+    if (skeletonRendered) return;
+    skeletonRendered = true;
+    var board = $('#board');
+    if (!board) return;
+    var row = el('div', { class: 'board-row skeleton' });
+    COLS.forEach(function(col){
+      var colEl = el('div', { class: 'col', dataset: { colkey: col.key } },
+        el('div', { class: 'col-head' }, el('span', { class: 'col-title', text: col.label }), el('span', { class: 'col-count', text: '…' })),
+        el('div', { class: 'col-body' },
+          el('div', { class: 'skeleton-card' }),
+          el('div', { class: 'skeleton-card', style:{height:'90px'} }),
+          el('div', { class: 'skeleton-card', style:{height:'130px'} })
+        )
+      );
+      row.appendChild(colEl);
+    });
+    replace(board, row);
+  }
+  function patchBoard(){
+    // keyed patch: update board without full rebuild, preserve scroll, focus, etc.
+    var board = $('#board');
+    if (!board) return;
+    // capture scroll positions
+    var scrollMap = {};
+    var bodies = board.querySelectorAll('.col-body');
+    for (var i=0;i<bodies.length;i++){
+      var sk = bodies[i].dataset.scrollkey || bodies[i].parentNode.dataset.colkey || String(i);
+      scrollMap[sk] = bodies[i].scrollTop;
+    }
+    var activeEl = document.activeElement;
+    var activeId = activeEl && activeEl.id ? activeEl.id : null;
+    var selStart = null, selEnd = null;
+    if (activeEl && (activeEl.tagName==='INPUT' || activeEl.tagName==='TEXTAREA')){
+      try { selStart = activeEl.selectionStart; selEnd = activeEl.selectionEnd; } catch(e){}
+    }
+    // capture existing tile positions for FLIP
+    var existingTiles = {};
+    var allTiles = board.querySelectorAll('.tile');
+    var firstRects = {};
+    var prefersReduced = false;
+    try { prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+    if (!prefersReduced){
+      for (var ti=0; ti<allTiles.length; ti++){
+        var tEl = allTiles[ti];
+        var tid = tEl.dataset.id;
+        if (tid){
+          existingTiles[tid] = tEl;
+          try { firstRects[tid] = tEl.getBoundingClientRect(); } catch(e){}
+        }
+      }
+    } else {
+      for (var ti2=0; ti2<allTiles.length; ti2++){
+        var tEl2 = allTiles[ti2];
+        var tid2 = tEl2.dataset.id;
+        if (tid2) existingTiles[tid2] = tEl2;
+      }
+    }
+    // build new board structure but reuse nodes when possible
+    var tasks = visibleTasks();
+    var knownStatuses = {};
+    COLS.forEach(function(c){ c.statuses.forEach(function(s){ knownStatuses[s]=1; }); });
+    knownStatuses['cancelled']=1;
+    var unknownMap = {};
+    tasks.forEach(function(t){ if (!knownStatuses[t.status]) { if (!unknownMap[t.status]) unknownMap[t.status]=[]; unknownMap[t.status].push(t); } });
+    var unknownCols = Object.keys(unknownMap).map(function(s){ return { key:s, label:s, statuses:[s], emptyText:'Nothing here yet', unknown:true }; });
+    function allCols(){
+      var base = COLS.slice();
+      var doneIdx = -1;
+      for (var i=0;i<base.length;i++) if (base[i].key==='done'){ doneIdx=i; break; }
+      if (unknownCols.length && doneIdx>=0){
+        var before = base.slice(0,doneIdx);
+        var after = base.slice(doneIdx);
+        return before.concat(unknownCols).concat(after);
+      }
+      return base.concat(unknownCols);
+    }
+    var colsToRender = allCols();
+    // For status view only, we do keyed patch; for other groupBy, fallback to full renderBoard logic but we are in patchBoard called from applyState which is status view? We'll handle status only, else full render
+    if (UI.groupBy !== 'status'){
+      renderBoard();
+      return;
+    }
+    var boardRow = board.querySelector('.board-row');
+    if (!boardRow){
+      renderBoard();
+      return;
+    }
+    // Map existing columns by key
+    var existingCols = {};
+    var colEls = boardRow.querySelectorAll('.col');
+    for (var ci=0; ci<colEls.length; ci++){
+      var ck = colEls[ci].dataset.colkey;
+      if (ck) existingCols[ck] = colEls[ci];
+    }
+    // For each col to render, patch its body
+    colsToRender.forEach(function(col){
+      var colTasksList = col.unknown ? unknownMap[col.key] : colTasks(tasks, col);
+      // handle Done show more
+      var tasksToShow = colTasksList;
+      if (col.key === 'done' && !UI.doneExpanded && colTasksList.length > 15){
+        var sorted = colTasksList.slice().sort(function(a,b){ return (tms(b.updatedAt)||0) - (tms(a.updatedAt)||0); });
+        tasksToShow = sorted.slice(0,15);
+      }
+      var colEl = existingCols[col.key];
+      if (!colEl){
+        // create new column
+        colEl = columnEl(col.label, col.key, tasksToShow, { zone: 'col:' + col.key, sk: col.key, emptyText: col.emptyText });
+        boardRow.appendChild(colEl);
+        return;
+      }
+      // update count with bump animation
+      var countEl = colEl.querySelector('.col-count');
+      if (countEl){
+        var oldCount = parseInt(countEl.textContent,10)||0;
+        var newCount = colTasksList.length;
+        if (oldCount !== newCount){
+          setText(countEl, String(newCount));
+          if (!prefersReduced){
+            countEl.classList.add('bump');
+            window.setTimeout(function(){ countEl.classList.remove('bump'); }, 180);
+          }
+        }
+      }
+      var body = colEl.querySelector('.col-body');
+      if (!body) return;
+      // build map of existing tiles in this column body
+      var existingInBody = {};
+      var bodyTiles = body.querySelectorAll('.tile');
+      for (var bti=0; bti<bodyTiles.length; bti++){
+        var btid = bodyTiles[bti].dataset.id;
+        if (btid) existingInBody[btid] = bodyTiles[bti];
+      }
+      // Determine which tasks should be in this column
+      var desiredIds = {};
+      for (var d=0; d<tasksToShow.length; d++) desiredIds[tasksToShow[d].id]=1;
+      // Remove tiles that are no longer in this column (but might be in another column, we will move)
+      // First, collect tiles to remove from this body that are not desired here
+      var toRemove = [];
+      for (var eid in existingInBody){
+        if (!desiredIds[eid]){
+          // check if this task exists elsewhere (moving) – if task still visible but in different column, we will move it later, so remove from here now
+          var taskStillExists = taskById(eid);
+          if (!taskStillExists || colTasksList.indexOf(taskStillExists)===-1){
+            toRemove.push(existingInBody[eid]);
+          }
+        }
+      }
+      // Animate out and remove
+      toRemove.forEach(function(elNode){
+        if (!prefersReduced){
+          elNode.classList.add('tile-leave');
+          window.setTimeout(function(){ if (elNode.parentNode) elNode.parentNode.removeChild(elNode); }, 180);
+        } else {
+          if (elNode.parentNode) elNode.parentNode.removeChild(elNode);
+        }
+      });
+      // Now ensure desired tasks are present in correct order
+      // We'll iterate desired tasks in order and place them
+      var lastNode = null;
+      // For show more button handling
+      var showMoreBtn = body.querySelector('.done-show-more');
+      for (var di=0; di<tasksToShow.length; di++){
+        var task = tasksToShow[di];
+        var existing = existingTiles[task.id] || existingInBody[task.id];
+        var tileNode;
+        if (existing){
+          // check if content changed: compare title, status, assignee, etc. Simple: if node dataset status != task status or title changed, recreate or update
+          // For simplicity, if status changed or title changed, recreate tile
+          var needsRecreate = false;
+          try {
+            if (existing.dataset.status !== task.status) needsRecreate = true;
+            else {
+              var titleEl = existing.querySelector('.tile-title');
+              if (titleEl && titleEl.textContent !== task.title) needsRecreate = true;
+            }
+          } catch(e){}
+          if (needsRecreate){
+            tileNode = tile(task);
+            if (existing.parentNode) existing.parentNode.replaceChild(tileNode, existing);
+            existingTiles[task.id] = tileNode;
+          } else {
+            tileNode = existing;
+            // update time node will be handled by tick, but update other parts if needed? For unchanged, leave untouched
+            // Ensure it is in correct body
+            if (tileNode.parentNode !== body){
+              // move with FLIP
+              body.insertBefore(tileNode, lastNode ? lastNode.nextSibling : body.firstChild);
+            } else {
+              // reorder if needed
+              var nextExpected = lastNode ? lastNode.nextSibling : body.firstChild;
+              // skip showMoreBtn and empty
+              while (nextExpected && (nextExpected.classList.contains('empty') || nextExpected.classList.contains('done-show-more'))) nextExpected = nextExpected.nextSibling;
+              if (tileNode !== nextExpected){
+                body.insertBefore(tileNode, lastNode ? lastNode.nextSibling : body.firstChild);
+              }
+            }
+          }
+        } else {
+          tileNode = tile(task);
+          tileNode.classList.add('tile-enter');
+          body.insertBefore(tileNode, lastNode ? lastNode.nextSibling : body.firstChild);
+          existingTiles[task.id] = tileNode;
+        }
+        lastNode = tileNode;
+      }
+      // handle Done show more button
+      if (col.key === 'done'){
+        var remaining = colTasksList.length - tasksToShow.length;
+        var existingBtn = body.querySelector('.done-show-more');
+        if (remaining > 0 && !UI.doneExpanded){
+          if (!existingBtn){
+            var btn = el('button', { class:'done-show-more', text:'Show ' + remaining + ' more', onclick:function(){ toggleDoneExpanded(); } });
+            body.appendChild(btn);
+          } else {
+            setText(existingBtn, 'Show ' + remaining + ' more');
+          }
+        } else {
+          if (existingBtn && existingBtn.parentNode) existingBtn.parentNode.removeChild(existingBtn);
+        }
+      }
+      // empty state
+      var emptyEl = body.querySelector('.empty');
+      if (tasksToShow.length === 0){
+        if (!emptyEl){
+          var emptyTxt = col.emptyText || 'Nothing here yet';
+          body.appendChild(el('div', { class: 'empty', text: emptyTxt }));
+        }
+      } else {
+        if (emptyEl && emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl);
+      }
+    });
+    // FLIP animation for moved tiles
+    if (!prefersReduced){
+      for (var mid in existingTiles){
+        var elNode = existingTiles[mid];
+        var first = firstRects[mid];
+        if (!first) continue;
+        try {
+          var last = elNode.getBoundingClientRect();
+          var dx = first.left - last.left;
+          var dy = first.top - last.top;
+          if (dx!==0 || dy!==0){
+            elNode.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+            elNode.style.transition = 'none';
+            // force reflow
+            elNode.getBoundingClientRect();
+            elNode.classList.add('moving');
+            elNode.style.transform = '';
+            elNode.style.transition = '';
+            (function(node){
+              window.setTimeout(function(){ node.classList.remove('moving'); node.style.transform=''; }, 220);
+            })(elNode);
+          }
+        } catch(e){}
+      }
+    }
+    // restore scroll
+    for (var i=0;i<bodies.length;i++){
+      var b = bodies[i];
+      var sk = b.dataset.scrollkey || b.parentNode.dataset.colkey || String(i);
+      if (scrollMap.hasOwnProperty(sk)){
+        try { b.scrollTop = scrollMap[sk]; } catch(e){}
+      }
+    }
+    // restore focus
+    if (activeId){
+      try {
+        var toFocus = document.getElementById(activeId);
+        if (toFocus && toFocus !== document.activeElement){
+          toFocus.focus();
+          if (selStart !== null && (toFocus.tagName==='INPUT' || toFocus.tagName==='TEXTAREA')){
+            try { toFocus.setSelectionRange(selStart, selEnd); } catch(e){}
+          }
+        }
+      } catch(e){}
+    }
+    // update seen
+    var ids = {}, stat = {};
+    S.tasks.forEach(function (t) { ids[t.id] = 1; stat[t.id] = t.status; });
+    seen.ids = ids; seen.status = stat;
+  }
+
 
   function renderMainTabs(){
     var tabs = $('#mainTabs');
@@ -1837,8 +2323,18 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     });
     var body = el('div', { class: 'col-body', dataset: { scrollkey: opts.sk || key } });
     var emptyTxt = (opts.emptyText || (COLS.filter(function(c){return c.key===key;})[0] && COLS.filter(function(c){return c.key===key;})[0].emptyText) || 'Nothing here yet');
-    if (!tasks.length) body.appendChild(el('div', { class: 'empty', text: emptyTxt }));
-    tasks.forEach(function (t) { body.appendChild(tile(t)); });
+    var tasksToShow = tasks;
+    var showMoreBtn = null;
+    if (key === 'done' && !UI.doneExpanded && tasks.length > 15){
+      // newest first for Done
+      var sorted = tasks.slice().sort(function(a,b){ return (tms(b.updatedAt)||0) - (tms(a.updatedAt)||0); });
+      tasksToShow = sorted.slice(0,15);
+      var remaining = tasks.length - 15;
+      showMoreBtn = el('button', { class:'done-show-more', text:'Show ' + remaining + ' more', onclick:function(){ toggleDoneExpanded(); } });
+    }
+    if (!tasksToShow.length) body.appendChild(el('div', { class: 'empty', text: emptyTxt }));
+    tasksToShow.forEach(function (t) { body.appendChild(tile(t)); });
+    if (showMoreBtn) body.appendChild(showMoreBtn);
     var head = el('div', { class: 'col-head' },
       el('span', { class: 'col-title', text: label, title: label }),
       count,
@@ -1863,6 +2359,36 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
       if (!o || typeof o !== 'object') o = {};
       o.collapsedCols = UI.collapsedCols;
       o.mainTab = UI.mainTab;
+      o.groupBy = UI.groupBy;
+      o.theme = UI.theme;
+      o.showCancelled = !!UI.showCancelled;
+      o.activity = !!UI.activity;
+      o.attention = !!UI.attention;
+      o.forceBoard = !!UI.forceBoard;
+      o.search = UI.search;
+      o.filterAgent = UI.filterAgent;
+      o.railCollapsed = !!UI.railCollapsed;
+      o.activitySeen = UI.activitySeen || 0;
+      o.attentionSeen = UI.attentionSeen || 0;
+      o.archiveSearch = UI.archiveSearch || '';
+      o.doneExpanded = !!UI.doneExpanded;
+      window.localStorage.setItem(LS_KEY, JSON.stringify(o));
+      var htmlEl = document.documentElement;
+      var keys=[];for(var kk in o.collapsedCols) if(o.collapsedCols[kk]) keys.push(kk);
+      if(keys.length) htmlEl.setAttribute('data-cols', keys.join(','));
+      else htmlEl.removeAttribute('data-cols');
+    } catch(e){}
+    render();
+  }
+  function toggleDoneExpanded(){
+    UI.doneExpanded = !UI.doneExpanded;
+    try {
+      var raw = window.localStorage.getItem(LS_KEY);
+      var o = raw ? JSON.parse(raw) : {};
+      if (!o || typeof o !== 'object') o = {};
+      o.doneExpanded = !!UI.doneExpanded;
+      o.mainTab = UI.mainTab;
+      o.collapsedCols = UI.collapsedCols || {};
       o.groupBy = UI.groupBy;
       o.theme = UI.theme;
       o.showCancelled = !!UI.showCancelled;
@@ -2051,7 +2577,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
   var EMPTY_DEMO = false;
   try { EMPTY_DEMO = new URLSearchParams(location.search).get('empty') === '1'; } catch(e){ EMPTY_DEMO = false; }
   function isEmptyTeam(){ return workers().length === 0; }
-  function shouldShowSetup(){ return isEmptyTeam() && !UI.forceBoard; }
+  function shouldShowSetup(){ if (!loaded && !DEMO) return false; return isEmptyTeam() && !UI.forceBoard; }
   function portInfo(){
     try { var p = location.port; return p ? ':' + p : ''; } catch(e){ return ''; }
   }
@@ -2062,6 +2588,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
   }
   function renderSetup(){
     var setupEl = $('#setup'), boardEl = $('#board'), emptyEl = $('#boardEmpty'), toolbar = document.querySelector('.toolbar'), needs = $('#needs'), cancelStrip = $('#cancelStrip');
+    if (!loaded && !DEMO){ if (setupEl) setupEl.classList.add('hidden'); return; }
     var show = shouldShowSetup();
     if (!setupEl) return;
     if (show){
@@ -2330,15 +2857,15 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     var owner = t.assignee || t.assignedIDE, manual = isManual(owner);
     var label = STATUS_LABEL[t.status] || t.status;
     var isStory = (t.type==='story');
-    var isWaiting = (t.status==='blocked' || t.status==='review' || (manual && (t.status==='backlog' || t.status==='todo' || t.status==='claimed' || t.status==='in_progress')));
+    var isWaiting = !isStory && (t.status==='blocked' || t.status==='review' || (manual && (t.status==='backlog' || t.status==='todo' || t.status==='claimed' || t.status==='in_progress')));
     var node = el('div', {
       class: 'tile' + (manual ? ' mine' : '') + (isStory ? ' story-tile' : '') + (isWaiting ? ' needs-human' : ''),
-      draggable: tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
+      draggable: !isStory && tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
       dataset: { id: t.id, status: t.status },
       'aria-label': t.id + ' — ' + t.title + ' (' + label + (owner ? ', ' + agentName(owner) : '') + ')',
       onclick: function (e) { if (e.target.closest('.tile-menu-btn') || e.target.closest('.handover-btn') || e.target.closest('.story-chip') || e.target.closest('.story-toggle') || e.target.closest('.subtask-row') || e.target.closest('.nudge-btn')) return; openTask(t.id); },
       onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); openTask(t.id); } },
-      ondragstart: function (e) { startDrag(e, t); },
+      ondragstart: function (e) { if (isStory) { e.preventDefault(); return; } startDrag(e, t); },
       ondragend: function () { endDrag(); }
     });
     if (!seen.ids[t.id]) node.classList.add('tile-enter');
@@ -2351,6 +2878,7 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     var idSpan = el('span', { class: 'tile-id', text: t.id, title: t.id, style:{flex:'1 1 auto', minWidth:'0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'} });
     var topRow = el('div', { class: 'tile-top' },
       el('span', { class: 'tile-type '+typeClass(t), text: typeIcon(t), title: (t.type||t.kind||'feature') }),
+      isStory ? el('span', { class:'tile-story-badge', text:'Story' }) : null,
       idSpan,
       timerNode(t, { staleAt: 30 * 60000, class: 'tile-time' }),
       menuBtn);
@@ -2358,14 +2886,14 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     node.appendChild(el('div', { class: 'tile-title', text: t.title, title: t.title }));
     var chips = el('div', { class: 'tile-chips' });
     var hasChips = false;
-    if (t.parentId){
+    if (!isStory && t.parentId){
       var parent = taskById(t.parentId);
       var prog = parent ? storyProgress(parent) : null;
       var progText = prog ? ' · '+prog.done+'/'+prog.total : '';
       var chip = el('span', { class:'tile-chip story-chip', text:'Story '+t.parentId+progText, title:'Open story '+t.parentId, onclick:function(e){ e.stopPropagation(); openTask(t.parentId); } });
       chips.appendChild(chip); hasChips=true;
     }
-    if (t.dependsOn && t.dependsOn.length){
+    if (!isStory && t.dependsOn && t.dependsOn.length){
       t.dependsOn.slice(0,2).forEach(function(dep){
         var met = dependencyMet(dep);
         var c = el('span', { class:'tile-chip dep-chip '+(met?'met':'unmet'), text:'after '+dep, title: met?'dependency met':'waiting for '+dep });
@@ -2376,14 +2904,14 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
         chips.appendChild(c2); hasChips=true;
       }
     }
-    if ((t.status==='backlog' || t.status==='todo') && t.reviewFeedback){
+    if (!isStory && (t.status==='backlog' || t.status==='todo') && t.reviewFeedback){
       chips.appendChild(el('span', { class:'tile-chip warn-chip', text:'Changes requested' })); hasChips=true;
     }
-    if (t.silent === true && (t.status==='claimed' || t.status==='in_progress')){
+    if (!isStory && t.silent === true && (t.status==='claimed' || t.status==='in_progress')){
       var mins = t.silentMinutes != null ? t.silentMinutes : '?';
       chips.appendChild(el('span', { class:'silent-badge', text:'silent ' + mins + ' min' })); hasChips=true;
     }
-    if (isHighPriority(t)){
+    if (!isStory && isHighPriority(t)){
       chips.appendChild(el('span', { class:'tile-priority '+(priorityOf(t)==='urgent'?'urgent':'high'), text: priorityOf(t)==='urgent'?'URGENT':'HIGH' })); hasChips=true;
     }
     if (hasChips) node.appendChild(chips);
@@ -2397,32 +2925,9 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
     if (isWaiting){
       node.appendChild(el('div', { class:'tile-waiting', text:'Waiting for you' }));
     }
-    var av = owner ? agentStateOf(owner) : 'offline';
-    var ownerRow = el('div', { class: 'tile-owner' },
-      owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
-      el('span', { class: 'owner-name', text: owner ? agentName(owner) : 'unassigned' }),
-      el('span', { class: 'state-dot '+stateDotClass(av), title: av })
-    );
-    var rightActions = el('div', { class:'tile-actions-right' });
-    var fbCount = 0;
-    if (typeof t.feedbackCount === 'number') fbCount = t.feedbackCount;
-    else if (t.reviewFeedback) fbCount = 1;
-    else if (t.deliverable && t.status==='review') fbCount = 1;
-    if (fbCount > 0){
-      rightActions.appendChild(el('span', { class:'comment-bubble', text:'💬 ' + fbCount, title: fbCount + ' feedback item(s)' }));
-    }
-    var hoverActions = el('div', { class:'tile-hover-actions' });
-    if (isHandoverHint(t.id)){
-      hoverActions.appendChild(el('button', { class:'btn small handover-btn', text:'Hand over', onclick:function(e){ e.stopPropagation(); openHandover(t.id); } }));
-    }
-    if ((t.status==='claimed' || t.status==='in_progress') && owner){
-      hoverActions.appendChild(el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(e){ e.stopPropagation(); copyNudge(owner); } }));
-    }
-    if (hoverActions.childNodes.length) rightActions.appendChild(hoverActions);
-    var footer = el('div', { class:'tile-footer' }, ownerRow, rightActions);
-    node.appendChild(footer);
     if (isStory){
       var prog = storyProgress(t);
+      node.appendChild(el('div', { class:'story-managed', text:'Managed automatically · ' + prog.done + ' of ' + prog.total + ' done' }));
       var bar = el('div', { class:'story-progress', title: prog.done+'/'+prog.total+' done' }, el('i', { style:{ width: (prog.total? Math.round(prog.done/prog.total*100):0)+'%' } }));
       node.appendChild(bar);
       var modeLabel = t.mode==='sequential' ? 'in order' : 'in parallel';
@@ -2446,8 +2951,34 @@ body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
         if (!subs.length) subBox.appendChild(el('div', { class:'muted', style:{fontSize:'11px'}, text:'No subtasks' }));
         node.appendChild(subBox);
       }
+    } else {
+      var av = owner ? agentStateOf(owner) : 'offline';
+      var ownerNameText = owner ? agentName(owner) : 'Open to any agent';
+      var ownerRow = el('div', { class: 'tile-owner' },
+        owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
+        el('span', { class: owner ? 'owner-name' : 'owner-name open', text: ownerNameText }),
+        owner ? el('span', { class: 'state-dot '+stateDotClass(av), title: av }) : null
+      );
+      var rightActions = el('div', { class:'tile-actions-right' });
+      var fbCount = 0;
+      if (typeof t.feedbackCount === 'number') fbCount = t.feedbackCount;
+      else if (t.reviewFeedback) fbCount = 1;
+      else if (t.deliverable && t.status==='review') fbCount = 1;
+      if (fbCount > 0){
+        rightActions.appendChild(el('span', { class:'comment-bubble', text:'💬 ' + fbCount, title: fbCount + ' feedback item(s)' }));
+      }
+      var hoverActions = el('div', { class:'tile-hover-actions' });
+      if (isHandoverHint(t.id)){
+        hoverActions.appendChild(el('button', { class:'btn small handover-btn', text:'Hand over', onclick:function(e){ e.stopPropagation(); openHandover(t.id); } }));
+      }
+      if ((t.status==='claimed' || t.status==='in_progress') && owner){
+        hoverActions.appendChild(el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(e){ e.stopPropagation(); copyNudge(owner); } }));
+      }
+      if (hoverActions.childNodes.length) rightActions.appendChild(hoverActions);
+      var footer = el('div', { class:'tile-footer' }, ownerRow, rightActions);
+      node.appendChild(footer);
     }
-    if (t.violations && t.violations.length){
+    if (!isStory && t.violations && t.violations.length){
       var b = el('div', { class:'badges' }, el('span', { class:'badge danger', text:'⚠ '+t.violations.length+' outside' }));
       node.appendChild(b);
     }
@@ -4544,9 +5075,16 @@ function demoApi(path, body, method){
     $('#demoBadge').classList.remove('hidden');
     setConn('live', 'demo');
     applyState(demoState());
-  } else {
+  } else if (loaded) {
     setConn('', 'connecting…');
     render();
+    connect();
+  } else {
+    setConn('', 'connecting…');
+    // skeleton already rendered, keep it until first MESH_INIT
+    try {
+      if (!skeletonRendered) renderSkeleton();
+    } catch(e){}
     connect();
   }
 
