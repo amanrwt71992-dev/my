@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Review Screen v1 — Design Reference</title>
+<style>
+:root{
+  --bg:#f5edde;
+  --panel:#fff8ed;
+  --card:#ffffff;
+  --text:#3d3d3d;
+  --muted:#6b6b6b;
+  --faint:#9a9590;
+  --border:#e8e2d5;
+  --border-strong:#d9d1c0;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#d6f2dd;
+  --accent-fg:#1e3a26;
+  --ok:#2f8a44;
+  --ok-soft:#d6f2dd;
+  --warn:#8a4a0a;
+  --warn-soft:#ffe9d0;
+  --danger:#9a1a24;
+  --danger-soft:#ffe2e6;
+  --purple:#7a5abf;
+  --purple-soft:#ede6ff;
+  --grey:#a09a8e;
+  --col-todo:#dceeff;
+  --col-working:#fff6cc;
+  --col-review:#e8defa;
+  --col-pending:#d3f0ee;
+  --col-done:#d6f2dd;
+  --dot-todo:#5a9ad5;
+  --dot-working:#c9a81a;
+  --dot-review:#8a6fd0;
+  --dot-pending:#4fb5a6;
+  --dot-done:#3a9a5a;
+  --dot-blocked:#d87a2a;
+  --fs-12:12px;
+  --fs-13:13px;
+  --fs-14:14px;
+  --fs-16:16px;
+  --fw-600:600;
+  --fw-700:700;
+  --sp-4:4px;
+  --sp-8:8px;
+  --sp-12:12px;
+  --sp-16:16px;
+  --r-sm:10px;
+  --r-md:12px;
+  --r-lg:18px;
+  --r-pill:999px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.06);
+  --shadow-md:0 1px 3px rgba(60,40,20,.06), 0 8px 24px rgba(60,40,20,.07);
+  --shadow-lg:0 2px 8px rgba(60,40,20,.08), 0 12px 32px rgba(60,40,20,.10);
+  --t:160ms;
+}
+[data-theme="dark"]{
+  --bg:#1a1a1e;
+  --panel:#242428;
+  --card:#2e2e34;
+  --text:#e8e0d0;
+  --muted:#a09a8e;
+  --faint:#7a756e;
+  --border:#3a3a40;
+  --border-strong:#4a4a54;
+  --accent:#86d9a0;
+  --accent-hover:#72c78e;
+  --accent-soft:#1e3a26;
+  --accent-fg:#e8f5eb;
+  --ok:#6fdc8c;
+  --ok-soft:#1e3a26;
+  --warn:#ffb86a;
+  --warn-soft:#3d2a1e;
+  --danger:#ff8a94;
+  --danger-soft:#4a2a30;
+  --purple:#b8a0ff;
+  --purple-soft:#2e2640;
+  --grey:#6b6b6b;
+  --col-todo:#1e2e40;
+  --col-working:#3a3520;
+  --col-review:#2e2640;
+  --col-pending:#1e3230;
+  --col-done:#1e3326;
+  --dot-todo:#7ab8e8;
+  --dot-working:#e6c84a;
+  --dot-review:#b8a0f0;
+  --dot-pending:#7ad6c6;
+  --dot-done:#6fdc8c;
+  --dot-blocked:#e6a15a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.page{max-width:1240px;margin:0 auto;padding:0 16px 40px}
+.demo-bar{display:flex;gap:8px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:6px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:600;transition:all var(--t)}
+.btn:hover{border-color:var(--border-strong);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700;box-shadow:var(--shadow-sm)}
+.btn.primary:hover{background:var(--accent-hover)}
+.btn.primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn.small{padding:4px 10px;font-size:11px}
+.btn[aria-pressed=true]{background:var(--text);color:var(--panel);border-color:var(--text)}
+.badge{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card)}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.badge.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.shell{display:flex;justify-content:center;padding:20px 0}
+.review-window{width:min(760px,100%);background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:min(92vh,960px);overflow:hidden}
+.review-head{padding:14px 16px 0;display:flex;flex-direction:column;gap:10px;background:var(--panel);border-bottom:1px solid var(--border)}
+.head-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.task-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600}
+.status-pill{font-size:11px;padding:3px 10px;border-radius:var(--r-pill);font-weight:700;border:1px solid transparent}
+.status-pill.review{background:var(--col-review);color:var(--dot-review);border-color:var(--dot-review)}
+.owner{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.avatar{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--border);color:var(--card);font-size:10px;font-weight:700}
+.story-chip{font-size:11px;padding:2px 8px;border-radius:var(--r-pill);background:var(--purple-soft);color:var(--purple);font-weight:700}
+.label{font-size:10px;padding:2px 7px;border-radius:var(--r-pill);background:var(--card);border:1px solid var(--border);font-weight:500}
+.time{font-size:11px;color:var(--muted)}
+.journey{display:flex;align-items:center;gap:6px;padding:8px 0 10px;font-size:11px;color:var(--muted);overflow-x:auto;scrollbar-width:none}
+.journey::-webkit-scrollbar{display:none}
+.j-step{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:2px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:500}
+.j-step.active{background:var(--text);color:var(--panel);border-color:var(--text);font-weight:700}
+.j-arrow{color:var(--faint)}
+.tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--border);background:var(--panel);height:44px;min-height:44px;align-items:flex-end;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:transparent;border:0;border-bottom:2px solid transparent;padding:0 12px;height:44px;font-size:13px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transform:translateY(1px)}
+.tabs button[aria-selected=true]{color:var(--text);border-bottom-color:var(--text);font-weight:700}
+.tabs .count{font-size:11px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-pill);padding:1px 6px;font-weight:700;min-width:18px;text-align:center}
+.review-body{overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px;flex:1;min-height:0;background:var(--panel)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;box-shadow:var(--shadow-sm)}
+.card h3{margin:0 0 8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px}
+.card h3 .meta{margin-left:auto;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
+.mono{font-family:ui-monospace,monospace;font-size:11px}
+.chip{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600;display:inline-flex;align-items:center;gap:4px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.chip.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.chip.danger{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.chip.mono{font-family:ui-monospace,monospace}
+.report-list{display:flex;flex-direction:column;gap:10px}
+.report-row{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.report-row .tick{width:20px;height:20px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:12px;font-weight:800;flex:0 0 20px;border:1px solid var(--ok)}
+.report-row .content{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.report-row .title{font-weight:600;font-size:13px}
+.report-row .desc{font-size:12px;color:var(--text);line-height:1.4}
+.report-row .ev{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.collapse{font-size:11px;color:var(--muted);cursor:pointer;background:transparent;border:0;padding:0;text-decoration:underline}
+.checks{display:flex;gap:6px;flex-wrap:wrap}
+.check-pill{font-size:11px;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--card);font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.check-pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.check-pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.check-pill.fail{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.files{display:flex;gap:6px;flex-wrap:wrap}
+.files .hidden-file{display:none}
+.files.show-all .hidden-file{display:inline-flex}
+.more{font-size:11px;color:var(--muted);cursor:pointer;background:transparent;border:0;text-decoration:underline}
+.commit-list{display:flex;flex-direction:column;gap:8px}
+.commit{display:flex;gap:10px;align-items:flex-start;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--panel)}
+.commit .dot{width:8px;height:8px;border-radius:50%;background:var(--dot-done);margin-top:6px;flex:0 0 8px}
+.commit .msg{font-size:12px;font-weight:600}
+.commit .meta{font-size:11px;color:var(--muted)}
+.dep-list{display:flex;flex-direction:column;gap:6px}
+.dep{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+.dep.ok{border-color:var(--ok)}
+.dep.missing{border-color:var(--danger)}
+.timeline{border-left:2px solid var(--border);padding-left:12px;margin-left:4px;display:flex;flex-direction:column;gap:10px}
+.tl-item{font-size:12px;display:flex;flex-direction:column;gap:2px;position:relative}
+.tl-item::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--border);position:absolute;left:-17px;top:4px}
+.tl-item.active::before{background:var(--accent)}
+.banner{font-size:12px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.banner.info{background:var(--col-todo);border-color:var(--dot-todo);color:var(--dot-todo)}
+.banner.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.banner.danger{background:var(--danger-soft);border-color:var(--danger);color:var(--danger)}
+.banner.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.spinner{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+.review-foot{position:sticky;bottom:0;background:var(--panel);border-top:1px solid var(--border);padding:12px 16px;display:flex;flex-direction:column;gap:10px;flex:0 0 auto}
+.foot-primary{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.foot-quiet{display:flex;gap:8px;flex-wrap:wrap}
+.feedback{border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.feedback textarea{width:100%;min-height:70px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--panel);color:var(--text)}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick button{font-size:11px;padding:3px 8px;border-radius:var(--r-pill);border:1px solid var(--border);background:var(--panel);color:var(--muted)}
+.quick button:hover{border-color:var(--border-strong);color:var(--text)}
+.phone-wrap{display:flex;justify-content:center;padding:12px}
+.phone{width:390px;max-width:100%;height:820px;background:var(--panel);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
+.phone .review-head{padding:12px}
+.phone .tabs{padding:0 12px}
+.phone .review-body{padding:12px}
+.phone .review-foot{padding:10px 12px}
+@media(max-width:560px){.shell{padding:0}.review-window{border-radius:0;max-height:100vh;width:100%}}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span style="font-weight:700;font-size:12px">Review Screen v1</span>
+  <button class="btn small" data-state="review-git" aria-pressed="true">Git: Code review</button>
+  <button class="btn small" data-state="merge-progress">Merge in progress</button>
+  <button class="btn small" data-state="merge-conflict">Merge conflict</button>
+  <button class="btn small" data-state="checks-fail">Checks failing</button>
+  <button class="btn small" data-state="local">Local project</button>
+  <button class="btn small" data-state="phone">Phone 390px</button>
+  <span style="margin-left:auto;display:flex;gap:6px">
+    <button class="btn small" id="themeBtn">◐ Theme</button>
+  </span>
+</div>
+
+<div class="page">
+<div class="shell" id="desktopShell">
+  <div class="review-window" role="dialog" aria-modal="true" aria-label="Review task">
+    <div class="review-head">
+      <div class="head-row">
+        <span class="task-id">TASK-207</span>
+        <span class="status-pill review" id="statusPill">Code review</span>
+        <span class="owner"><span class="avatar">CX</span> Codex · busy</span>
+        <span class="story-chip">Story #12</span>
+        <span class="time" id="timeLabel">in review 12m</span>
+        <span class="label">Research</span>
+        <span class="label" style="background:var(--warn-soft);color:var(--warn);border-color:transparent">High</span>
+      </div>
+      <div class="journey">
+        <span class="j-step">To do</span><span class="j-arrow">→</span>
+        <span class="j-step">In progress</span><span class="j-arrow">→</span>
+        <span class="j-step active">Code review</span><span class="j-arrow">→</span>
+        <span class="j-step">Pending</span><span class="j-arrow">→</span>
+        <span class="j-step">Done</span>
+      </div>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">Overview <span class="count">3</span></button>
+        <button role="tab">Progress <span class="count">4</span></button>
+        <button role="tab">Checks <span class="count">3</span></button>
+        <button role="tab">Files <span class="count" id="filesCount">6</span></button>
+      </div>
+    </div>
+
+    <div class="review-body" id="reviewBody">
+      <div class="banner info hidden" id="mergeBanner"><span class="spinner"></span><span id="mergeBannerText">Merging to main…</span></div>
+      <div class="banner danger hidden" id="conflictBanner">Merge conflict: 2 files have conflicts with main. Resolve manually. Task stays in Code review.</div>
+      <div class="banner warn hidden" id="checksBanner">Checks failing — primary action disabled. Fix required before merge.</div>
+
+      <div class="card">
+        <h3>Requirement and acceptance checklist <span class="meta">3 items · Codex</span></h3>
+        <div class="report-list">
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <span class="title">Use constraints extractor in every turn</span>
+              <span class="desc">What: call extractor before agent run. Where: src/agent/runner.ts line 42.</span>
+              <div class="ev"><span class="chip mono">src/agent/runner.ts +12 -2</span><span class="chip mono">tsc exit 0</span></div>
+              <button class="collapse" data-more="m1">Show more</button>
+              <span class="mono hidden" id="m1">Evidence: added import constraints, call in loop, log shows extractor hit 5 times.</span>
+            </div>
+          </div>
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <span class="title">Block off-boundary file writes</span>
+              <span class="desc">What: reject paths outside project. Where: lib/guard.ts.</span>
+              <div class="ev"><span class="chip mono">lib/guard.ts +28</span><span class="chip mono">eslint exit 0</span></div>
+            </div>
+          </div>
+          <div class="report-row">
+            <span class="tick">✓</span>
+            <div class="content">
+              <span class="title">Record acceptance per item</span>
+              <span class="desc">What: structured report row per acceptance. Where: task-window-v1.html report-list.</span>
+              <div class="ev"><span class="chip mono">docs/design/task-window-v1.html</span><span class="chip mono">unit 11/11</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Agent summary</h3>
+        <div style="font-size:12px;line-height:1.5">
+          Implemented constraints extractor in every turn, added guard for off-boundary writes, and built structured report checklist. Verified with tsc and eslint clean, unit tests 11/11 pass. Branch agentmesh/TASK-207 ready for review. No duplication between timeline and latest report.
+        </div>
+      </div>
+
+      <div class="card" id="filesCard">
+        <h3>Files changed <span class="meta"><span id="filesMeta">6 files · +120 -18</span> <button class="more" id="filesToggle">Show all</button></span></h3>
+        <div class="files" id="filesList">
+          <span class="chip ok">src/agent/runner.ts +42 -5</span>
+          <span class="chip ok">lib/guard.ts +28 -2</span>
+          <span class="chip ok">src/board/render.ts +18 -3</span>
+          <span class="chip ok">docs/design/task-window-v1.html +40 -8</span>
+          <span class="chip danger hidden-file">src/secret.env +1</span>
+          <span class="chip warn hidden-file">lib/tmp/cache.ts +2 outside</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Tests / automatic checks <span class="meta" id="checksMeta">3 checks</span></h3>
+        <div class="checks" id="checksList">
+          <span class="check-pill ok">tsc exit 0</span>
+          <span class="check-pill ok">eslint exit 0</span>
+          <span class="check-pill ok">unit 11/11</span>
+        </div>
+      </div>
+
+      <div class="card" id="gitCard">
+        <h3>Branch and commits</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <span class="chip mono" id="branchChip">branch: agentmesh/TASK-207</span>
+          <a class="chip mono" id="prChip" href="#" style="text-decoration:none">PR #16 — open</a>
+        </div>
+        <div class="commit-list">
+          <div class="commit"><span class="dot"></span><div><div class="msg">Use constraints extractor in every turn</div><div class="meta">309e6dc · Codex · 12m ago</div></div></div>
+          <div class="commit"><span class="dot"></span><div><div class="msg">Guard off-boundary writes</div><div class="meta">a1b2c3d · Codex · 18m ago</div></div></div>
+          <div class="commit"><span class="dot"></span><div><div class="msg">Structured report checklist</div><div class="meta">e4f5g6h · Codex · 24m ago</div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Dependencies</h3>
+        <div class="dep-list">
+          <div class="dep ok"><span>✓</span><span>TASK-201 — constraints lib merged</span><span class="badge ok" style="margin-left:auto">met</span></div>
+          <div class="dep ok"><span>✓</span><span>TASK-202 — guard contract</span><span class="badge ok" style="margin-left:auto">met</span></div>
+          <div class="dep missing hidden" id="depMissing"><span>✕</span><span>TASK-203 — board v5 tokens not done</span><span class="badge danger" style="margin-left:auto">unmet</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Execution timeline</h3>
+        <div class="timeline">
+          <div class="tl-item active"><span>12:42 picked by Codex</span><span class="mono" style="color:var(--muted)">branch created from main</span></div>
+          <div class="tl-item"><span>12:43 coding — edited src/agent/runner.ts</span><span class="mono" style="color:var(--muted)">+42 lines</span></div>
+          <div class="tl-item"><span>12:45 testing — tsc clean</span><span class="mono" style="color:var(--muted)">exit 0</span></div>
+          <div class="tl-item"><span>12:47 commit + PR</span><span class="mono" style="color:var(--muted)">PR #16 opened</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Handover history</h3>
+        <div class="timeline">
+          <div class="tl-item"><span>Codex → Review · 12:47</span><span style="color:var(--muted);font-size:11px">Summary added, checks green, ready for manager</span></div>
+          <div class="tl-item"><span>Arena → Codex · 12:40</span><span style="color:var(--muted);font-size:11px">Question answered: use extractor in every turn</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-foot">
+      <div class="foot-primary">
+        <button class="btn primary" id="primaryAction">Approve and merge</button>
+        <span class="badge hidden" id="primaryReason">Checks failing</span>
+      </div>
+      <div class="foot-quiet">
+        <button class="btn small" id="approveNoDeploy">Approve without deploying</button>
+        <button class="btn small" id="sendBack">Send back</button>
+        <button class="btn small ghost" id="releaseBtn">Release to To do</button>
+      </div>
+      <div class="feedback hidden" id="feedbackBox">
+        <span style="font-size:12px;font-weight:600">Feedback to agent</span>
+        <div class="quick">
+          <button data-phrase="Missing evidence for acceptance 2">Missing evidence</button>
+          <button data-phrase="Please add tests for guard.ts">Add tests</button>
+          <button data-phrase="Off-boundary file marked — move to allowed path">Off-boundary</button>
+          <button data-phrase="Rebase with main before merge">Rebase needed</button>
+        </div>
+        <textarea id="feedbackText" placeholder="Explain what to fix..."></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn small ghost" id="cancelFeedback">Cancel</button>
+          <button class="btn small primary" id="submitFeedback">Send back with feedback</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phone-wrap hidden" id="phoneWrap">
+  <div class="phone">
+    <div class="review-head">
+      <div class="head-row"><span class="task-id">TASK-207</span><span class="status-pill review">Code review</span><span class="avatar">CX</span></div>
+      <div class="tabs"><button aria-selected="true">Overview</button><button>Checks</button><button>Files</button></div>
+    </div>
+    <div class="review-body">
+      <div class="card"><h3>Checklist</h3><div class="report-list"><div class="report-row"><span class="tick">✓</span><div class="content"><span class="title">Use extractor every turn</span><span class="desc">src/agent/runner.ts</span><div class="ev"><span class="chip mono">tsc exit 0</span></div></div></div></div></div>
+      <div class="card"><h3>Files <span class="meta">6 files</span></h3><div class="files"><span class="chip ok">runner.ts +42</span><span class="chip ok">guard.ts +28</span></div></div>
+      <div class="card"><h3>Checks</h3><div class="checks"><span class="check-pill ok">tsc</span><span class="check-pill ok">eslint</span></div></div>
+    </div>
+    <div class="review-foot"><button class="btn primary" style="width:100%">Approve and merge</button><div class="foot-quiet"><button class="btn small">Without deploy</button><button class="btn small">Send back</button><button class="btn small ghost">Release</button></div></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+'use strict';
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  try{
+    var saved = window.localStorage.getItem('sprout.review.theme');
+    if(saved==='dark') root.setAttribute('data-theme','dark');
+  }catch(e){}
+  function setTheme(next){
+    if(next==='dark') root.setAttribute('data-theme','dark');
+    else root.removeAttribute('data-theme');
+    try{ window.localStorage.setItem('sprout.review.theme', next); }catch(e){}
+  }
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isDark = root.getAttribute('data-theme')==='dark';
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  }
+  var primary = document.getElementById('primaryAction');
+  var primaryReason = document.getElementById('primaryReason');
+  var mergeBanner = document.getElementById('mergeBanner');
+  var mergeBannerText = document.getElementById('mergeBannerText');
+  var conflictBanner = document.getElementById('conflictBanner');
+  var checksBanner = document.getElementById('checksBanner');
+  var checksList = document.getElementById('checksList');
+  var checksMeta = document.getElementById('checksMeta');
+  var gitCard = document.getElementById('gitCard');
+  var branchChip = document.getElementById('branchChip');
+  var prChip = document.getElementById('prChip');
+  var filesToggle = document.getElementById('filesToggle');
+  var filesList = document.getElementById('filesList');
+  var depMissing = document.getElementById('depMissing');
+  var desktopShell = document.getElementById('desktopShell');
+  var phoneWrap = document.getElementById('phoneWrap');
+  var feedbackBox = document.getElementById('feedbackBox');
+  var sendBackBtn = document.getElementById('sendBack');
+  var cancelFeedback = document.getElementById('cancelFeedback');
+  var feedbackText = document.getElementById('feedbackText');
+  var quickBtns = document.querySelectorAll('[data-phrase]');
+  var stateBtns = document.querySelectorAll('[data-state]');
+
+  if(filesToggle && filesList){
+    filesToggle.addEventListener('click', function(){
+      var expanded = filesList.classList.contains('show-all');
+      if(expanded){
+        filesList.classList.remove('show-all');
+        filesToggle.textContent = 'Show all';
+      } else {
+        filesList.classList.add('show-all');
+        filesToggle.textContent = 'Hide';
+      }
+    });
+  }
+  function setFeedback(open){
+    if(!feedbackBox) return;
+    if(open) feedbackBox.classList.remove('hidden');
+    else feedbackBox.classList.add('hidden');
+  }
+  if(sendBackBtn) sendBackBtn.addEventListener('click', function(){ setFeedback(true); if(feedbackText) feedbackText.focus(); });
+  if(cancelFeedback) cancelFeedback.addEventListener('click', function(){ setFeedback(false); });
+  for(var i=0;i<quickBtns.length;i++){
+    (function(b){
+      b.addEventListener('click', function(){
+        var phrase = b.getAttribute('data-phrase');
+        if(feedbackText){
+          var cur = feedbackText.value;
+          feedbackText.value = cur ? cur + '\n' + phrase : phrase;
+          feedbackText.focus();
+        }
+      });
+    })(quickBtns[i]);
+  }
+  var moreBtns = document.querySelectorAll('[data-more]');
+  for(var m=0;m<moreBtns.length;m++){
+    (function(b){
+      b.addEventListener('click', function(){
+        var id = b.getAttribute('data-more');
+        var el = document.getElementById(id);
+        if(!el) return;
+        var isHidden = el.classList.contains('hidden');
+        if(isHidden){
+          el.classList.remove('hidden');
+          b.textContent = 'Hide';
+        } else {
+          el.classList.add('hidden');
+          b.textContent = 'Show more';
+        }
+      });
+    })(moreBtns[m]);
+  }
+  function applyState(state){
+    for(var s=0;s<stateBtns.length;s++){
+      var btn = stateBtns[s];
+      if(btn.getAttribute('data-state')===state) btn.setAttribute('aria-pressed','true');
+      else btn.setAttribute('aria-pressed','false');
+    }
+    if(mergeBanner) mergeBanner.classList.add('hidden');
+    if(conflictBanner) conflictBanner.classList.add('hidden');
+    if(checksBanner) checksBanner.classList.add('hidden');
+    if(primaryReason) primaryReason.classList.add('hidden');
+    if(primary){
+      primary.disabled = false;
+      primary.textContent = 'Approve and merge';
+    }
+    if(checksList){
+      while(checksList.firstChild) checksList.removeChild(checksList.firstChild);
+      var ok1 = document.createElement('span'); ok1.className='check-pill ok'; ok1.textContent='tsc exit 0'; checksList.appendChild(ok1);
+      var ok2 = document.createElement('span'); ok2.className='check-pill ok'; ok2.textContent='eslint exit 0'; checksList.appendChild(ok2);
+      var ok3 = document.createElement('span'); ok3.className='check-pill ok'; ok3.textContent='unit 11/11'; checksList.appendChild(ok3);
+    }
+    if(checksMeta) checksMeta.textContent='3 checks';
+    if(gitCard) gitCard.classList.remove('hidden');
+    if(depMissing) depMissing.classList.add('hidden');
+    if(desktopShell) desktopShell.classList.remove('hidden');
+    if(phoneWrap) phoneWrap.classList.add('hidden');
+    if(state==='review-git'){
+      if(primary) primary.textContent='Approve and merge';
+    } else if(state==='merge-progress'){
+      if(mergeBanner){ mergeBanner.classList.remove('hidden'); }
+      if(mergeBannerText) mergeBannerText.textContent='Merging to main… 2/3 steps';
+      if(primary){ primary.disabled=true; primary.textContent='Merging…'; }
+    } else if(state==='merge-conflict'){
+      if(conflictBanner) conflictBanner.classList.remove('hidden');
+      if(primary){ primary.disabled=true; primary.textContent='Approve and merge'; }
+      if(primaryReason){ primaryReason.classList.remove('hidden'); primaryReason.textContent='Conflict with main'; primaryReason.className='badge danger'; }
+    } else if(state==='checks-fail'){
+      if(checksBanner) checksBanner.classList.remove('hidden');
+      if(checksList){
+        while(checksList.firstChild) checksList.removeChild(checksList.firstChild);
+        var c1 = document.createElement('span'); c1.className='check-pill ok'; c1.textContent='tsc exit 0'; checksList.appendChild(c1);
+        var c2 = document.createElement('span'); c2.className='check-pill fail'; c2.textContent='eslint fail'; checksList.appendChild(c2);
+        var c3 = document.createElement('span'); c3.className='check-pill fail'; c3.textContent='unit 9/11'; checksList.appendChild(c3);
+      }
+      if(checksMeta) checksMeta.textContent='3 checks · 2 failing';
+      if(primary){ primary.disabled=true; primary.textContent='Approve and merge'; }
+      if(primaryReason){ primaryReason.classList.remove('hidden'); primaryReason.textContent='Checks failing — fix required'; primaryReason.className='badge danger'; }
+    } else if(state==='local'){
+      if(gitCard) gitCard.classList.add('hidden');
+      if(primary) primary.textContent='Approve';
+    } else if(state==='phone'){
+      if(desktopShell) desktopShell.classList.add('hidden');
+      if(phoneWrap) phoneWrap.classList.remove('hidden');
+    }
+  }
+  for(var k=0;k<stateBtns.length;k++){
+    (function(b){ b.addEventListener('click', function(){ applyState(b.getAttribute('data-state')); }); })(stateBtns[k]);
+  }
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){ setFeedback(false); }
+  });
+})();
+</script>
+</body>
+</html>
