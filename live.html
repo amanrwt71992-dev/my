@@ -6,6 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>AgentMesh</title>
 <style>
+
 /* Sprout restyle round 1 — colours, font, cards, columns */
 *,*::before,*::after{box-sizing:border-box}
 :root{
@@ -596,6 +597,123 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 #newTaskBtn{position:relative}
 #newTaskBtn::before{content:'✦';margin-right:6px;font-size:11px}
 
+
+
+/* V4-2 additions: contrast fixes, card structure, tabs, collapsible columns */
+.main-tabs{display:flex;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--panel);overflow-x:auto;scrollbar-width:none;white-space:nowrap}
+.main-tabs::-webkit-scrollbar{display:none}
+.main-tabs button[role=tab]{background:transparent;border:1px solid transparent;border-radius:var(--radius-pill);padding:6px 14px;font-weight:600;color:var(--muted);white-space:nowrap;flex:0 0 auto;transition:background var(--t),color var(--t),border-color var(--t)}
+.main-tabs button[role=tab][aria-selected=true]{background:var(--text);color:var(--panel);border-color:var(--text);font-weight:800}
+.main-tabs button[role=tab]:hover{background:var(--card-bg);color:var(--text);border-color:var(--border)}
+.main-tabs button[role=tab]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.stories-view,.team-view,.archive-view{padding:16px;display:flex;flex-direction:column;gap:16px;overflow:auto;min-height:0}
+.stories-view.hidden,.team-view.hidden,.archive-view.hidden{display:none!important}
+.story-card{background:var(--card-bg);border:0;border-radius:18px;padding:16px 18px;box-shadow:var(--card-shadow);display:flex;flex-direction:column;gap:12px}
+[data-theme="dark"] .story-card{border:1px solid var(--border);box-shadow:none}
+.story-card-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.story-card-title{font-size:16px;font-weight:800;flex:1 1 auto;letter-spacing:-0.01em}
+.story-card .story-progress{height:6px;background:var(--panel);border-radius:var(--radius-pill);overflow:hidden}
+.story-card .story-progress i{display:block;height:100%;background:var(--purple)}
+.subtask-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--panel);border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer}
+.subtask-row:hover{border-color:var(--border-strong);background:var(--card-bg)}
+.subtask-row .st-id{font-family:ui-monospace,monospace;font-size:10.5px;color:var(--muted);font-weight:600;flex:0 0 auto}
+.subtask-row .st-title{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.subtask-row .st-status{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);background:var(--card-bg);border:1px solid var(--border);color:var(--muted);font-weight:600}
+.subtask-row .st-dep{font-size:10.5px;color:var(--muted);font-style:italic}
+
+.archive-view .archive-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0}
+.archive-view .archive-toolbar input[type=search]{flex:1 1 200px;min-width:140px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 12px}
+.archive-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card-bg);border:0;border-radius:12px;box-shadow:var(--card-shadow);font-size:12.5px;cursor:pointer}
+[data-theme="dark"] .archive-row{border:1px solid var(--border);box-shadow:none}
+.archive-row:hover{box-shadow:var(--card-shadow-hover);transform:translateY(-1px)}
+[data-theme="dark"] .archive-row:hover{box-shadow:none;border-color:var(--border-strong)}
+.archive-row .a-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600;flex:0 0 auto}
+.archive-row .a-title{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.archive-row .a-owner{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.archive-row .a-when{font-size:11px;color:var(--muted);flex:0 0 auto}
+.archive-row .a-status{font-size:10.5px;padding:2px 8px;border-radius:var(--radius-pill);background:var(--panel);border:1px solid var(--border);font-weight:600;flex:0 0 auto}
+
+/* collapsible columns */
+.col{position:relative}
+.col-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.06);background:transparent}
+.col-collapse-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-pill);width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);flex:0 0 auto;transition:background var(--t),color var(--t),border-color var(--t)}
+.col-collapse-btn:hover{background:var(--card-bg);color:var(--text);border-color:var(--border-strong)}
+.col.collapsed{flex:0 0 44px!important;width:44px!important;overflow:hidden;min-height:200px}
+.col.collapsed .col-body{display:none!important}
+.col.collapsed .col-head{flex-direction:column;align-items:center;justify-content:flex-start;padding:10px 4px;gap:10px;border-bottom:0;height:100%}
+.col.collapsed .col-head .col-title{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;letter-spacing:.04em}
+.col.collapsed .col-head .col-count{margin-left:0;margin-top:2px}
+.col.collapsed .col-head .col-collapse-btn{transform:rotate(0deg)}
+.col .col-collapsed-strip{display:none}
+.col.collapsed .col-collapsed-strip{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 4px;cursor:pointer;flex:1 1 auto;justify-content:flex-start}
+.col-collapsed-title{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:800;white-space:nowrap;letter-spacing:.04em}
+
+/* card structure V4-2 */
+.tile{padding:12px 14px;gap:8px;border-radius:16px;background:var(--card-bg);border:0;box-shadow:var(--card-shadow);display:flex;flex-direction:column;position:relative}
+[data-theme="dark"] .tile{border:1px solid var(--border);box-shadow:none}
+.tile:hover{box-shadow:var(--card-shadow-hover);transform:translateY(-1px)}
+[data-theme="dark"] .tile:hover{box-shadow:none;border-color:var(--border-strong)}
+.tile-top{display:flex;align-items:center;gap:8px;min-width:0}
+.tile-id{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:600;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-time{font-size:11px;color:var(--muted);flex:0 0 auto;margin-left:auto}
+.tile-title{font-weight:700;font-size:13px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:0;letter-spacing:-0.01em}
+.tile-title[title]{cursor:default}
+.tile-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tile-labels{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tile-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;min-width:0}
+.tile-owner{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);min-width:0;flex:1 1 auto}
+.tile-owner .owner-name{font-weight:600;color:var(--text);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-actions-right{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.comment-bubble{font-size:11px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 8px;color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.tile-hover-actions{display:flex;gap:6px;opacity:0;pointer-events:none;transition:opacity var(--t);align-items:center}
+.tile:hover .tile-hover-actions,.tile:focus-within .tile-hover-actions{opacity:1;pointer-events:auto}
+body.compact .tile .tile-hover-actions{opacity:1;pointer-events:auto}
+.tile.needs-human{border-left:3px solid var(--acc-ask)}
+.tile.needs-human[data-status=review]{border-left-color:var(--acc-review)}
+.tile.needs-human[data-status=blocked]{border-left-color:var(--acc-ask)}
+.tile-waiting{font-size:11px;color:var(--acc-ask);font-weight:700;display:flex;align-items:center;gap:5px;margin-top:2px}
+.tile-waiting::before{content:'●';font-size:8px}
+.tile[data-status=review] .tile-waiting{color:var(--acc-review)}
+[data-theme="dark"] .tile-waiting{color:#e6a15a}
+[data-theme="dark"] .tile[data-status=review] .tile-waiting{color:#b8a0f0}
+
+/* contrast fixes */
+.tile-chip.story-chip{background:var(--purple-soft);color:#4a2a7a;border:0;font-weight:700}
+[data-theme="dark"] .tile-chip.story-chip{background:#2e2640;color:#dccbff;border:1px solid #4a3a6a}
+.tile-chip.dep-chip{background:#efe8d8;color:#3d3d3d;border:0}
+.tile-chip.dep-chip.unmet{background:#efe8d8;color:#55514a;opacity:.85;border:0}
+[data-theme="dark"] .tile-chip.dep-chip{background:#2a2a30;color:#e8e0d0;border:1px solid var(--border)}
+[data-theme="dark"] .tile-chip.dep-chip.unmet{background:#2a2a30;color:#a09a8e;opacity:.85;border:1px solid var(--border)}
+.tile-chip.dep-chip.met{background:var(--panel);color:var(--text);border:1px solid var(--border)}
+[data-theme="dark"] .tile-chip.dep-chip.met{background:#2a2a30;color:#e8e0d0;border-color:var(--border)}
+.badge{font-weight:600}
+.badge.warn{background:#ffe0c8;color:#5a2a00;border:0}
+.badge.danger{background:#ffe2e6;color:#5a0a14;border:0}
+.badge.purple{background:#e8defa;color:#3a1a6a;border:0}
+.badge.ok{background:#d6f2dd;color:#143a1e;border:0}
+[data-theme="dark"] .badge.warn{background:#3d2a1e;color:#f5c28a;border:1px solid #5a3a20}
+[data-theme="dark"] .badge.danger{background:#3a1e24;color:#ffb0b8;border:1px solid #5a2a30}
+[data-theme="dark"] .badge.purple{background:#2e2640;color:#dccbff;border:1px solid #4a3a6a}
+[data-theme="dark"] .badge.ok{background:#1e3326;color:#8ae0a0;border:1px solid #2a4a30}
+.tile-labels .lbl{background:#efe8d8;color:#3d3d3d;border:1px solid var(--border);font-weight:600}
+[data-theme="dark"] .tile-labels .lbl{background:#2a2a30;color:#e8e0d0;border-color:var(--border)}
+.silent-badge{background:#ffe2e6;color:#5a0a14;border:0;font-weight:800}
+[data-theme="dark"] .silent-badge{background:#3a1e24;color:#ffb0b8;border:1px solid #5a2a30}
+.tile-priority.high{background:#ffe0c8;color:#5a2a00;border:0}
+.tile-priority.urgent{background:#ffd1d6;color:#5a0a14;border:0}
+[data-theme="dark"] .tile-priority.high{background:#3d2a1e;color:#f5c28a;border:1px solid #5a3a20}
+[data-theme="dark"] .tile-priority.urgent{background:#3a1e24;color:#ffb0b8;border:1px solid #5a2a30}
+
+/* board-only visibility */
+.board-only{display:flex}
+body:not([data-main-tab=board]) .board-only{display:none!important}
+body[data-main-tab=board] .board-only{display:flex!important}
+body[data-main-tab=board] .board-only.seg{display:inline-flex!important}
+
+/* hide board when not board tab */
+#board.hidden{display:none!important}
+
 </style>
 </head>
 <body>
@@ -615,7 +733,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     <button id="locksBtn" class="btn small hidden" aria-label="File locks" title="File locks">🔒 0</button>
     <button id="newTaskBtn" class="btn primary" title="New task (N)">Add New Task</button>
     <button id="themeBtn" class="btn icon" aria-label="Theme: auto" title="Theme">◐</button>
-    <div class="seg" role="group" aria-label="Group by">
+    <div class="seg board-only" role="group" aria-label="Group by">
       <button id="groupStatus" data-group="status" aria-pressed="true">Status</button>
       <button id="groupAgent" data-group="agent" aria-pressed="false">Agent</button>
       <button id="groupStory" data-group="story" aria-pressed="false">Story</button>
@@ -630,10 +748,15 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 <main>
   <aside class="rail" id="rail" aria-label="Team and file locks"></aside>
   <section class="center">
-    <div class="toolbar">
+    <div id="mainTabs" class="main-tabs" role="tablist" aria-label="Main sections">
+      <button role="tab" id="tab-board" data-tab="board" aria-selected="true" tabindex="0">Board</button>
+      <button role="tab" id="tab-stories" data-tab="stories" aria-selected="false" tabindex="-1">Stories</button>
+      <button role="tab" id="tab-team" data-tab="team" aria-selected="false" tabindex="-1">Team</button>
+      <button role="tab" id="tab-archive" data-tab="archive" aria-selected="false" tabindex="-1">Archive</button>
+    </div>
+    <div class="toolbar board-only">
       <span class="muted">Board</span>
-      <label class="check"><input type="checkbox" id="showCancelled"> Show cancelled lane</label>
-      <label class="check"><input type="checkbox" id="compactToggle"> Compact</label>
+      <label class="check board-only"><input type="checkbox" id="compactToggle"> Compact</label>
       <span class="muted" id="boardHint"></span>
     </div>
     <div id="needs" class="needs hidden" aria-live="polite"></div>
@@ -641,6 +764,17 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     <div id="boardEmpty" class="notice hidden" style="margin:10px 10px 0"></div>
     <div id="setup" class="setup hidden" aria-label="First-run setup"></div>
     <div id="board" class="board" aria-label="Task board"></div>
+    <div id="storiesView" class="stories-view hidden" aria-label="Stories"></div>
+    <div id="teamView" class="team-view hidden" aria-label="Team"></div>
+    <div id="archiveView" class="archive-view hidden" aria-label="Archive">
+      <div class="archive-toolbar">
+        <input id="archiveSearch" type="search" placeholder="Search archive…" aria-label="Search archive">
+        <span id="archiveCount" class="muted"></span>
+        <label class="check"><input type="checkbox" id="showCancelledArchive"> Show cancelled</label>
+        <input type="checkbox" id="showCancelled" class="hidden" aria-hidden="true">
+      </div>
+      <div id="archiveList" class="archive-list"></div>
+    </div>
   </section>
   <aside class="activity" id="activity" aria-label="Activity feed">
     <div class="activity-head"><strong>Activity</strong><span class="muted" id="activityCount"></span>
@@ -851,7 +985,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
 
   /* 2. state + persisted view options */
   var S = { tasks: [], locks: [], events: [], agents: [], launchers: [], workspacePath: '', agentState: {}, handoverHints: [], attention: [], rejected: [], ides: [], prompts: {} };
-  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0, forceBoard: false, idesSuggestions: {} };
+  var UI = { groupBy: 'status', theme: 'auto', showCancelled: false, search: '', filterAgent: '', activity: false, attention: false, compact: false, railCollapsed: true, railMobileOpen: false, activitySeen: 0, attentionSeen: 0, forceBoard: false, idesSuggestions: {}, mainTab: 'board', collapsedCols: {}, archiveSearch: '' };
   var LS_KEY = 'agentmesh.ui.v1', PREF_KEY = 'agentmesh.prefs.v1';
   var AV = {};                       // agentId -> { emoji, color, img } (UI-only, kept in localStorage)
   function loadUI() {
@@ -871,6 +1005,9 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       if (typeof o.railCollapsed === 'boolean') UI.railCollapsed = o.railCollapsed;
       if (typeof o.activitySeen === 'number') UI.activitySeen = o.activitySeen;
       if (typeof o.attentionSeen === 'number') UI.attentionSeen = o.attentionSeen;
+      if (o.mainTab === 'board' || o.mainTab === 'stories' || o.mainTab === 'team' || o.mainTab === 'archive') UI.mainTab = o.mainTab;
+      if (o.collapsedCols && typeof o.collapsedCols === 'object') UI.collapsedCols = o.collapsedCols;
+      if (typeof o.archiveSearch === 'string') UI.archiveSearch = o.archiveSearch;
     } catch (e) { /* storage unavailable — fine */ }
   }
   function loadPrefs() {
@@ -898,7 +1035,8 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       window.localStorage.setItem(LS_KEY, JSON.stringify({
         groupBy: UI.groupBy, theme: UI.theme, showCancelled: UI.showCancelled,
         activity: UI.activity, attention: !!UI.attention, forceBoard: !!UI.forceBoard, search: UI.search, filterAgent: UI.filterAgent,
-        railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0, attentionSeen: UI.attentionSeen || 0
+        railCollapsed: !!UI.railCollapsed, activitySeen: UI.activitySeen || 0, attentionSeen: UI.attentionSeen || 0,
+        mainTab: UI.mainTab || 'board', collapsedCols: UI.collapsedCols || {}, archiveSearch: UI.archiveSearch || ''
       }));
     } catch (e) { /* ignore */ }
   }
@@ -1100,6 +1238,7 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     renderAgentFilter();
     renderRail();
     renderBoard();
+    renderMainTabs();
     renderActivity();
     renderAttention();
     renderSetup();
@@ -1518,16 +1657,227 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     S.tasks.forEach(function (t) { ids[t.id] = 1; stat[t.id] = t.status; });
     seen.ids = ids; seen.status = stat;
   }
+
+  function renderMainTabs(){
+    var tabs = $('#mainTabs');
+    if (!tabs) return;
+    var btns = tabs.querySelectorAll('[role=tab]');
+    for (var i=0;i<btns.length;i++){
+      var b = btns[i];
+      var isSel = b.dataset.tab === UI.mainTab;
+      b.setAttribute('aria-selected', isSel ? 'true' : 'false');
+      b.setAttribute('tabindex', isSel ? '0' : '-1');
+    }
+    document.body.setAttribute('data-main-tab', UI.mainTab || 'board');
+    var board = $('#board');
+    var storiesView = $('#storiesView');
+    var teamView = $('#teamView');
+    var archiveView = $('#archiveView');
+    var needs = $('#needs');
+    var cancelStrip = $('#cancelStrip');
+    var boardEmpty = $('#boardEmpty');
+    var setupEl = $('#setup');
+    var showBoard = UI.mainTab === 'board';
+    var showStories = UI.mainTab === 'stories';
+    var showTeam = UI.mainTab === 'team';
+    var showArchive = UI.mainTab === 'archive';
+    if (board) board.classList.toggle('hidden', !showBoard);
+    if (storiesView) storiesView.classList.toggle('hidden', !showStories);
+    if (teamView) teamView.classList.toggle('hidden', !showTeam);
+    if (archiveView) archiveView.classList.toggle('hidden', !showArchive);
+    if (needs) needs.classList.toggle('hidden', !showBoard || needs.classList.contains('hidden') && true); // keep hidden logic but only show on board
+    // Actually needs visibility is handled by renderNeeds, but we hide if not board
+    if (needs && !showBoard) needs.classList.add('hidden');
+    if (cancelStrip && !showBoard) cancelStrip.classList.add('hidden');
+    if (boardEmpty) {
+      if (!showBoard) boardEmpty.classList.add('hidden');
+      // else let renderEmptyState handle
+    }
+    if (setupEl){
+      // setup only on board tab when shouldShowSetup
+      if (!showBoard) setupEl.classList.add('hidden');
+    }
+    if (showStories) renderStories();
+    if (showTeam) renderTeam();
+    if (showArchive) renderArchive();
+  }
+  function setMainTab(tab){
+    if (tab !== 'board' && tab !== 'stories' && tab !== 'team' && tab !== 'archive') return;
+    UI.mainTab = tab;
+    saveUI();
+    renderMainTabs();
+    render();
+  }
+  function renderStories(){
+    var view = $('#storiesView');
+    if (!view) return;
+    var stories = S.tasks.filter(function(t){ return t.type==='story'; }).sort(function(a,b){ return (a.order||0)-(b.order||0) || a.id.localeCompare(b.id); });
+    if (!stories.length){
+      replace(view, el('div', { class:'empty', style:{padding:'20px',textAlign:'center'}, text:'No stories yet — create a story to group related tasks. Stories help you track parallel or sequential work.' }));
+      return;
+    }
+    var nodes = stories.map(function(story){
+      var prog = storyProgress(story);
+      var subs = subtasksOf(story.id).sort(function(a,b){ return (a.order||0)-(b.order||0) || a.id.localeCompare(b.id); });
+      var subRows = subs.map(function(st){
+        var owner = st.assignee || st.assignedIDE;
+        var depText = st.dependsOn && st.dependsOn.length ? 'after ' + st.dependsOn.join(', ') : '';
+        return el('div', { class:'subtask-row', onclick:function(e){ e.stopPropagation(); openTask(st.id); } },
+          el('span', { class:'st-id', text: st.id, title: st.id }),
+          el('span', { class:'st-title', text: st.title, title: st.title }),
+          owner ? avatarNode(owner, 'sm') : null,
+          el('span', { class:'st-status', text: STATUS_LABEL[st.status]||st.status }),
+          depText ? el('span', { class:'st-dep', text: depText }) : null
+        );
+      });
+      return el('div', { class:'story-card' },
+        el('div', { class:'story-card-head' },
+          el('span', { class:'tile-type t-story', text: typeIcon(story) }),
+          el('span', { class:'story-card-title', text: story.id + ' — ' + story.title }),
+          el('span', { class:'badge', text: story.mode==='sequential' ? 'in order' : 'in parallel' }),
+          el('span', { class:'badge', text: prog.done + '/' + prog.total + ' done' })
+        ),
+        el('div', { class:'story-progress', title: prog.done+'/'+prog.total+' done' }, el('i', { style:{ width: (prog.total? Math.round(prog.done/prog.total*100):0)+'%' } })),
+        subRows.length ? el('div', { class:'story-subtasks', style:{borderLeft:'0',paddingLeft:'0'} }, subRows) : el('div', { class:'empty', text:'No subtasks yet' }),
+        el('div', { style:{display:'flex',justifyContent:'flex-end'} }, el('button', { class:'btn primary small', text:'Open story', onclick:function(){ openTask(story.id); } }))
+      );
+    });
+    replace(view, nodes);
+  }
+  function renderTeam(){
+    var view = $('#teamView');
+    if (!view) return;
+    // reuse teamSettings logic but render directly
+    var agents = workers().slice().sort(function (a, b) { return agentName(a.id).localeCompare(agentName(b.id)); });
+    var rows = agents.map(function (a) { return agentRow(a, function(){ renderTeam(); render(); }); });
+    var pending = (S.launchers || []).filter(function (l) { return !agentById(l.id); });
+    var launcherNodes = pending.map(function (l) {
+      return el('div', { class: 'card launcher', dataset: { zone: 'launcher', agent: l.id } },
+        el('div', { class: 'row' }, el('span', { class: 'badge', text: l.mode === 'command' ? 'command' : 'app' }),
+          el('span', { class: 'name trunc', text: l.label || l.id })),
+        el('div', { class: 'muted', style: { fontSize: '11px' }, text: 'Not joined yet — start it and it appears in the team.' }),
+        launchButton(l.id, l.label, !!(l.running)));
+    });
+    var rejPanel = rejectedPanel();
+    var nodes = [];
+    if (rejPanel) nodes.push(rejPanel);
+    nodes.push(el('div', { class:'section' },
+      el('h3', { text:'Team (' + agents.length + ')' }),
+      agents.length ? rows : el('div', { class:'empty', text:'No worker agents yet. Add agents or connect your IDEs.' })
+    ));
+    if (launcherNodes.length) nodes.push(el('div', { class:'section' }, el('h3', { text:'Can be started' }), launcherNodes));
+    nodes.push(el('div', { class:'section' },
+      el('h3', { text:'Add agents' }),
+      el('div', { class:'muted', style:{fontSize:'12px'}, text:'Use Settings → Team & avatars to add agents, manage avatars and runner status.' }),
+      el('button', { class:'btn small', text:'Open Team Settings', onclick:function(){ openSettings('team'); } })
+    ));
+    replace(view, nodes);
+  }
+  function renderArchive(){
+    var view = $('#archiveView');
+    var listEl = $('#archiveList');
+    var searchEl = $('#archiveSearch');
+    var countEl = $('#archiveCount');
+    var showCancelledEl = $('#showCancelledArchive');
+    if (!view || !listEl) return;
+    if (searchEl && searchEl.value !== (UI.archiveSearch||'')) searchEl.value = UI.archiveSearch||'';
+    if (showCancelledEl) showCancelledEl.checked = !!UI.showCancelled;
+    var q = (UI.archiveSearch||'').trim().toLowerCase();
+    var now = Date.now();
+    var sevenDays = 7*24*60*60*1000;
+    var archived = S.tasks.filter(function(t){
+      if (t.status === 'cancelled') return UI.showCancelled;
+      if (t.status === 'done'){
+        var upd = tms(t.updatedAt);
+        if (!upd) return false;
+        return (now - upd) > sevenDays;
+      }
+      return false;
+    }).sort(function(a,b){
+      var ta = tms(a.updatedAt)||0, tb = tms(b.updatedAt)||0;
+      return tb - ta;
+    });
+    var filtered = archived;
+    if (q){
+      filtered = archived.filter(function(t){
+        var owner = t.assignee || t.assignedIDE || '';
+        var hay = (t.id + ' ' + t.title + ' ' + owner + ' ' + (t.featureTitle||'') + ' ' + (t.status||'')).toLowerCase();
+        return hay.indexOf(q) >=0;
+      });
+    }
+    if (countEl) setText(countEl, filtered.length + ' archived (' + archived.length + ' total)');
+    if (!filtered.length){
+      replace(listEl, el('div', { class:'empty', text: q ? 'No archived tasks match your search.' : 'Nothing archived yet. Done tasks older than 7 days and cancelled tasks appear here.' }));
+      return;
+    }
+    var rows = filtered.map(function(t){
+      var owner = t.assignee || t.assignedIDE;
+      var when = t.updatedAt ? agoText(t.updatedAt) : '';
+      return el('div', { class:'archive-row', onclick:function(){ openTask(t.id); }, title: t.title },
+        el('span', { class:'a-id', text: t.id }),
+        el('span', { class:'a-title', text: t.title }),
+        el('span', { class:'a-owner', text: owner ? agentName(owner) : 'unassigned' }),
+        el('span', { class:'a-when', text: when }),
+        el('span', { class:'a-status badge ' + statusBadgeClass(t.status), text: STATUS_LABEL[t.status]||t.status })
+      );
+    });
+    replace(listEl, rows);
+  }
+
   function columnEl(label, key, tasks, opts) {
     opts = opts || {};
+    var isCollapsed = !!(UI.collapsedCols && UI.collapsedCols[key]);
     var count = el('span', { class: 'col-count', text: String(tasks.length) });
+    var collapseBtn = el('button', {
+      class: 'col-collapse-btn',
+      'aria-label': isCollapsed ? 'Expand ' + label : 'Collapse ' + label,
+      title: isCollapsed ? 'Expand' : 'Collapse',
+      text: isCollapsed ? '›' : '‹',
+      onclick: function(e){ e.stopPropagation(); toggleColumnCollapse(key); }
+    });
     var body = el('div', { class: 'col-body', dataset: { scrollkey: opts.sk || key } });
-    var emptyTxt = (opts.emptyText || (COLS.filter(function(c){return c.key===key;})[0] && COLS.filter(function(c){return c.key===key;})[0].emptyText) || 'No tasks');
+    var emptyTxt = (opts.emptyText || (COLS.filter(function(c){return c.key===key;})[0] && COLS.filter(function(c){return c.key===key;})[0].emptyText) || 'Nothing here yet');
     if (!tasks.length) body.appendChild(el('div', { class: 'empty', text: emptyTxt }));
     tasks.forEach(function (t) { body.appendChild(tile(t)); });
-    var col = el('div', { class: 'col' + (opts.narrow ? ' narrow' : ''), dataset: { zone: opts.zone || ('col:' + key), colkey: key } },
-      el('div', { class: 'col-head' }, el('span', { class: 'col-title', text: label }), count), body);
+    var head = el('div', { class: 'col-head' },
+      el('span', { class: 'col-title', text: label, title: label }),
+      count,
+      collapseBtn
+    );
+    var col = el('div', { class: 'col' + (opts.narrow ? ' narrow' : '') + (isCollapsed ? ' collapsed' : ''), dataset: { zone: opts.zone || ('col:' + key), colkey: key } }, head, body);
+    if (isCollapsed){
+      var collapsedStrip = el('div', { class:'col-collapsed-strip', onclick:function(){ toggleColumnCollapse(key); }, title:'Click to expand ' + label },
+        el('span', { class:'col-collapsed-title', text: label }),
+        el('span', { class:'col-count', text: String(tasks.length) })
+      );
+      col.appendChild(collapsedStrip);
+    }
     return col;
+  }
+  function toggleColumnCollapse(key){
+    if (!UI.collapsedCols) UI.collapsedCols = {};
+    UI.collapsedCols[key] = !UI.collapsedCols[key];
+    try {
+      var raw = window.localStorage.getItem(LS_KEY);
+      var o = raw ? JSON.parse(raw) : {};
+      if (!o || typeof o !== 'object') o = {};
+      o.collapsedCols = UI.collapsedCols;
+      o.mainTab = UI.mainTab;
+      o.groupBy = UI.groupBy;
+      o.theme = UI.theme;
+      o.showCancelled = !!UI.showCancelled;
+      o.activity = !!UI.activity;
+      o.attention = !!UI.attention;
+      o.forceBoard = !!UI.forceBoard;
+      o.search = UI.search;
+      o.filterAgent = UI.filterAgent;
+      o.railCollapsed = !!UI.railCollapsed;
+      o.activitySeen = UI.activitySeen || 0;
+      o.attentionSeen = UI.attentionSeen || 0;
+      o.archiveSearch = UI.archiveSearch || '';
+      window.localStorage.setItem(LS_KEY, JSON.stringify(o));
+    } catch(e){}
+    render();
   }
 
   /* V2 helpers: type icon, priority, labels, agentState, handoverHints, story */
@@ -1980,11 +2330,13 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     var owner = t.assignee || t.assignedIDE, manual = isManual(owner);
     var label = STATUS_LABEL[t.status] || t.status;
     var isStory = (t.type==='story');
+    var isWaiting = (t.status==='blocked' || t.status==='review' || (manual && (t.status==='backlog' || t.status==='todo' || t.status==='claimed' || t.status==='in_progress')));
     var node = el('div', {
-      class: 'tile' + (manual ? ' mine' : '') + (isStory ? ' story-tile' : ''), draggable: tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
+      class: 'tile' + (manual ? ' mine' : '') + (isStory ? ' story-tile' : '') + (isWaiting ? ' needs-human' : ''),
+      draggable: tileDraggable(t) ? 'true' : 'false', tabindex: '0', role: 'button',
       dataset: { id: t.id, status: t.status },
       'aria-label': t.id + ' — ' + t.title + ' (' + label + (owner ? ', ' + agentName(owner) : '') + ')',
-      onclick: function (e) { if (e.target.closest('.tile-menu-btn') || e.target.closest('.handover-btn') || e.target.closest('.story-chip') || e.target.closest('.story-toggle') || e.target.closest('.subtask-row')) return; openTask(t.id); },
+      onclick: function (e) { if (e.target.closest('.tile-menu-btn') || e.target.closest('.handover-btn') || e.target.closest('.story-chip') || e.target.closest('.story-toggle') || e.target.closest('.subtask-row') || e.target.closest('.nudge-btn')) return; openTask(t.id); },
       onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); openTask(t.id); } },
       ondragstart: function (e) { startDrag(e, t); },
       ondragend: function () { endDrag(); }
@@ -1996,30 +2348,14 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       title: 'Move to…', text: '⋯', onclick: function (e) { e.stopPropagation(); openMoveMenu(t, menuBtn); }
     });
     var working = t.status === 'claimed' || t.status === 'in_progress';
+    var idSpan = el('span', { class: 'tile-id', text: t.id, title: t.id, style:{flex:'1 1 auto', minWidth:'0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'} });
     var topRow = el('div', { class: 'tile-top' },
       el('span', { class: 'tile-type '+typeClass(t), text: typeIcon(t), title: (t.type||t.kind||'feature') }),
-      el('span', { class: 'tile-id', text: t.id }),
-      isHighPriority(t) ? el('span', { class: 'tile-priority '+(priorityOf(t)==='urgent'?'urgent':'high'), text: priorityOf(t)==='urgent'?'URGENT':'HIGH' }) : null,
-      el('span', { class: 'status-dot st-' + (t.status || 'backlog') + (working ? ' beat' : ''), title: label, style:{marginLeft:'2px'} }),
+      idSpan,
       timerNode(t, { staleAt: 30 * 60000, class: 'tile-time' }),
       menuBtn);
     node.appendChild(topRow);
-    node.appendChild(el('div', { class: 'tile-title', text: t.title }));
-    var av = owner ? agentStateOf(owner) : 'offline';
-    var ownerRow = el('div', { class: 'tile-owner' },
-      owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
-      el('span', { class: 'owner-name', text: owner ? agentName(owner) : 'unassigned' }),
-      el('span', { class: 'state-dot '+stateDotClass(av), title: av }),
-      el('span', { class: 'muted', style:{fontSize:'10px'}, text: av })
-    );
-    node.appendChild(ownerRow);
-    if (t.labels && t.labels.length){
-      var lbls = el('div', { class: 'tile-labels' });
-      var show = t.labels.slice(0,2);
-      show.forEach(function(l){ lbls.appendChild(el('span', { class:'lbl', text:l })); });
-      if (t.labels.length>2) lbls.appendChild(el('span', { class:'lbl', text:'+'+(t.labels.length-2) }));
-      node.appendChild(lbls);
-    }
+    node.appendChild(el('div', { class: 'tile-title', text: t.title, title: t.title }));
     var chips = el('div', { class: 'tile-chips' });
     var hasChips = false;
     if (t.parentId){
@@ -2037,17 +2373,54 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
       });
       if (t.dependsOn.length>2){
         var c2 = el('span', { class:'tile-chip dep-chip', text:'+'+(t.dependsOn.length-2)+' deps' });
-        chips.appendChild(c2);
+        chips.appendChild(c2); hasChips=true;
       }
     }
     if ((t.status==='backlog' || t.status==='todo') && t.reviewFeedback){
       chips.appendChild(el('span', { class:'tile-chip warn-chip', text:'Changes requested' })); hasChips=true;
     }
-    if (isHandoverHint(t.id)){
-      var hb = el('button', { class:'tile-chip handover-btn', text:'Hand over', onclick:function(e){ e.stopPropagation(); openHandover(t.id); } });
-      chips.appendChild(hb); hasChips=true;
+    if (t.silent === true && (t.status==='claimed' || t.status==='in_progress')){
+      var mins = t.silentMinutes != null ? t.silentMinutes : '?';
+      chips.appendChild(el('span', { class:'silent-badge', text:'silent ' + mins + ' min' })); hasChips=true;
+    }
+    if (isHighPriority(t)){
+      chips.appendChild(el('span', { class:'tile-priority '+(priorityOf(t)==='urgent'?'urgent':'high'), text: priorityOf(t)==='urgent'?'URGENT':'HIGH' })); hasChips=true;
     }
     if (hasChips) node.appendChild(chips);
+    if (t.labels && t.labels.length){
+      var lbls = el('div', { class: 'tile-labels' });
+      var show = t.labels.slice(0,2);
+      show.forEach(function(l){ lbls.appendChild(el('span', { class:'lbl', text:l })); });
+      if (t.labels.length>2) lbls.appendChild(el('span', { class:'lbl', text:'+'+(t.labels.length-2) }));
+      node.appendChild(lbls);
+    }
+    if (isWaiting){
+      node.appendChild(el('div', { class:'tile-waiting', text:'Waiting for you' }));
+    }
+    var av = owner ? agentStateOf(owner) : 'offline';
+    var ownerRow = el('div', { class: 'tile-owner' },
+      owner ? avatarNode(owner, 'sm') : el('span', { class: 'avatar sm', style: { background: 'var(--grey-dot)' }, text: '?' }),
+      el('span', { class: 'owner-name', text: owner ? agentName(owner) : 'unassigned' }),
+      el('span', { class: 'state-dot '+stateDotClass(av), title: av })
+    );
+    var rightActions = el('div', { class:'tile-actions-right' });
+    var fbCount = 0;
+    if (typeof t.feedbackCount === 'number') fbCount = t.feedbackCount;
+    else if (t.reviewFeedback) fbCount = 1;
+    else if (t.deliverable && t.status==='review') fbCount = 1;
+    if (fbCount > 0){
+      rightActions.appendChild(el('span', { class:'comment-bubble', text:'💬 ' + fbCount, title: fbCount + ' feedback item(s)' }));
+    }
+    var hoverActions = el('div', { class:'tile-hover-actions' });
+    if (isHandoverHint(t.id)){
+      hoverActions.appendChild(el('button', { class:'btn small handover-btn', text:'Hand over', onclick:function(e){ e.stopPropagation(); openHandover(t.id); } }));
+    }
+    if ((t.status==='claimed' || t.status==='in_progress') && owner){
+      hoverActions.appendChild(el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(e){ e.stopPropagation(); copyNudge(owner); } }));
+    }
+    if (hoverActions.childNodes.length) rightActions.appendChild(hoverActions);
+    var footer = el('div', { class:'tile-footer' }, ownerRow, rightActions);
+    node.appendChild(footer);
     if (isStory){
       var prog = storyProgress(t);
       var bar = el('div', { class:'story-progress', title: prog.done+'/'+prog.total+' done' }, el('i', { style:{ width: (prog.total? Math.round(prog.done/prog.total*100):0)+'%' } }));
@@ -2073,15 +2446,6 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
         if (!subs.length) subBox.appendChild(el('div', { class:'muted', style:{fontSize:'11px'}, text:'No subtasks' }));
         node.appendChild(subBox);
       }
-    }
-    if (t.silent === true && (t.status==='claimed' || t.status==='in_progress')){
-      var mins = t.silentMinutes != null ? t.silentMinutes : '?';
-      var silentBadge = el('span', { class:'silent-badge', text:'silent ' + mins + ' min' });
-      node.appendChild(silentBadge);
-    }
-    if ((t.status==='claimed' || t.status==='in_progress') && owner){
-      var nudgeBtn = el('button', { class:'btn small nudge-btn', text:'Copy nudge', onclick:function(e){ e.stopPropagation(); copyNudge(owner); } });
-      node.appendChild(nudgeBtn);
     }
     if (t.violations && t.violations.length){
       var b = el('div', { class:'badges' }, el('span', { class:'badge danger', text:'⚠ '+t.violations.length+' outside' }));
@@ -2915,8 +3279,13 @@ ul.plain{margin:0;padding-left:18px}ul.plain li{overflow-wrap:anywhere}
     function onDocDown(e) { if (!box.contains(e.target)) { document.removeEventListener('mousedown', onDocDown, true); closeOverlay(menu); } }
   }
   function openMoveMenu(t, anchor) {
-    openMenu(anchor, 'Move ' + t.id + ' (' + STATUS_LABEL[t.status] + ')', movesFor(t),
-      [{ label: 'Open details', run: function () { openTask(t.id); } }]);
+    var extra = [{ label: 'Open details', run: function () { openTask(t.id); } }];
+    if (UI.compact){
+      if (isHandoverHint(t.id)) extra.unshift({ label: 'Hand over', run: function(){ openHandover(t.id); } });
+      var owner = t.assignee || t.assignedIDE;
+      if ((t.status==='claimed' || t.status==='in_progress') && owner) extra.unshift({ label: 'Copy nudge for ' + agentName(owner), run: function(){ copyNudge(owner); } });
+    }
+    openMenu(anchor, 'Move ' + t.id + ' (' + STATUS_LABEL[t.status] + ')', movesFor(t), extra);
   }
   function closeMenus() {
     var closed = false;
@@ -4077,6 +4446,58 @@ function demoApi(path, body, method){
     $('#agentFilter').addEventListener('change', function (e) { UI.filterAgent = e.target.value; saveUI(); render(); });
     $('#showCancelled').addEventListener('change', function (e) { UI.showCancelled = e.target.checked; saveUI(); render(); });
     var ct = $('#compactToggle'); if (ct) { ct.addEventListener('change', function(e){ UI.compact = e.target.checked; try { window.localStorage.setItem(PREF_KEY, JSON.stringify({ avatars: AV, compact: !!UI.compact })); } catch(err){} applyDensity(); }); }
+    // main tabs
+    var mainTabsEl = $('#mainTabs');
+    if (mainTabsEl){
+      var tabBtns = mainTabsEl.querySelectorAll('[role=tab]');
+      for (var ti=0; ti<tabBtns.length; ti++){
+        (function(btn){
+          btn.addEventListener('click', function(){ setMainTab(btn.dataset.tab); });
+          btn.addEventListener('keydown', function(e){
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
+              e.preventDefault();
+              var tabs = Array.prototype.slice.call(mainTabsEl.querySelectorAll('[role=tab]'));
+              var idx = tabs.indexOf(btn);
+              var nextIdx = e.key === 'ArrowRight' ? (idx+1)%tabs.length : (idx-1+tabs.length)%tabs.length;
+              tabs[nextIdx].focus();
+              setMainTab(tabs[nextIdx].dataset.tab);
+            }
+          });
+        })(tabBtns[ti]);
+      }
+    }
+    var archiveSearchEl = $('#archiveSearch');
+    if (archiveSearchEl){
+      archiveSearchEl.addEventListener('input', function(e){
+        UI.archiveSearch = e.target.value;
+        try { saveUI(); } catch(err){}
+        renderArchive();
+      });
+    }
+    var showCancelledArchiveEl = $('#showCancelledArchive');
+    if (showCancelledArchiveEl){
+      showCancelledArchiveEl.addEventListener('change', function(e){
+        UI.showCancelled = e.target.checked;
+        var sc = $('#showCancelled');
+        if (sc) sc.checked = e.target.checked;
+        saveUI();
+        renderArchive();
+        renderBoard();
+      });
+    }
+    // keep old showCancelled in sync if present
+    var scOld = $('#showCancelled');
+    if (scOld){
+      scOld.addEventListener('change', function(e){
+        UI.showCancelled = e.target.checked;
+        var sca = $('#showCancelledArchive');
+        if (sca) sca.checked = e.target.checked;
+        saveUI();
+        renderBoard();
+        renderArchive();
+      });
+    }
+
     $('#newTaskBtn').addEventListener('click', openNewTask);
     $('#settingsBtn').addEventListener('click', function () { openSettings('team'); });
     var locksBtn = $('#locksBtn');
@@ -4112,8 +4533,13 @@ function demoApi(path, body, method){
   applyGroup();
   initStrip();
   wire();
-  $('#showCancelled').checked = !!UI.showCancelled;
+  var scInit = $('#showCancelled'); if (scInit) scInit.checked = !!UI.showCancelled;
   var ct2 = $('#compactToggle'); if (ct2) ct2.checked = !!UI.compact;
+  var scaInit = $('#showCancelledArchive'); if (scaInit) scaInit.checked = !!UI.showCancelled;
+  var asInit = $('#archiveSearch'); if (asInit) asInit.value = UI.archiveSearch||'';
+  // set initial main tab attr
+  document.body.setAttribute('data-main-tab', UI.mainTab || 'board');
+  renderMainTabs();
   if (DEMO) {
     $('#demoBadge').classList.remove('hidden');
     setConn('live', 'demo');
